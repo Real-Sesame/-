@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>띵조 AUTO TEAM MAKER Ver. 1.0.03</title>
+<title>띵조 AUTO TEAM MAKER Ver. 1.0.05</title>
 <meta name="description" content="명조(Wuthering Waves) 역경의 탑·필드 파티 자동 편성과 1사이클 예상 피해 계산기">
 <meta name="theme-color" content="#05060b">
 <meta property="og:title" content="띵조 AUTO TEAM MAKER">
@@ -286,21 +286,57 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
 .cstep.hand { border-style: dashed; border-left-style: solid; }
 .p1 { --pc: var(--p1); --pcs: var(--p1-soft); } .p2 { --pc: var(--p2); --pcs: var(--p2-soft); } .p3 { --pc: var(--p3); --pcs: var(--p3-soft); }
 .rot-head .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pc); display: inline-block; }
-/* 사이클 타임라인 */
-.gantt-wrap { overflow-x: auto; margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 8px 10px 10px; }
-.gantt { display: grid; grid-template-columns: 96px 1fr; gap: 5px 8px; font-size: 11px; align-items: center; }
-.g-lab { display: flex; align-items: center; gap: 5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
-.g-lab .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pc); flex: 0 0 auto; }
-.g-axis { position: relative; height: 14px; }
-.g-axis span { position: absolute; top: 0; transform: translateX(-50%); color: var(--muted); font: 500 10px/14px var(--f-mono); }
-.g-axis span:first-child { transform: none; }
-.g-track { position: relative; height: 26px; background: var(--surface); border-radius: 6px; border: 1px solid var(--line); }
-.gb { position: absolute; top: 3px; bottom: 3px; border-radius: 4px; text-align: center; background: var(--pcs); border: 1px solid var(--pc); border-left-width: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 3px; line-height: 17px; color: var(--ink); font-size: 10.5px; box-sizing: border-box; min-width: 3px; }
-.gb.hand { border-style: dashed; border-left-style: solid; }
-.gb.lib { background: color-mix(in srgb, var(--pc) 32%, var(--pcs)); font-weight: 700; }
-.gb.idle { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line) 4px 5px); border: 1px dashed var(--line); color: var(--muted); }
-.g-mark { position: absolute; top: -3px; bottom: -3px; border-left: 1.5px dashed var(--accent); z-index: 1; pointer-events: none; }
+/* 딜 사이클 탭 */
+.tl-card { display: grid; gap: 12px; }
+.tl-bar { display: flex; height: 44px; border-radius: 10px; overflow: hidden; gap: 2px; background: var(--line); border: 1px solid var(--line); }
+.tl-seg { display: flex; align-items: center; justify-content: center; min-width: 4px; background: var(--pcs); border-top: 4px solid var(--pc); color: var(--ink); font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.tl-seg.hand { background: repeating-linear-gradient(135deg, var(--pcs) 0 6px, transparent 6px 10px); }
+.tl-seg.idle { background: var(--surface-2); color: var(--muted); border-top-color: var(--line); font-weight: 500; }
+.tl-ticks { position: relative; height: 16px; margin-top: -6px; }
+.tl-ticks span { position: absolute; white-space: nowrap; transform: translateX(-50%); font: 500 11px/16px var(--f-mono); color: var(--muted); }
+.tl-ticks span:first-child { transform: none; }
+.tl-ticks span:last-child { transform: translateX(-100%); }
+.tl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.tl-row { display: grid; grid-template-columns: 58px 130px 1fr; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: var(--pcs); border-left: 5px solid var(--pc); font-size: 15px; }
+.tl-row.hand { border: 1.5px dashed var(--pc); border-left: 5px solid var(--pc); }
+.tl-row.lib { box-shadow: inset 0 0 0 2px var(--pc); }
+.tl-row.lib .tl-act { font-weight: 800; }
+.tl-t { color: var(--muted); font-size: 13px; }
+.tl-who { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-who .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pc); flex: 0 0 auto; }
+.tl-act { font-weight: 600; color: var(--ink); }
+.tl-act small { font-weight: 500; color: var(--muted); font-size: 12.5px; margin-left: 4px; }
+.tl-row .sw, .tl-swap .sw { font-size: 11px; font-weight: 700; color: var(--pc, var(--accent)); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.tl-swap { display: grid; grid-template-columns: 58px 1fr; gap: 10px; font-size: 12.5px; color: var(--muted); padding: 2px 10px; }
+@media (max-width: 560px) {
+  .tl-row { grid-template-columns: 50px 1fr; row-gap: 2px; font-size: 14px; }
+  .tl-row .tl-who { grid-column: 2; font-size: 12.5px; }
+  .tl-row .tl-act { grid-column: 2; }
+  .tl-row .tl-t { grid-row: 1 / span 2; align-self: start; padding-top: 2px; }
+  .tl-swap { grid-template-columns: 50px 1fr; }
+}
 .patch { display: grid; gap: 12px; }
+/* 도감 버프 설명 */
+table.db td.nw { white-space: nowrap; min-width: 92px; }
+@media (max-width: 760px) {
+  table.dbc, table.dbc tbody, table.dbc tr { display: block; width: 100%; }
+  table.dbc thead { display: none; }
+  table.dbc tr { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
+  table.dbc td { display: block; border: 0 !important; padding: 0 !important; min-width: 0 !important; }
+  table.dbc td.c-name { margin-bottom: 6px; }
+  table.dbc td.c-el, table.dbc td.c-role { display: inline-block; vertical-align: top; margin-right: 18px; }
+  table.dbc td.c-el .muted { display: inline; margin-left: 6px; }
+  table.dbc td.c-out, table.dbc td.c-buf { margin-top: 10px; }
+  table.dbc td.c-out::before, table.dbc td.c-buf::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; letter-spacing: .3px; }
+}
+.bf { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13px; line-height: 1.45; }
+.bf:last-child { border-bottom: 0; }
+.bf-to { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); margin-right: 2px; }
+.bf b.num { color: var(--accent); }
+.bf-c { font-size: 11.5px; color: var(--warn); margin-top: 2px; }
+.bf-s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.bf-mode { font-weight: 700; font-size: 12px; margin: 8px 0 2px; color: var(--ink); border-left: 3px solid var(--accent); padding-left: 6px; }
+.bf-mode:first-child { margin-top: 0; }
 .patch-admin { border: 1px dashed var(--accent); background: var(--accent-soft); }
 .patch-admin code { font: 11.5px var(--f-mono); background: var(--surface); padding: 0 4px; border-radius: 4px; }
 .patch h3 { margin: 0 0 4px; font-size: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -359,7 +395,7 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
     <div class="top-row">
       <div class="brand">
         <h1>띵조 <b>AUTO</b> TEAM MAKER</h1>
-        <small><span class="chip num" id="ver-chip">Ver. 1.0.03</span> 명조 파티 자동 편성 · 예상 딜 계산</small>
+        <small><span class="chip num" id="ver-chip">Ver. 1.0.05</span> 명조 파티 자동 편성 · 예상 딜 계산</small>
       </div>
       <div class="top-actions">
         <span class="chip" id="owned-chip">보유 0명</span>
@@ -373,6 +409,7 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
       <button class="tab" role="tab" data-tab="tower-build" aria-selected="true">역경의 탑 편성</button>
       <button class="tab" role="tab" data-tab="field">필드 파티</button>
       <button class="tab" role="tab" data-tab="presets">추천 조합</button>
+      <button class="tab" role="tab" data-tab="timeline">딜 사이클</button>
       <button class="tab" role="tab" data-tab="tower-info">역경의 탑 정보</button>
       <button class="tab" role="tab" data-tab="roster">보유 캐릭터</button>
       <button class="tab" role="tab" data-tab="db">도감</button>
@@ -423,6 +460,11 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
   <section data-panel="presets" hidden>
     <div class="filters" id="preset-filter"></div>
     <div class="preset-grid" id="preset-grid"></div>
+  </section>
+
+  <section data-panel="timeline" hidden>
+    <div class="toolbar"><label class="lbl" for="tl-sel">파티 선택</label><select id="tl-sel" style="max-width:100%;min-width:0;flex:1 1 260px"></select></div>
+    <div class="stack" id="tl-body"></div>
   </section>
 
   <!-- 역경의 탑 정보 -->
@@ -511,7 +553,7 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
             <li>파티 카드의 <b>딜 사이클</b>을 펼치면 교체 순서, 캐릭터별 행동 순서, 필드 시간, 메인이 받는 반주 버프가 나옵니다.</li>
             <li>"끝까지 필드 유지"는 도중에 교체하면 손해인 캐릭터입니다(예: 방랑자·전도는 혼자서는 협주 에너지를 빨리 못 채워 3-2-1 운영이 어렵습니다). 복링처럼 짝이 맞는 파트너가 있으면 그 조합 전용 퀵스왑 사이클이 대신 나옵니다.</li>
             <li>조합별 전용 사이클이 있는 파티(예: 여우의 별자리·방랑자·복링)는 <b>팀 전체 순서</b>를 캐릭터별 색으로 구분해 보여 줍니다. 맨 위 "색 구분"에서 색과 캐릭터를 확인하고, 칸 앞 숫자 순서대로 따라 하면 됩니다. 점선 칸은 퀵스왑 구간입니다.</li>
-            <li><b>타임라인</b>: 캐릭터마다 한 줄씩, 시간축(초) 위에 동작 블록을 그립니다. 블록에 마우스를 올리면(휴대폰은 길게 누르면) 동작 이름과 몇 초부터 몇 초까지인지 나옵니다. 세로 점선은 반주 → 변주로 교체하는 시점, 굵은 블록은 공명 해방입니다. 화면이 좁으면 타임라인을 옆으로 밀어 보세요.</li>
+            <li><b>딜 사이클 탭</b>: 파티 카드의 <b>타임라인으로 크게 보기</b>를 누르거나 위쪽 <b>딜 사이클</b> 탭을 열면, 내 편성 파티나 추천 조합을 골라 큰 화면으로 볼 수 있습니다. 위쪽 막대는 누가 언제 필드에 있는지(빗금은 퀵스왑), 아래 <b>순서대로 따라 하기</b>는 몇 초에 누가 무엇을 하는지 한 줄씩 보여 줍니다. 교체 시점은 "↓ A → B" 줄로 표시됩니다.</li>
             <li>"첫 사이클"은 변주 없이 시작할 때, "두 번째 사이클부터"는 변주로 들어올 때의 순서입니다.</li>
             <li>파티 사이클 시간은 세 캐릭터 필드 시간의 합이고, 공명 해방 쿨타임 때문에 최소 25초로 봅니다. 파티 비교와 자동 편성은 <b>1사이클 피해량</b> 기준이고, 여우의 별자리 2체인처럼 사이클을 줄이는 체인은 사이클 시간과 초당 피해에 반영됩니다.</li>
           </ul></article>
@@ -692,6 +734,7 @@ const EL = {
 const EL_BY_ID = { 1: 'glacio', 2: 'fusion', 3: 'electro', 4: 'aero', 5: 'spectro', 6: 'havoc' };
 const WT = { 1: '대검', 2: '직검', 3: '권총', 4: '권갑', 5: '증폭기' };
 const DT = { n: '일반 공격', h: '강공격', s: '공명 스킬', l: '공명 해방', e: '에코 어빌리티', st: '이상 효과', c: '협동 공격', o: '반주 스킬', i: '변주 스킬' };
+const CAP_N = { chafe: '서리 효과', flare: '전자 효과', bane: '암흑 효과', erosion: '풍식 효과', frazzle: '광학 효과', fusionBurst: '불꽃 효과', tuneRupture: '조화 파동', tuneStrain: '조화 밀집', hack: '해킹', unison: '합일', shield: '실드', heal: '치유', coord: '협동 공격', echo: '에코 활용' };
 const STATUS_CAPS = ['chafe', 'flare', 'bane', 'erosion', 'frazzle', 'fusionBurst'];
 const ROLE_N = { main: '메인 딜러', sub: '서브 딜러·버퍼', sup: '서포터' };
 
@@ -814,19 +857,23 @@ const CHARS = [
   { id: 'hsin', rid: 1311, role: 'main', pw: 104, ap: ['flare'], f: ['aoe'], w: 21050116, w4: 21050074, set: 36,
     modes: {
       flare: { n: '전자', p: { n: 20, h: 20, l: 35, st: 15, s: 10 }, ap: ['flare'],
-        b: [{ s: 'amp', v: 20, el: 'electro', to: 'others', src: '여우의 별자리 반주(전자)' },
-            { s: 'bonus', v: 50, el: 'electro', to: 'self', treqOther: 'flare', src: '흥망성쇠의 순환(전자 2스택)' },
-            { s: 'bonus', v: 20, el: 'electro', to: 'self', withChar: 'rover_electro', src: '방랑자·전도 연계' }] },
+        b: [{ s: 'amp', v: 20, el: 'electro', to: 'others', src: '여우의 별자리 반주(전자): 다른 파티원 전도 피해 부스트, 20초' },
+            { s: 'bonus', v: 50, el: 'electro', to: 'self', treqOther: 'flare', src: '흥망성쇠의 순환: 파티원이 전자 효과를 걸 때마다 25%, 최대 2스택' },
+            { s: 'bonus', v: 20, el: 'electro', to: 'self', withChar: 'rover_electro', src: '흥망성쇠의 순환: 방랑자·전도 변주 후 30초' }] },
       unison: { n: '합일', p: { s: 60, l: 30, n: 10 }, ap: ['unison'], needOther: 'unison',
-        b: [{ s: 'amp', v: 20, to: 'team', req: 'unison', src: '여우의 별자리 반주(합일)' },
-            { s: 'atk', v: 50, to: 'self', up: .6, src: '만상 합일 변주(공격력 50%, 8초)' },
-            { s: 'amp', v: 6, to: 'team', req: 'unison', src: '합일 버프 2스택' }] }
+        b: [{ s: 'amp', v: 20, to: 'others', req: 'unison', src: '여우의 별자리 반주(합일): 합일을 얻은 다른 파티원 전체 피해 부스트, 30초' },
+            { s: 'atk', v: 50, to: 'self', up: .6, src: '흥망성쇠의 순환: 합일 변주 후 공격력 50%, 8초' },
+            { s: 'final', v: 9, to: 'team', req: 'unison', uniq: 'unisonBuff', src: '합일 버프 3스택: 스택당 최종 피해 3%(여우의 별자리 합일 모드로 최대 3스택)' }] }
     },
     note: '전자 모드는 방랑자·전도/복링 등 전자 효과 부여자와, 합일 모드는 쇄명·금희 등 합일 캐릭터와 짝을 이룹니다.' },
   { id: 'suoming', rid: 1312, release: Date.UTC(2026, 9, 22, 2), role: 'sub', pw: 52, p: { n: 40, s: 30, l: 20, c: 10 }, ap: ['unison', 'coord'], f: ['aoe'], w: 21020107, w4: 21020017, set: 36,
-    b: [{ s: 'amp', v: 20, el: 'electro', to: 'next', src: '쇄명 반주' },
-        { s: 'amp', v: 25, dt: 's', to: 'next', req: 'unison', src: '쇄명 반주(합일 버프 시 스킬)' },
-        { s: 'bonus', v: 30, el: 'electro', to: 'next', req: 'unison', up: .8, src: '봉인된 자물쇠(합일 반주 강화)' }],
+    b: [{ s: 'amp', v: 20, el: 'electro', to: 'next', src: '쇄명 반주: 다음 캐릭터 전도 피해 부스트, 8초' },
+        { s: 'amp', v: 25, dt: 's', to: 'next', req: 'unison', src: '쇄명 반주: 합일 버프 보유 시 공명 스킬 피해 부스트' },
+        { s: 'bonus', v: 30, el: 'electro', to: 'next', src: '약속의 족쇄: 해방 후 8초 안에 반주 시 다음 캐릭터 전도 피해 보너스' },
+        { s: 'bonus', v: 40, el: 'electro', to: 'next', treqOther: 'unison', src: '약속의 족쇄: 합일 버프 1스택당 +20%, 최대 +40%' },
+        { s: 'final', v: 6, to: 'team', req: 'unison', treqOther: 'unison', uniq: 'unisonBuff', src: '합일 버프 2스택: 스택당 최종 피해 3%' },
+        { s: 'bonus', v: 50, el: 'electro', to: 'self', up: .8, src: '비에 젖은 옛 약속: 변주 후 전도 피해 보너스 50%, 15초' },
+        { s: 'cd', v: 100, to: 'self', up: .6, src: '약속의 족쇄: 반주 후 자신 크리티컬 피해 100%, 12초' }],
     note: '3.7 2페이즈(10/22~) 출시. 해방으로 합일을 얻고 퇴장 시 반주+상대 변주를 동시에 발동합니다.' },
   { id: 'lily', rid: 0, upcoming: true, release: Date.UTC(2026, 10, 11, 2), releaseTxt: '3.8 예정', name: '릴리', q: 5, el: 'spectro', wt: 3, icon: '', role: 'sup', pw: 16, p: { n: 40, s: 30, l: 30 }, ap: ['heal', 'unison'], f: ['heal'], w: 21030015, w4: 21030064, set: 38,
     b: [{ s: 'amp', v: 20, to: 'team', src: '릴리 반주(추정)' }, { s: 'atk', v: 20, to: 'team', src: '릴리 공명 해방(추정)' }, { s: 'cd', v: 25, to: 'team', src: '릴리 고유 스킬(추정)' }],
@@ -834,26 +881,29 @@ const CHARS = [
   { id: 'jingran', rid: 1212, role: 'main', pw: 104, p: { h: 80, o: 15, i: 5 }, ap: ['shield'], f: ['aoe'], w: 21010076, w4: 21010104, set: 35, b: [] },
   { id: 'qingxiao', rid: 1413, role: 'main', pw: 102, p: { h: 50, l: 30, o: 20 }, ap: ['tuneStrain'], f: ['move'], w: 21020106, w4: 21020017, set: 34, b: [] },
   { id: 'suisui', rid: 1110, role: 'sup', pw: 18, p: { s: 50, l: 30, st: 20 }, ap: ['chafe', 'heal'], f: ['heal', 'group'], w: 21050096, w4: 21050024, set: 33,
-    b: [{ s: 'amp', v: 25, to: 'team', src: '수수 반주(전체 피해 25%)' },
-        { s: 'amp', v: 12, to: 'team', up: .8, src: '푸른 하늘을 노닐며(공효 200% 초과분)' },
-        { s: 'atk', v: 50, to: 'next', req: STATUS_CAPS, up: .6, src: '산안개(이상 효과 소모 시)' },
-        { s: 'amp', v: 15, dt: 'st', to: 'team', treq: STATUS_CAPS, src: '천리강산(이상 효과 스택 +3)' }] },
+    b: [{ s: 'amp', v: 25, to: 'team', src: '수수 반주: 파티 전원 전체 피해 부스트, 30초' },
+        { s: 'bonus', v: 12, to: 'team', up: .8, src: '푸른 하늘을 노닐며: 공명 효율 200% 초과분 1%당 피해 0.2%, 최대 12%' },
+        { s: 'atk', v: 50, to: 'next', req: STATUS_CAPS, up: .6, src: '산안개: 다음 캐릭터가 이상 효과를 소모하면 공격력 최대 50%(공효 260% 필요)' },
+        { s: 'amp', v: 15, dt: 'st', to: 'team', treq: STATUS_CAPS, src: '천리강산: 이상 효과 최대 스택 +3(이상 효과 피해 약 15%로 환산)' }] },
   { id: 'xuanling', rid: 1610, role: 'main', pw: 106, p: { h: 80, l: 10, o: 10 }, ap: ['bane'], f: ['aoe', 'move'], w: 21020096, w4: 21020074, set: 33,
     b: [{ s: 'amp', v: 20, el: 'havoc', to: 'others', req: 'bane', src: '양양·현령 반주' }] },
   { id: 'rover_electro', rid: 1309, role: 'sub', pw: 46, p: { s: 60, n: 40 }, ap: ['flare'], f: ['aoe'], w: 21020016, w4: 21020017, set: 37,
     b: [{ s: 'amp', v: 25, to: 'next', req: STATUS_CAPS, src: '방랑자·전도 반주(번개의 정수)' },
         { s: 'atk', v: 10, to: 'team', src: '과부하(파티 공격력 10%)' },
-        { s: 'bonus', v: 12, el: 'electro', to: 'next', src: '소울프레이어 메인 에코' }] },
+        { s: 'bonus', v: 12, el: 'electro', to: 'next', src: '메인 에코 효과: 다음 캐릭터 전도 피해 보너스 12%' }] },
   { id: 'hiyuki', rid: 1108, role: 'main', pw: 106, p: { st: 55, l: 35, i: 5, n: 5 }, ap: ['chafe'], f: ['aoe'], w: 21020086, w4: 21020104, set: 30,
-    b: [{ s: 'amp', v: 20, el: 'glacio', to: 'others', treq: 'chafe', src: '히유키 반주' }, { s: 'cd', v: 40, to: 'self', treqOther: ['chafe', 'bane'], src: '눈의 침식 1스택' }] },
+    b: [{ s: 'amp', v: 20, el: 'glacio', to: 'others', treq: 'chafe', src: '히유키 반주: 서리 효과가 있는 적에게 다른 파티원 응결 피해 부스트, 20초' },
+        { s: 'cd', v: 40, to: 'self', treqOther: ['chafe', 'bane'], src: '속삭이는 눈(눈의 침식 1스택): 자신 크리티컬 피해 40%' },
+        { s: 'amp', v: 60, el: 'glacio', dt: 'st', to: 'self', treqOther: ['chafe', 'bane'], up: .8, src: '속삭이는 눈(1·3스택): 히유키가 필드에 있을 때 적이 받는 냉해 효과 피해 30%+30% 부스트' }] },
   { id: 'lucilla', rid: 1109, role: 'sub', pw: 44, ap: ['chafe'], f: ['aoe'], w: 21050086, w4: 21050104, set: 30,
     modes: {
       chafe: { n: '서리', p: { n: 60, st: 30, s: 10 }, ap: ['chafe'],
-        b: [{ s: 'amp', v: 60, el: 'glacio', dt: 'st', to: 'team', src: '루실라 반주(서리 효과 피해)' },
-            { s: 'res', v: 8, el: 'glacio', to: 'team', src: '슬로우 모션(응결 저항 -8%)' }] },
+        b: [{ s: 'amp', v: 60, el: 'glacio', dt: 'st', to: 'team', src: '루실라 반주(서리): 목표가 받는 서리 효과 피해 부스트, 30초' },
+            { s: 'res', v: 8, el: 'glacio', to: 'team', src: '슬로우 모션: 근처 적 응결 저항 8% 감소' }] },
       echo: { n: '에코', p: { e: 80, n: 20 }, ap: ['echo'],
-        b: [{ s: 'amp', v: 50, dt: 'e', to: 'next', src: '루실라 반주(에코)' },
-            { s: 'bonus', v: 25, dt: 'e', to: 'team', src: '슬로우 모션(에코 피해 25%)' }] }
+        b: [{ s: 'amp', v: 50, dt: 'e', to: 'next', src: '루실라 반주(에코): 다음 캐릭터 에코 어빌리티 피해 부스트, 14초' },
+            { s: 'bonus', v: 25, dt: 'e', to: 'team', src: '슬로우 모션: 파티 전원 에코 어빌리티 피해 보너스 25%, 30초' },
+            { s: 'cd', v: 40, dt: 'e', to: 'team', up: .75, src: '줌: 스택당 에코 어빌리티 크리티컬 피해 10%, 최대 4스택' }] }
     } },
   { id: 'sigrika', rid: 1412, role: 'main', pw: 106, p: { e: 75, o: 15, n: 10 }, ap: ['echo'], f: ['aoe'], w: 21040066, w4: 21040104, set: 29,
     b: [{ s: 'bonus', v: 18, el: 'aero', to: 'team', treq: 'echo', src: '함의의 축복 6스택' }, { s: 'bonus', v: 18, dt: 'e', to: 'team', src: '함의의 축복 6스택' }] },
@@ -870,7 +920,8 @@ const CHARS = [
     b: [{ s: 'amp', v: 15, to: 'next', src: '레베카 반주' }, { s: 'amp', v: 35, dt: 'h', to: 'next', src: '오버리미트(강공격 최대 35%)' },
         { s: 'atk', v: 20, to: 'team', src: '파티 타임!(공격력 20%)' }] },
   { id: 'lucy', rid: 1511, role: 'main', pw: 100, p: { h: 60, n: 25, s: 15 }, ap: ['hack'], f: [], w: 21030056, w4: 21030104, set: 32, set2: [26, 9],
-    b: [{ s: 'amp', v: 25, dt: 'n', to: 'next', src: '루시 반주' }, { s: 'amp', v: 20, to: 'others', req: 'hack', src: '카운터 프로그램' }] },
+    b: [{ s: 'amp', v: 25, dt: 'n', to: 'next', src: '루시 반주: 다음 캐릭터 일반 공격 피해 부스트, 14초' }, { s: 'amp', v: 20, to: 'others', req: 'hack', src: '카운터 프로그램: 해킹 이탈을 건 다른 파티원 전체 피해 부스트' },
+        { s: 'amp', v: 5, to: 'team', src: '넷러너: 표기된 적이 받는 피해 5% 증가, 30초' }] },
   { id: 'aemeath', rid: 1210, role: 'main', pw: 106, ap: ['fusionBurst'], f: ['aoe'], w: 21020076, w4: 21020104, set: 27,
     modes: {
       fusionBurst: { n: '불꽃', p: { st: 45, l: 35, s: 20 }, ap: ['fusionBurst'],
@@ -880,7 +931,7 @@ const CHARS = [
     } },
   { id: 'luuk', rid: 1510, role: 'main', pw: 100, p: { n: 70, o: 15, s: 15 }, ap: ['tuneStrain'], f: [], w: 21040056, w4: 21040104, set: 26, b: [] },
   { id: 'mornye', rid: 1209, role: 'sup', pw: 14, p: { l: 60, h: 40 }, ap: ['heal', 'shield'], f: ['heal'], w: 21010066, w4: 21010024, set: 25,
-    b: [{ s: 'amp', v: 25, to: 'team', src: '모니에 반주' }, { s: 'amp', v: 40, to: 'team', treq: ['tuneRupture', 'tuneStrain'], up: .75, src: '간섭 표식(조화 효과 대상)' }] },
+    b: [{ s: 'amp', v: 25, to: 'team', src: '모니에 반주: 파티 전원 전체 피해 부스트, 30초' }, { s: 'bonus', v: 40, to: 'team', treq: ['tuneRupture', 'tuneStrain'], up: .75, src: '간섭 표기: 조화 간섭 상태의 적에게 주는 피해 증가(공효 100% 초과 1%당 0.25%, 최대 40%)' }] },
   { id: 'lynae', rid: 1509, role: 'sub', pw: 40, p: { n: 50, l: 30, s: 20 }, ap: ['tuneRupture', 'tuneStrain'], f: ['move'], w: 21030046, w4: 21030064, set: 24,
     b: [{ s: 'amp', v: 15, to: 'next', src: '린네 반주' }, { s: 'amp', v: 25, dt: 'l', to: 'next', src: '린네 반주(해방)' },
         { s: 'bonus', v: 24, to: 'team', src: '컬러 스프레이 폭발(피해 24%)' }] },
@@ -888,24 +939,24 @@ const CHARS = [
     b: [{ s: 'amp', v: 50, dt: 'e', to: 'next', src: '구원 반주' }, { s: 'bonus', v: 30, dt: 'e', to: 'team', src: '대나무 빛(에코 30%)' },
         { s: 'cd', v: 30, to: 'team', src: '진중한 한 수(치피 최대 30%)' }] },
   { id: 'chisa', rid: 1508, role: 'sup', pw: 22, p: { l: 60, n: 40 }, ap: ['bane', 'heal', 'shield'], f: ['heal'], w: 21010056, w4: 21010094, set: 23, set2: [6],
-    b: [{ s: 'amp', v: 20, dt: 'st', to: 'team', treq: STATUS_CAPS, src: '치사 반주(이상 효과 스택 +3)' },
-        { s: 'defign', v: 18, to: 'team', req: STATUS_CAPS, src: '파멸의 선(방어 무시 18%)' },
-        { s: 'defign', v: 12, to: 'team', src: '공허한 올가미(암흑 방깎)' }] },
+    b: [{ s: 'amp', v: 20, dt: 'st', to: 'team', treq: STATUS_CAPS, src: '치사 반주(종말의 현 연주): 이상 효과 최대 스택 +3(이상 효과 피해 약 20%로 환산)' },
+        { s: 'defign', v: 18, to: 'team', req: STATUS_CAPS, src: '파멸의 선: 이상 효과를 건 캐릭터가 공허히 얽힌 흔적 대상에게 방어력 18% 무시' }] },
   { id: 'galbrena', rid: 1208, role: 'main', pw: 104, p: { n: 60, h: 20, e: 20 }, ap: ['echo'], f: ['aoe'], w: 21030036, w4: 21030104, set: 22, set2: [2], b: [] },
   { id: 'augusta', rid: 1306, role: 'main', pw: 96, p: { h: 85, o: 5, s: 10 }, ap: ['shield'], f: [], w: 21010046, w4: 21010104, set: 20, set2: [3],
     b: [{ s: 'amp', v: 15, to: 'next', src: '아우구스타 반주' }] },
   { id: 'iuno', rid: 1410, role: 'sub', pw: 46, p: { l: 60, h: 40 }, ap: ['heal', 'shield'], f: ['heal'], w: 21040046, w4: 21040104, set: 8,
-    b: [{ s: 'amp', v: 50, dt: 'h', to: 'next', src: '유노 반주(강공격 50%)' }] },
+    b: [{ s: 'amp', v: 50, dt: 'h', to: 'next', src: '유노 반주: 다음 캐릭터 강공격 피해 부스트, 14초' },
+        { s: 'amp', v: 40, to: 'next', treq: 'shield', up: .75, src: '창백한 달빛의 축복: 보름달 영역에서 실드를 받을 때마다 전체 피해 4%, 최대 10스택' }] },
   { id: 'phrolova', rid: 1608, role: 'main', pw: 102, p: { e: 50, h: 40, s: 10 }, ap: ['echo'], f: ['aoe'], w: 21050066, w4: 21050084, set: 19, set2: [12],
     b: [{ s: 'amp', v: 20, el: 'havoc', to: 'next', src: '플로로 반주' }, { s: 'amp', v: 25, dt: 'h', to: 'next', src: '플로로 반주(강공격)' }] },
   { id: 'cartethyia', rid: 1409, role: 'main', pw: 100, p: { l: 50, n: 30, st: 20 }, ap: ['erosion'], f: ['heal'], w: 21020056, w4: 21020104, set: 17,
     b: [{ s: 'amp', v: 17.5, el: 'aero', to: 'others', treq: STATUS_CAPS, src: '카르티시아 반주' }] },
   { id: 'lupa', rid: 1207, role: 'sub', pw: 40, p: { l: 50, i: 30, n: 20 }, ap: [], f: [], w: 21010036, w4: 21010084, set: 18,
     b: [{ s: 'amp', v: 20, el: 'fusion', to: 'next', src: '루파 반주' }, { s: 'amp', v: 25, dt: 'n', to: 'next', src: '루파 반주(일반 공격)' },
-        { s: 'atk', v: 12, to: 'team', src: '추적 사냥(공격력)' }, { s: 'bonus', v: 10, el: 'fusion', to: 'team', src: '추적 사냥(보스 대상)' },
-        { s: 'res', v: 9, el: 'fusion', to: 'team', src: '영광(용융 저항 무시)' }] },
+        { s: 'atk', v: 18, to: 'team', up: .85, src: '추적 사냥: 공격력 6%, 변주마다 +6%(최대 18%)' }, { s: 'bonus', v: 10, el: 'fusion', to: 'team', src: '추적 사냥: 노도·해일급(보스) 대상 용융 피해 보너스 10%' },
+        { s: 'res', v: 9, el: 'fusion', to: 'team', src: '승리의 박수갈채: 용융 저항 3% 무시 + 다른 용융 캐릭터당 3%(용융 3명이면 15%)' }] },
   { id: 'ciaccona', rid: 1407, role: 'sub', pw: 44, p: { st: 50, l: 30, n: 20 }, ap: ['erosion'], f: ['aoe'], w: 21030026, w4: 21030064, set: 16,
-    b: [{ s: 'amp', v: 100, el: 'aero', dt: 'st', to: 'team', src: '샤콘 반주(풍식 피해 100%)' }, { s: 'bonus', v: 24, el: 'aero', to: 'team', src: '앙상블 실프(기류 24%)' }] },
+    b: [{ s: 'amp', v: 100, el: 'aero', dt: 'st', to: 'team', src: '샤콘 반주: 목표가 받는 풍식 효과 피해 부스트, 30초' }, { s: 'bonus', v: 24, el: 'aero', to: 'team', src: '음률의 독주: 근처 파티 전원 기류 피해 보너스 24%' }] },
   { id: 'zani', rid: 1507, role: 'main', pw: 98, p: { h: 60, st: 30, n: 10 }, ap: ['frazzle'], f: [], w: 21040036, w4: 21040104, set: 11,
     b: [{ s: 'amp', v: 20, el: 'spectro', to: 'others', treq: 'frazzle', src: '젠니 반주' }, { s: 'bonus', v: 12, el: 'spectro', to: 'self', src: '변주 회절 12%' }] },
   { id: 'cantarella', rid: 1607, role: 'sub', pw: 42, p: { n: 40, c: 40, s: 20 }, ap: ['heal', 'coord', 'echo'], f: ['heal'], w: 21050056, w4: 21050104, set: 12,
@@ -924,14 +975,14 @@ const CHARS = [
   { id: 'carlotta', rid: 1107, role: 'main', pw: 96, p: { s: 70, l: 20, o: 10 }, ap: [], f: [], w: 21030016, w4: 21030044, set: 10, b: [] },
   { id: 'shorekeeper', rid: 1505, role: 'sup', pw: 12, p: { s: 60, l: 40 }, ap: ['heal'], f: ['heal'], w: 21050036, w4: 21050024, set: 7,
     b: [{ s: 'amp', v: 15, to: 'team', src: '파수인 반주' }, { s: 'cr', v: 12.5, to: 'team', src: '별의 영역·심층(크리 12.5%)' },
-        { s: 'cd', v: 25, to: 'team', src: '별의 영역·해금(치피 25%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코)' }],
+        { s: 'cd', v: 25, to: 'team', src: '별의 영역·해금(치피 25%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코): 에코 사용 시 파티 전원 공격력 10%, 20초' }],
     note: '합일 대응은 할 수 없어 여우의 별자리 합일 파티에서는 릴리 출시 후 교체를 권장합니다.' },
   { id: 'verina', rid: 1503, role: 'sup', pw: 12, p: { l: 50, h: 30, c: 20 }, ap: ['heal', 'coord'], f: ['heal'], w: 21050036, w4: 21050024, set: 7,
-    b: [{ s: 'amp', v: 15, to: 'team', src: '벨리나 반주' }, { s: 'atk', v: 20, to: 'team', src: '자연의 선물(공격력 20%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코)' }] },
+    b: [{ s: 'amp', v: 15, to: 'team', src: '벨리나 반주' }, { s: 'atk', v: 20, to: 'team', src: '자연의 선물(공격력 20%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코): 에코 사용 시 파티 전원 공격력 10%, 20초' }] },
   { id: 'buling', rid: 1307, role: 'sup', pw: 16, p: { s: 50, l: 50 }, ap: ['flare', 'heal'], f: ['heal'], w: 21050016, w4: 21050094, set: 7,
-    b: [{ s: 'amp', v: 15, to: 'team', src: '복링 반주' }, { s: 'bonus', v: 25, dt: 's', to: 'team', src: '오뢰 퇴마진(스킬 피해)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코)' }] },
+    b: [{ s: 'amp', v: 15, to: 'team', src: '복링 반주' }, { s: 'bonus', v: 25, dt: 's', to: 'team', src: '오뢰 퇴마진(스킬 피해)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코): 에코 사용 시 파티 전원 공격력 10%, 20초' }] },
   { id: 'rover_aero', rid: 1406, role: 'sup', pw: 20, p: { s: 60, l: 40 }, ap: ['erosion', 'heal'], f: ['heal'], w: 21020046, w4: 21020044, set: 7,
-    b: [{ s: 'atk', v: 20, to: 'team', up: .6, src: '바람 속의 모래(공격력 20%)' }, { s: 'amp', v: 15, el: 'aero', dt: 'st', to: 'team', src: '침식의 경계(풍식 스택 +3)' }] },
+    b: [{ s: 'atk', v: 20, to: 'self', up: .6, src: '허공의 먼지: 변주 후 자신 공격력 20%, 10초' }, { s: 'amp', v: 15, el: 'aero', dt: 'st', to: 'team', src: '방랑자·기류 반주(침식의 경계): 풍식 효과 최대 스택 +3(풍식 피해 약 15%로 환산)' }] },
   { id: 'rover_spectro', rid: 1501, role: 'sub', pw: 40, p: { s: 50, l: 30, st: 20 }, ap: ['frazzle'], f: [], w: 21020015, w4: 21020044, set: 5, b: [] },
   { id: 'rover_havoc', rid: 1604, role: 'main', pw: 78, p: { n: 35, h: 25, l: 30, s: 10 }, ap: [], f: [], w: 21020015, w4: 21020044, set: 6, b: [] },
   // ===== 1.x ~ 2.x =====
@@ -1082,6 +1133,92 @@ const ROT = {
   lynae: { ft: 5, loop: ['변주 → 공명 해방으로 캔슬', 'E → 공명 해방', '공명 해방', '강공(풀차지)', '점프 3회', '공중 평타', '반주'] },
   jinhsi: { ft: 16, loop: ['변주', 'E', '강화 평타 1~3', 'E (초승달)', '강화 평타 4', '강화 E (합일 획득)', '반주'], tip: '팀 한 바퀴에 두 번 나옵니다. 두 번째 등장 때는 E 다음에 공명 해방을 넣습니다.' },
   rover_spectro: { ft: 6, loop: ['강공 → E', '후속 공격 → 공명 회로 회전·회오리', '교체 (E 쿨 대기)', '변주', '공명 해방', '평타 1·2', '공명 회로 연타', '반주'] },
+  // ----- 1.0.05: 예전 캐릭터 사이클 (출처: Prydwen 캐릭터 가이드 로테이션) -----
+  camellya: { ft: 22, full: true,
+    loop: ['변주', 'E(피어난 동백꽃) → 에코로 캔슬', '에코 → 대시로 캔슬', '강공(넝쿨의 춤) 1~3', '강공(타오르는 넝쿨의 춤)', '강공(넝쿨의 춤) 4 → 에코로 캔슬', '에코 → 대시 → 공명 해방', '공명 해방', '평타(넝쿨의 춤) 1 → E로 캔슬', 'E(일순의 꽃)', '강공(넝쿨의 춤) 1~3', '강공(타오르는 넝쿨의 춤)', '강공(넝쿨의 춤) 4 → E로 캔슬', 'E(암흑 꽃술의 마음)', '에코 (교체)', '반주'],
+    tip: '사이클이 15초를 넘어 앞 캐릭터의 반주 버프(14초)가 끝까지 유지되지 않는 편입니다. 붉은 동백꽃 상태에서는 이동이 막혀 퀵스왑에 맞지 않습니다.' },
+  changli: { ft: 9,
+    loop: ['변주', '평타(심안 충전)', 'E', '강공', '평타(심안 충전)', '공중 평타 → 대시로 캔슬', '공중 평타 4', '평타(심안 충전)', 'E', '평타(심안 정복)', '강공(이화의 화신)', '공명 해방', '강공(이화의 화신) (교체)', '반주'],
+    tip: '거의 모든 동작에서 교체 캔슬이 되는 퀵스왑 친화 캐릭터입니다. 마지막 강공을 끝까지 쓰고 에코를 넣으면 약 1.4초 길어집니다.' },
+  jiyan: { ft: 16, full: true,
+    open: ['평소: 공명 스킬(돌진의 창)을 쿨마다 써서 공명 에너지 모으기'],
+    loop: ['에코 (버프를 미리 켜 두기)', '변주', '회로(청룡의 폭풍)', '강공(청룡의 창) 1타 → E로 바로 캔슬', 'E', '강공(청룡의 창) 1~3타', '강공(청룡의 창) 1~3타', 'E', '반주'],
+    tip: '공명 해방 지속 시간 내내 필드에 있어야 합니다. 교체 캔슬은 대부분 손해라 하이퍼 캐리 파티가 맞습니다.' },
+  carlotta: { ft: 16, full: true,
+    loop: ['변주', 'E(폭력 미학)', 'E(찬란한 색채)', '공중 평타', '강공(임박한 망각) → 공명 해방으로 캔슬', '공명 해방(새로운 트렌드)', '해방 연타(조종의 종) ×4', '해방 마무리(치명적인 피날레)', 'E(폭력 미학)', 'E(찬란한 색채) (교체 캔슬 가능)', '반주'],
+    tip: '공명 해방의 큰 자기 버프가 교체하면 끝나므로 퀵스왑에 약합니다. 강공(임박한 망각)은 22초, 해방은 25초 쿨입니다.' },
+  xiangli_yao: { ft: 15,
+    loop: ['변주', 'E(기본 추론) → 공명 해방으로 바로 캔슬', '공명 해방(사고의 배열)', '강화 E(분기)', '회로 공중 공격', '회로 E(통치의 법칙)', '강화 평타 1~3', '회로 E(통치의 법칙)', '강화 E(분기)', '회로 공중 공격', '회로 E(통치의 법칙)', '에코 (교체 캔슬)', '반주'],
+    tip: '통찰 상태는 24초까지 가지만 큐브 충전 3회를 다 쓰면 끝납니다. 거의 모든 동작이 교체 캔슬 구간이지만, 음림처럼 교체하면 사라지는 반주 버프를 받았을 때는 퀵스왑을 피하세요.' },
+  augusta: { ft: 18, full: true,
+    loop: ['변주', '강공(백스텝)', '평타(회전 베기)', 'E', '강공(백스텝)', '평타(회전 베기)', '강공 → 공명 해방으로 캔슬', '공명 해방', '강공 → E로 캔슬', 'E 강타 → 도약 → 낙하 (길게 누른 해방으로 캔슬)', '해방 길게 누르기', '평타 ×9', '공명 해방(불멸자의 보우)', '점프 올려치기 (마지막 타에 교체)', '반주'],
+    tip: '회로 3회 사이클(대부분 파티 기준)입니다. 반주를 받은 캐릭터는 자기 반주를 쓰기 전까지 교체하면 안 돼서 퀵스왑에 약합니다.' },
+  calcharo: { ft: 16,
+    loop: ['에코 (미리 사용)', '변주', '공명 해방', '강공(죽음의 사자) (교체 캔슬 가능)', '평타 1~5', '강공(죽음의 사자) (교체 캔슬 가능)', '평타 1~5', '강공(죽음의 사자)', '반주'],
+    tip: '강공(죽음의 사자)은 3번 넣습니다. 교체 캔슬을 하면 몸은 안전하지만 반주 버프를 잃어 딜이 줄어듭니다.' },
+  encore: { ft: 15,
+    loop: ['에코 (미리 사용)', '변주', '공명 해방', 'E(광란)', '평타 1~4', 'E(광란)', '평타 1~4', 'E(광란)', '강공(파열) → 시전 시작하자마자 교체 캔슬', '반주'],
+    tip: '해방 위주 파티의 기본 버스트입니다. 퀵스왑 파티에서는 해방 없이 스킬·평타로 협주를 채우는 준비 사이클이 더 낫습니다.' },
+  yinlin: { ft: 7,
+    loop: ['변주', '평타 4 (교체 캔슬 가능)', 'E(자기장의 포효)', '강공 → E(천둥의 폭발)로 강공 후딜 캔슬', '착지하자마자 공명 해방', '평타 1', '회로 강공(천면 매혹)', '에코 → 교체 캔슬', '반주'],
+    tip: '필드 시간이 짧고 대부분 동작에 교체 캔슬이 있습니다. 천둥의 폭발은 교체하면 쿨이 돌기 시작하니 교체 타이밍에 주의하세요.' },
+  zhezhi: { ft: 7, full: true,
+    loop: ['변주', '평타 1~3', 'E', '강공(구성)', 'E(천재의 붓놀림) → 점프로 캔슬', 'E(천재의 붓놀림) → 공명 해방으로 캔슬', '공명 해방', 'E(궁극·천재의 붓놀림) → 대시 → 에코', '반주'],
+    tip: '퀵스왑할 수 있는 구간이 평타 3뿐이라 사이클을 끝까지 돌리는 편이 낫습니다.' },
+  luuk: { ft: 17, full: true,
+    loop: ['변주', '공중 공격 2·3', 'E(고리)', '평타(황금 꿰뚫기) → 대시로 바로 캔슬', '공중 평타 1', '공중 공격 2·3', 'E(돌파)', '평타(황금 꿰뚫기) → 대시로 바로 캔슬', '공중 평타 1', '공중 공격 2·3', 'E(섬광)', '공중 공격(대지를 흔드는 망치) → 공명 해방으로 캔슬', '공명 해방', 'E (교체)', '반주'],
+    tip: '황금의 법칙 쿨(24초)·해방 쿨(25초)에 맞춰 약 25초마다 돕니다. 변주 후 교체하면 기술이 끊겨 퀵스왑은 거의 불가능합니다. 에코는 보통 생략합니다.' },
+  brant: { ft: 8,
+    loop: ['변주', '공명 해방(세상 끝까지)', '공중 평타 2', '공중 강공 2 (끝까지 충전)', '공중 평타 3', 'E(재에서 돌아오다)', '반주'],
+    tip: '약 8초 사이클로 퀵스왑 없이 회로를 가득 채웁니다. 에코(장송의 용)는 마지막 닻 뒤에 쓰거나 생략합니다.' },
+  roccia: { ft: 6,
+    loop: ['변주', '평타 4 → 공명 해방으로 캔슬', '공명 해방', 'E → 첫 타 후 대시로 캔슬', '대시', '평타(진짜 환상) 1~3 → 에코로 캔슬', '에코 (교체)', '반주'],
+    tip: '교체 캔슬 여유가 적고, 공중 공격이 끊기면 사이클이 느려집니다.' },
+  rover_havoc: { ft: 10,
+    loop: ['변주', 'E', '강공(소멸) → 다크 서지 진입', 'E(움브라) (교체 캔슬 가능)', '공명 해방', '에코 → 바로 교체 캔슬', '반주'],
+    tip: '가장 짧은 버스트 콤보입니다. 다른 딜러가 있는 퀵스왑 파티에 맞고, 해방 위주로 길게 쓰면 필드 시간이 늘어납니다. 5세트(인멸)를 유지하려면 틈틈이 평타를 넣으세요.' },
+  lingyang: { ft: 16, full: true,
+    loop: ['에코 (미리 사용)', '변주(출동·사자의 기상)', '공명 해방(돌진·사자의 질주)', '강공 → 회로 진입(공중)', '평타 1 → E → 평타 2 → E (반복)', '평타 1 → 회로 발차기 → 공중 꼬리 치기', '반주'],
+    tip: '해방은 14초, 회로 상태는 최대 10초까지 늘어납니다. 중간에 나가면 손해가 커서 하이퍼 캐리 파티용입니다.' },
+  jianxin: { ft: 8, full: true,
+    loop: ['변주', '평타 (5세트·협주 유지)', 'E (쿨마다)', '공명 해방 (협주 채우기·몰이)', '(선택) 회로 채널링 약 6초 → 실드', '에코', '반주 (메인 딜러의 해방 버스트에 맞추기)'],
+    tip: '정해진 사이클보다 우선순위로 돕니다. 반주(해방 피해 38%)는 교체하면 끝나므로 해방을 많이 쓰는 딜러에게 넘기세요.' },
+  sanhua: { ft: 3,
+    loop: ['변주', '공명 해방', 'E', '강공(폭발)', '강공(폭발)', '에코(왜가리) → 교체 캔슬', '반주'],
+    tip: '게임에서 가장 빠른 협주 사이클 중 하나입니다. 평타 위주 변형: 변주 → 평타 3~5 → 해방 → E → 강공 → 반주.' },
+  mortefi: { ft: 4,
+    loop: ['변주', 'E(열정의 변주)', 'E(분노의 후가)', '평타 1~4', 'E(분노의 후가)', '공명 해방', '에코(왜가리) → 교체 캔슬', '반주'],
+    tip: '가장 빠르고 쉬운 협주 사이클 중 하나입니다. 해방(드래곤의 광상곡)과 반주를 다음 딜러 직전에 함께 넘기세요.' },
+  taoqi: { ft: 6,
+    open: ['평타 1~3으로 미리 협주 채우기 (디스코드 무기면 생략 가능)'],
+    loop: ['변주', '반격 1~3 (타이밍 막기)', '공명 해방', '평타 1~4', 'E', '반주'],
+    tip: '정해진 순서로 도는 고정 사이클입니다. 월광 세트 + 왜가리 에코면 반주 직전에 교체 캔슬합니다.' },
+  lumi: { ft: 8,
+    loop: ['변주', '공명 해방', 'E(덮치기) (교체 캔슬 후 바로 복귀 가능)', '빨간 불 평타 1~3', 'E(후퇴)', '노란 불 평타', '대시 채널링(강한 빛 ×6)', 'E(덮치기)', '에코 → 교체 캔슬', '반주'],
+    tip: '하이브리드치고 사이클이 긴 편입니다. 교체 후 바로 복귀하면 짧아지지만 손이 빨라야 합니다.' },
+  danjin: { ft: 7,
+    loop: ['변주', 'E(주홍 침식) 1·2', '공명 해방', 'E(주홍빛)', '평타 2·3', 'E(진홍 맥동) 1~3', '강공(부분 충전) 2회', '에코 → 교체 캔슬', '반주'],
+    tip: '하이브리드(빠른 협주) 사이클입니다. 딜러로 쓸 때는 주홍빛 → 평타 → 진홍 맥동을 한 번 더 넣고 강공을 끝까지 충전합니다.' },
+  aalto: { ft: 5,
+    open: ['다른 캐릭터 사이클 중에 E(안개 분신)를 미리 써서 쿨 돌리기'],
+    loop: ['변주', '공명 해방(안개속의 꽃구경)', 'E(안개 분신)', '평타 1~5', '에코', '반주'],
+    tip: '필드 시간을 최소로 쓰는 서브 딜러입니다. 해방의 문을 통과한 공격은 공격력이 오릅니다.' },
+  youhu: { ft: 6.5,
+    loop: ['변주', '감정(바로 캔슬)', '공명 해방', '감정', '평타 1~4', 'E', '감정', '반주'],
+    tip: '약 6.5초 사이클이 계속 반복됩니다. 반주(협동 공격 피해 100%)는 협동 공격이 많은 딜러에게 넘기세요.' },
+  baizhi: { ft: 6.5,
+    loop: ['변주', '평타 1~4', 'E (교체해서 메인 딜러가 천뢰 줍기)', '공명 해방 (변주 직후 동작을 캔슬하도록 늦게)', '평타 1~3', '에코', '반주'],
+    tip: '필드 시간 약 6.5초(무기 별의 교향곡이면 약 5.5초)입니다. 반주 치료를 받는 동안 전체 피해 15% 부스트가 붙습니다.' },
+  yuanwu: { ft: 3,
+    loop: ['에코', '변주 (있으면)', 'E(뇌전의 쐐기 설치)', '공명 해방 (쐐기 폭발)', '회로 E', 'E(쐐기 다시 설치)', '반주 (있으면)'],
+    tip: '정해진 사이클 없이 쐐기를 깔고 바로 나가는 캐릭터입니다. 쐐기는 12초 유지, 3초마다 다시 깔 수 있습니다.' },
+  yangyang: { ft: 4,
+    loop: ['변주', '평타 3', '강공', '강공(바람의 노래)', '공명 해방 (후딜 캔슬)', '평타 1', '강공', '강공(바람의 노래)', 'E (후딜 캔슬)', '점프', '공중 공격(깃털 방출)', '반주'],
+    tip: '게임에서 가장 짧은 사이클 중 하나입니다. 반주가 다음 캐릭터의 공명 에너지를 채워 줘서 퀵스왑에 잘 맞습니다.' },
+  chixia: { ft: 12,
+    open: ['평소: 공명 스킬을 쿨마다 써서 회로 게이지 모으기 (1회분은 남겨 두기, 쓰고 바로 교체 캔슬)'],
+    loop: ['에코 (미리 사용)', '거리 벌리고 변주(당당히 등장)', 'E 길게 → 회로 채널링(총알 30발) → 평타로 펑펑', '공명 해방 (채널링 공격력 버프 중)', 'E 길게 → 회로 채널링 → 펑펑', '반주'],
+    tip: '회로 채널링 한 번에 약 4초가 걸려 필드 시간이 깁니다. 장리처럼 교체 캔슬이 많은 파트너와 듀얼 딜러로 씁니다.' },
   suoming: { ft: 7, loop: ['변주', '평타', 'E', '공명 해방 (합일 획득)', '교체 → 합일: 반주와 상대 변주 동시 발동'], tip: '10/22 출시 전 정보라 세부 순서는 바뀔 수 있습니다.' }
 };
 
@@ -1338,7 +1475,10 @@ function calcTeam(ids, ctx) {
       return buffApplies(b, b.owner, r, members, order);
     });
     const zApplied = zoneBuffs.filter(b => buffApplies({ ...b, to: 'team' }, r, r, members, order));
-    const all = applied.concat(zApplied);
+    let all = applied.concat(zApplied);
+    // 같은 효과(예: 합일 버프)는 여러 캐릭터가 줘도 한 번만, 가장 큰 값으로
+    const best = {}; all.forEach(b => { if (b.uniq && (!best[b.uniq] || b.v > best[b.uniq].v)) best[b.uniq] = b; });
+    all = all.filter(b => !b.uniq || best[b.uniq] === b);
     let atkP = custom ? 0 : P.atk, flat = custom ? 0 : P.flat;
     all.forEach(b => { const v = b.v * (b.up ?? 1); if (b.s === 'atk' && !b.el && !b.dt) atkP += v; if (b.s === 'flat') flat += v; });
     const w = weaponOf(r.weaponId);
@@ -1769,155 +1909,120 @@ function deactivateLicense() {
 /* =====================================================================
    버전 · 패치 노트 (수정할 때마다 맨 위에 추가하고 APP_VERSION을 올립니다)
    ===================================================================== */
-const APP_VERSION = '1.0.03';
+const APP_VERSION = '1.0.05';
 const PATCH_NOTES = /*PATCH_NOTES_START*/[
- {
-  "v": "1.0.03",
-  "d": "2026-10-14",
-  "s": "전체 검증을 마치고 베타 표기를 뗀 첫 정식 버전입니다. GitHub Pages로 바로 올릴 수 있게 정리했습니다.",
-  "g": [
-   {
-    "h": "화면",
-    "i": [
-     "다크 모드에서 추천 조합 탭의 파티 선택 칸(편성에 넣기 옆)이 흰 배경으로 보여 글자가 안 보이던 문제를 고쳤습니다. 모든 선택 칸·입력 칸이 테마 색을 따릅니다."
-    ]
-   }
-  ]
- },
- {
-  "v": "1.0.02 beta",
-  "d": "2026-10-14",
-  "s": "스킬 레벨, 공유 코드, 사이클 타임라인을 넣고 화면을 검정·노랑 우주 테마로 바꿨습니다.",
-  "g": [
-   {
-    "h": "스킬 레벨",
-    "i": [
-     "캐릭터 설정에서 일반 공격·공명 스킬·공명 회로·공명 해방·변주 스킬 레벨(1~10)을 정할 수 있습니다. 기본값은 모두 10입니다.",
-     "레벨별 배율은 게임 데이터의 스킬 배율표(Lv.1 50.3% ~ Lv.10 100%)를 그대로 씁니다.",
-     "캐릭터마다 각 피해 유형이 어느 스킬 트리(공명 회로 포함)에서 나오는지 게임 데이터로 비중을 구해 반영합니다.",
-     "설정 창에서 현재 레벨이 모두 10일 때 대비 몇 %인지 바로 보여 주고, 10 미만이면 장비 칸에 레벨이 표시됩니다."
-    ]
-   },
-   {
-    "h": "공유 코드",
-    "i": [
-     "오른쪽 위 공유 버튼에서 조합 텍스트 복사와 공유 코드 만들기·불러오기를 한곳에서 합니다(기존 조합 복사 버튼을 합침).",
-     "코드를 불러오면 바뀔 내용(보유 인원, 파티 구성)을 먼저 보여 주고 확인을 누를 때만 적용합니다.",
-     "내 스탯은 인증 사용자가 직접 체크했을 때만 코드에 들어가고, 코드에 스탯이 없으면 내 기존 스탯은 그대로 남습니다."
-    ]
-   },
-   {
-    "h": "사이클 타임라인",
-    "i": [
-     "딜 사이클을 펼치면 캐릭터별 한 줄씩 시간축 위에 동작 블록을 그린 타임라인이 나옵니다.",
-     "추천 사이클 데이터(여전복 퀵스왑 포함)와 각 캐릭터 필드 시간으로 그리며, 반주 → 변주 교체 시점과 공명 해방을 표시합니다."
-    ]
-   },
-   {
-    "h": "디자인",
-    "i": [
-     "검정·노랑 우주 테마로 바꾸고 배경에 별을 넣었습니다. 기본은 다크(우주) 테마이고 라이트 모드도 그대로 쓸 수 있습니다.",
-     "카드와 표는 불투명 배경이라 별 배경이 글자를 가리지 않습니다. 동작 줄이기 설정을 켠 기기에서는 별이 반짝이지 않습니다."
-    ]
-   },
-   {
-    "h": "정리",
-    "i": [
-     "파티 카드의 단순 시간 막대는 타임라인으로 대체해 없앴습니다.",
-     "사용 설명과 계산식 설명에 스킬 레벨·공유 코드·타임라인 내용을 추가했습니다."
-    ]
-   }
-  ]
- },
- {
-  "v": "1.0.01 beta",
-  "d": "2026-10-13",
-  "s": "버전 표기를 시작한 첫 버전입니다.",
-  "g": [
-   {
-    "h": "딜 계산 기준",
-    "i": [
-     "파티 비교·자동 편성·추천 조합의 기준을 초당 피해에서 1사이클 피해량(세 캐릭터가 한 바퀴 도는 동안 넣는 피해)으로 바꿨습니다.",
-     "사이클 시간과 초당 피해는 1사이클 피해 아래에 참고용으로 작게 표시합니다."
-    ]
-   },
-   {
-    "h": "여우의 별자리 · 방랑자(전도) · 복링 사이클",
-    "i": [
-     "아카라이브 「여전복」 사이클 글(3.7) 기준으로 순서를 다시 썼습니다. 복링 → 방랑자·전도 → 여우의 별자리 순서이고, 복링 사이클 도중 방랑자를 잠깐 꺼내는 퀵스왑 구간을 넣었습니다.",
-     "첫 사이클(전투 시작)과 두 번째 사이클부터(반복)의 순서를 따로 보여 줍니다.",
-     "이 조합에서는 방랑자·전도와 복링의 필드 시간을 약 7초씩으로 계산해, 한 바퀴가 명함 약 31초, 2돌 이상 약 29초가 됩니다.",
-     "복링이 없는 파티의 방랑자·전도는 기존처럼 사이클을 끝까지 돌리는 순서를 보여 줍니다."
-    ]
-   },
-   {
-    "h": "딜 사이클 보기",
-    "i": [
-     "팀 전체 순서를 캐릭터별 색으로 구분해 보여 줍니다. 위쪽 \"색 구분\" 표시에서 어떤 색이 어떤 캐릭터인지 확인할 수 있습니다.",
-     "교체 순서 1·2·3번째 캐릭터가 각각 파랑·주황·분홍으로 표시되고, 사이클 막대와 캐릭터별 상세 순서에도 같은 색을 씁니다.",
-     "퀵스왑으로 잠깐 꺼내는 구간은 점선 테두리와 \"퀵스왑\" 표시로 구분합니다."
-    ]
-   },
-   {
-    "h": "기타",
-    "i": [
-     "패치 노트 탭을 추가했습니다.",
-     "화면 상단과 파일 이름, 조합 복사 텍스트에 버전을 표시합니다."
-    ]
-   }
-  ]
- },
- {
-  "v": "1.0.00",
-  "d": "버전 표기 이전 작업 모음",
-  "s": "",
-  "g": [
-   {
-    "h": "기본 정리",
-    "i": [
-     "이름을 띵조 AUTO TEAM MAKER로 바꾸고, 누락된 일러스트·무기·에코 세트를 채웠습니다.",
-     "변주·반주 버프 계산식을 다시 만들고 반주가 다음 캐릭터에게 가는 순서까지 반영했습니다.",
-     "라이트·다크 모드를 추가했습니다."
-    ]
-   },
-   {
-    "h": "편성",
-    "i": [
-     "역경의 탑 자동 편성과 필드 파티 기능을 만들었습니다.",
-     "방랑자는 속성이 달라도 피로도를 공유하도록 처리했습니다.",
-     "1~3층 단일 캐릭터(속성 접대) 추천을 켜고 끌 수 있고, 켜면 4~7파티를 편성합니다.",
-     "추천 조합(히유키·루실라·수수, 여전복, 여우의 별자리 합일 등)을 넣었습니다."
-    ]
-   },
-   {
-    "h": "역경의 탑 정보",
-    "i": [
-     "현재 시즌과 탑 버프·속성 저항을 자동으로 갱신하고, 탑 버프를 딜 계산에 반영합니다."
-    ]
-   },
-   {
-    "h": "계산 정밀도",
-    "i": [
-     "무기 재련과 공명 체인을 반영하고, 전 캐릭터 공명 체인 자료를 도감에 넣었습니다.",
-     "파티별 딜 사이클 예시를 추가하고 히유키·여우의 별자리 사이클을 사용자 제보대로 고쳤습니다.",
-     "치사(3+2), 루시·레베카(1+2+2) 등 혼합 에코 세트 구성을 지원합니다."
-    ]
-   },
-   {
-    "h": "내 스탯 · 라이선스",
-    "i": [
-     "내 캐릭터 스탯을 입력해 그 스탯으로 딜을 계산하는 기능을 추가했습니다.",
-     "내 스탯 입력은 라이선스 키를 인증한 사용자만 쓸 수 있습니다."
-    ]
-   },
-   {
-    "h": "배포",
-    "i": [
-     "처음 쓰는 사람을 위한 사용 설명을 넣고, 친구와 공유할 수 있는 링크로 배포했습니다."
-    ]
-   }
-  ]
- }
+  { v: '1.0.05', d: '2026-10-14', s: '기본 틀로 나오던 예전 캐릭터 27명의 딜 사이클을 공략 자료 기준으로 채웠습니다.',
+    g: [
+      { h: '딜 사이클 추가 (27명)', i: [
+        '메인 딜러: 카멜리아, 기염, 카를로타, 상리요, 아우구스타, 카카루, 앙코, 능양, 루크·헤르센, 치샤, 방랑자·인멸',
+        '서브·서포터: 장리, 음림, 절지, 브렌트, 로코코, 감심, 산화, 모르테피, 도기, 루미, 단근, 알토, 유호, 설지, 연무, 양양',
+        '캐릭터마다 실제 동작 순서(캔슬·교체 캔슬 포함), 필드 시간, 퀵스왑 가능 여부와 운영 팁을 넣었습니다.',
+        '필드 시간이 일괄 값(메인 15초·서브 6초·서포터 5초) 대신 캐릭터별 값으로 바뀌어, 사이클 시간과 초당 피해가 더 정확해졌습니다(1사이클 피해량은 그대로).',
+        '출처: Prydwen 캐릭터 가이드 로테이션. 출시 전인 릴리는 자료가 나오면 추가합니다.'] }
+    ] },
+  { v: '1.0.04', d: '2026-10-14', s: '딜 사이클을 전용 탭으로 옮겨 크게 보이게 하고, 캐릭터별 버프를 게임 원문과 다시 대조해 고쳤습니다.',
+    g: [
+      { h: '딜 사이클 탭', i: [
+        '파티 카드 안의 작은 타임라인 그래프를 없애고 "딜 사이클" 탭을 새로 만들었습니다.',
+        '내 편성 파티와 추천 조합 중 하나를 골라, 큰 막대(누가 언제 필드에 있는지)와 "순서대로 따라 하기" 목록(몇 초에 누가 무엇을 하는지)으로 봅니다.',
+        '파티 카드의 딜 사이클에서 "타임라인으로 크게 보기"를 누르면 그 파티가 바로 열립니다.'] },
+      { h: '도감 가독성', i: [
+        '공명자 목록의 속성·무기·역할 칸이 한 글자씩 줄바뀜되던 문제를 고쳤습니다(예: "회절 / 권총 · 5성").',
+        '휴대폰에서는 공명자 목록을 표 대신 카드로 보여 줍니다.',
+        '버프 설명을 "대상 · 효과 · 수치 · 조건 · 출처" 순으로 정리했습니다. 반주의 "심화"는 게임 표기에 맞춰 "피해 부스트"로 부릅니다.'] },
+      { h: '버프 수정 (게임 원문 대조)', i: [
+        '여우의 별자리: 합일 반주는 합일을 얻은 다른 파티원만 받도록, 합일 버프는 피해 부스트가 아닌 최종 피해 3%×3스택으로 고쳤습니다.',
+        '쇄명: 약속의 족쇄(다음 캐릭터 전도 피해 보너스 30% + 합일 버프당 20%), 합일 버프, 본인 전도 피해 보너스 50%·크리티컬 피해 100%를 반영했습니다. 합일 버프는 여러 명이 줘도 한 번만 계산합니다.',
+        '방랑자·기류: 없는 효과였던 파티 공격력 20%를 지우고, 본인 공격력 20%(허공의 먼지)로 고쳤습니다.',
+        '치사: 게임에 없는 "공허한 올가미" 방어 무시를 지웠습니다.',
+        '유노: 창백한 달빛의 축복(실드를 받을 때마다 전체 피해 4%, 최대 10스택)을 추가했습니다.',
+        '모니에: 간섭 표기는 피해 부스트가 아니라 피해 증가(보너스)라 구간을 바로잡았습니다.',
+        '수수: 푸른 하늘을 노닐며는 피해 증가(보너스)로 바로잡고, 산안개의 공효 조건을 적었습니다.',
+        '루시: 넷러너(표기된 적이 받는 피해 5%)를, 루실라 에코 모드: 줌(에코 크리티컬 피해 최대 40%)을 추가했습니다.',
+        '히유키: 눈의 침식으로 적이 받는 냉해 효과 피해 30%+30% 부스트를 추가했습니다.',
+        '루파: 추적 사냥 공격력을 최대 18%로, 저항 무시 설명을 용융 캐릭터 수 기준으로 고쳤습니다. 샤콘 기류 24%의 출처를 "음률의 독주"로 바로잡았습니다.'] }
+    ] },
+  { v: '1.0.03', d: '2026-10-14', s: '전체 검증을 마치고 베타 표기를 뗀 첫 정식 버전입니다. GitHub Pages로 바로 올릴 수 있게 정리했습니다.',
+    g: [
+      { h: '라이선스', i: [
+        '스킬 레벨 설정을 라이선스 인증 사용자 전용으로 바꿨습니다. 상세 스탯과 함께 캐릭터 설정의 잠금 안내 하나로 묶었습니다.',
+        '인증 전에는 스킬 레벨을 모두 10으로 계산하고, 인증을 해제해도 입력해 둔 레벨은 지워지지 않습니다.',
+        '일반 라이선스 키 1개와 관리자 라이선스 키 1개를 추가했습니다.',
+        '관리자 키로 인증하면 패치 노트 탭에서 패치 노트를 편집하고, 편집 내용이 반영된 Index.html을 바로 내려받을 수 있습니다.'] },
+      { h: '화면', i: [
+        '다크 모드에서 추천 조합 탭의 파티 선택 칸(편성에 넣기 옆)이 흰 배경으로 보여 글자가 안 보이던 문제를 고쳤습니다. 모든 선택 칸·입력 칸이 테마 색을 따릅니다.',
+        '쓰이지 않던 내부 코드(이전 버전의 장비 변경 함수 등)를 정리했습니다.'] },
+      { h: '배포', i: [
+        '파일 이름을 Index.html로 바꾸고, GitHub Pages 무료 주소(아이디.github.io)에서 바로 열리도록 404.html 자동 이동과 .nojekyll을 함께 제공합니다.',
+        '브라우저 탭 아이콘, 링크 미리보기 제목·설명을 넣었습니다.',
+        'GitHub Pages에서는 역경의 탑 정보가 게임 데이터 저장소에서 자동으로 갱신됩니다.'] },
+      { h: '검증', i: [
+        '61명 전원의 일러스트·무기·에코 세트·반주 데이터 연결과 단독 계산을 확인했습니다(출시 전인 릴리는 추정값).',
+        '파티 조합 3,540개와 현재 시즌의 모든 탑 구역에서 계산 오류(빈 값·무한대)가 없는 것을 확인했습니다.',
+        '3~7파티, 1~3층 단일 캐릭터 켜기/끄기 전 조합에서 캐릭터 중복(방랑자 피로도 공유 포함)이 없는 것을 확인했습니다.',
+        '쇄명 출시일(10/22, 3.7 후반)과 3.8(11/11경 예상) 일정을 다시 확인했습니다.',
+        '모든 탭, 공유 코드(잘못된 코드 포함), 라이트·다크 모드, 휴대폰 폭(390px)에서 오류와 가로 넘침이 없는 것을 확인했습니다.'] }
+    ] },
+  { v: '1.0.02 beta', d: '2026-10-14', s: '스킬 레벨, 공유 코드, 사이클 타임라인을 넣고 화면을 검정·노랑 우주 테마로 바꿨습니다.',
+    g: [
+      { h: '스킬 레벨', i: [
+        '캐릭터 설정에서 일반 공격·공명 스킬·공명 회로·공명 해방·변주 스킬 레벨(1~10)을 정할 수 있습니다. 기본값은 모두 10입니다.',
+        '레벨별 배율은 게임 데이터의 스킬 배율표(Lv.1 50.3% ~ Lv.10 100%)를 그대로 씁니다.',
+        '캐릭터마다 각 피해 유형이 어느 스킬 트리(공명 회로 포함)에서 나오는지 게임 데이터로 비중을 구해 반영합니다.',
+        '설정 창에서 현재 레벨이 모두 10일 때 대비 몇 %인지 바로 보여 주고, 10 미만이면 장비 칸에 레벨이 표시됩니다.'] },
+      { h: '공유 코드', i: [
+        '오른쪽 위 공유 버튼에서 조합 텍스트 복사와 공유 코드 만들기·불러오기를 한곳에서 합니다(기존 조합 복사 버튼을 합침).',
+        '코드를 불러오면 바뀔 내용(보유 인원, 파티 구성)을 먼저 보여 주고 확인을 누를 때만 적용합니다.',
+        '내 스탯은 인증 사용자가 직접 체크했을 때만 코드에 들어가고, 코드에 스탯이 없으면 내 기존 스탯은 그대로 남습니다.'] },
+      { h: '사이클 타임라인', i: [
+        '딜 사이클을 펼치면 캐릭터별 한 줄씩 시간축 위에 동작 블록을 그린 타임라인이 나옵니다.',
+        '추천 사이클 데이터(여전복 퀵스왑 포함)와 각 캐릭터 필드 시간으로 그리며, 반주 → 변주 교체 시점과 공명 해방을 표시합니다.'] },
+      { h: '디자인', i: [
+        '검정·노랑 우주 테마로 바꾸고 배경에 별을 넣었습니다. 기본은 다크(우주) 테마이고 라이트 모드도 그대로 쓸 수 있습니다.',
+        '카드와 표는 불투명 배경이라 별 배경이 글자를 가리지 않습니다. 동작 줄이기 설정을 켠 기기에서는 별이 반짝이지 않습니다.'] },
+      { h: '정리', i: [
+        '파티 카드의 단순 시간 막대는 타임라인으로 대체해 없앴습니다.',
+        '사용 설명과 계산식 설명에 스킬 레벨·공유 코드·타임라인 내용을 추가했습니다.'] }
+    ] },
+  { v: '1.0.01 beta', d: '2026-10-13', s: '버전 표기를 시작한 첫 버전입니다.',
+    g: [
+      { h: '딜 계산 기준', i: [
+        '파티 비교·자동 편성·추천 조합의 기준을 초당 피해에서 1사이클 피해량(세 캐릭터가 한 바퀴 도는 동안 넣는 피해)으로 바꿨습니다.',
+        '사이클 시간과 초당 피해는 1사이클 피해 아래에 참고용으로 작게 표시합니다.'] },
+      { h: '여우의 별자리 · 방랑자(전도) · 복링 사이클', i: [
+        '아카라이브 「여전복」 사이클 글(3.7) 기준으로 순서를 다시 썼습니다. 복링 → 방랑자·전도 → 여우의 별자리 순서이고, 복링 사이클 도중 방랑자를 잠깐 꺼내는 퀵스왑 구간을 넣었습니다.',
+        '첫 사이클(전투 시작)과 두 번째 사이클부터(반복)의 순서를 따로 보여 줍니다.',
+        '이 조합에서는 방랑자·전도와 복링의 필드 시간을 약 7초씩으로 계산해, 한 바퀴가 명함 약 31초, 2돌 이상 약 29초가 됩니다.',
+        '복링이 없는 파티의 방랑자·전도는 기존처럼 사이클을 끝까지 돌리는 순서를 보여 줍니다.'] },
+      { h: '딜 사이클 보기', i: [
+        '팀 전체 순서를 캐릭터별 색으로 구분해 보여 줍니다. 위쪽 "색 구분" 표시에서 어떤 색이 어떤 캐릭터인지 확인할 수 있습니다.',
+        '교체 순서 1·2·3번째 캐릭터가 각각 파랑·주황·분홍으로 표시되고, 사이클 막대와 캐릭터별 상세 순서에도 같은 색을 씁니다.',
+        '퀵스왑으로 잠깐 꺼내는 구간은 점선 테두리와 "퀵스왑" 표시로 구분합니다.'] },
+      { h: '기타', i: [
+        '패치 노트 탭을 추가했습니다.',
+        '화면 상단과 파일 이름, 조합 복사 텍스트에 버전을 표시합니다.'] }
+    ] },
+  { v: '1.0.00', d: '버전 표기 이전 작업 모음',
+    g: [
+      { h: '기본 정리', i: [
+        '이름을 띵조 AUTO TEAM MAKER로 바꾸고, 누락된 일러스트·무기·에코 세트를 채웠습니다.',
+        '변주·반주 버프 계산식을 다시 만들고 반주가 다음 캐릭터에게 가는 순서까지 반영했습니다.',
+        '라이트·다크 모드를 추가했습니다.'] },
+      { h: '편성', i: [
+        '역경의 탑 자동 편성과 필드 파티 기능을 만들었습니다.',
+        '방랑자는 속성이 달라도 피로도를 공유하도록 처리했습니다.',
+        '1~3층 단일 캐릭터(속성 접대) 추천을 켜고 끌 수 있고, 켜면 4~7파티를 편성합니다.',
+        '추천 조합(히유키·루실라·수수, 여전복, 여우의 별자리 합일 등)을 넣었습니다.'] },
+      { h: '역경의 탑 정보', i: ['현재 시즌과 탑 버프·속성 저항을 자동으로 갱신하고, 탑 버프를 딜 계산에 반영합니다.'] },
+      { h: '계산 정밀도', i: [
+        '무기 재련과 공명 체인을 반영하고, 전 캐릭터 공명 체인 자료를 도감에 넣었습니다.',
+        '파티별 딜 사이클 예시를 추가하고 히유키·여우의 별자리 사이클을 사용자 제보대로 고쳤습니다.',
+        '치사(3+2), 루시·레베카(1+2+2) 등 혼합 에코 세트 구성을 지원합니다.'] },
+      { h: '내 스탯 · 라이선스', i: [
+        '내 캐릭터 스탯을 입력해 그 스탯으로 딜을 계산하는 기능을 추가했습니다.',
+        '내 스탯 입력은 라이선스 키를 인증한 사용자만 쓸 수 있습니다.'] },
+      { h: '배포', i: ['처음 쓰는 사람을 위한 사용 설명을 넣고, 친구와 공유할 수 있는 링크로 배포했습니다.'] }
+    ] }
 ]/*PATCH_NOTES_END*/;
 
 /* =====================================================================
@@ -1982,9 +2087,27 @@ const sIcon = id => (typeof IMG_SET !== 'undefined' && IMG_SET[id]) ? `<img src=
 function elTag(el) { return EL[el] ? `<span class="el-tag" style="color:${EL[el].c}">${EL[el].n}</span>` : ''; }
 
 /* ---------- 버프 표기 ---------- */
-const STAT_N = { atk: '공격력', flat: '공격력(고정)', bonus: '피해 보너스', amp: '피해 심화', cr: '크리티컬', cd: '크리티컬 피해', defign: '방어 무시', res: '저항 감소', final: '최종 피해', er: '공명 효율', hp: 'HP', def: '방어력' };
+const STAT_N = { atk: '공격력', flat: '공격력(고정)', bonus: '피해 보너스', amp: '피해 부스트', cr: '크리티컬', cd: '크리티컬 피해', defign: '방어 무시', res: '저항 감소', final: '최종 피해', er: '공명 효율', hp: 'HP', def: '방어력' };
 const TO_N = { self: '자신', team: '파티 전원', others: '다른 파티원', next: '다음 등장 캐릭터' };
 function buffLabel(b) { const p = []; if (b.el && b.el !== '*') p.push(EL[b.el].n); if (b.dt) p.push(DT[b.dt]); p.push(STAT_N[b.s] || b.s); return p.join(' '); }
+function capTxt(x) { const a = [].concat(x); return a.length >= 5 ? '이상 효과' : a.map(k => CAP_N[k] || k).join('·'); }
+function buffCond(b) {
+  const c = [];
+  if (b.req) c.push(`받는 캐릭터가 ${capTxt(b.req)} 담당일 때`);
+  if (b.treq) c.push(`파티에 ${capTxt(b.treq)} 담당이 있을 때`);
+  if (b.treqOther) c.push(`다른 파티원 중 ${capTxt(b.treqOther)} 담당이 있을 때`);
+  if (b.withChar && CH[b.withChar]) c.push(`${CH[b.withChar].name}와 함께일 때`);
+  if (b.up !== undefined && b.up < 1) c.push(`유지율을 고려해 ${Math.round(b.up * 100)}%만 반영`);
+  return c.join(' · ');
+}
+// 도감용: "누구에게 · 무엇이 · 얼마나 · 조건 · 출처"를 한 줄씩
+function buffDescHTML(b) {
+  const tgt = TO_N[b.to || 'self'];
+  const eff = [b.el && b.el !== '*' ? EL[b.el].n : '', b.dt ? DT[b.dt] : '', STAT_N[b.s] || b.s].filter(Boolean).join(' ');
+  const v = b.s === 'flat' ? `+${b.v}` : b.s === 'res' ? `-${b.v}%` : `+${b.v}%`;
+  const cond = buffCond(b);
+  return `<div class="bf"><div><span class="bf-to">${esc(tgt)}</span> ${esc(eff)} <b class="num">${v}</b></div>${cond ? `<div class="bf-c">조건: ${esc(cond)}</div>` : ''}${b.src ? `<div class="bf-s">${esc(b.src)}</div>` : ''}</div>`;
+}
 function buffVal(b) { const v = b.v * (b.up ?? 1); return b.s === 'flat' ? `+${Math.round(v)}` : `+${+v.toFixed(1)}%`; }
 
 /* ---------- 파티 슬롯 계획 ----------
@@ -2186,7 +2309,7 @@ function partyHTML(p, r, pi) {
       ${Object.entries(main.per).map(([dt, x]) => `<div class="rl">${DT[dt]}</div><div>${x.share}%</div><div>${x.bonus.toFixed(0)}%</div><div>${x.amp.toFixed(0)}%</div><div>×${x.critE.toFixed(2)}</div><div>×${x.mult.toFixed(2)}</div>`).join('')}
       </div><div class="note" style="margin-top:6px">공격력 <span class="num">${fmt(main.ATK)}</span> (공격력 +${main.atkP.toFixed(0)}%)</div>` : '';
     body = `<div class="chips">${chips.join('')}</div>
-      ${rotationHTML(r)}
+      ${rotationHTML(r, 'p' + pi)}
       <details class="buffs"><summary>메인 딜러가 받는 버프 ${ext.length}개 · 계산 근거</summary><ul class="buff-list">${rows || '<li><span class="src">받는 버프 없음</span><span></span></li>'}${tRows}</ul>${grid}</details>`;
   }
   return `<article class="party">${head}<div class="slots">${slotsHTML}</div><div class="party-body">${body}</div></article>`;
@@ -2247,7 +2370,7 @@ function cycleSteps(seq, ids) {
   const tr = TEAM_ROT.find(t => t.seq && t.seq.loop && t.has.every(id => ids.includes(id)));
   let steps = [];
   if (tr) {
-    steps = tr.seq.loop.map(([id, tx, sub, qs]) => ({ id, t: tx, full: sub ? `${tx} (${sub})` : tx, qs: !!qs }));
+    steps = tr.seq.loop.map(([id, tx, sub, qs]) => ({ id, t: tx, sub: sub || '', full: sub ? `${tx} (${sub})` : tx, qs: !!qs }));
     seq.forEach(m => { // 팀 순서에 한 칸만 있는 캐릭터(예: 여우의 별자리)는 본인 사이클을 펼쳐 넣음
       const own = steps.filter(x => x.id === m.id);
       if (own.length !== 1) return;
@@ -2265,28 +2388,7 @@ function cycleSteps(seq, ids) {
   let t = 0; steps.forEach(x => { x.s = t; t += x.d; });
   return { steps, total: t };
 }
-function stepAbbr(t) {
-  const s = String(t).replace(/\([^)]*\)/g, ' ');
-  for (const [re, a] of [[/변주/, '변주'], [/반주/, '반주'], [/해방/, '해방'], [/강화\s*(E|스킬)/, '강화E'], [/강공/, '강공'], [/에코/, '에코'], [/(^|[^가-힣])E|스킬/, 'E'], [/평/, '평타'], [/교체/, '교체']]) if (re.test(s)) return a;
-  return '·';
-}
-const G_PX = 30; // 1초당 가로 픽셀(타임라인이 좁으면 가로 스크롤)
-function ganttHTML(r, seq, pcOf) {
-  const ids = seq.map(m => m.id);
-  const { steps, total } = cycleSteps(seq, ids);
-  const T = Math.max(total, r.rot);
-  const pct = v => (v / T * 100).toFixed(2) + '%';
-  const marks = steps.filter((x, i) => /반주/.test(x.t) && steps[i + 1] && steps[i + 1].id !== x.id).map(x => x.s + x.d);
-  const markHTML = marks.map(v => `<i class="g-mark" style="left:${pct(v)}"></i>`).join('');
-  const ticks = []; for (let v = 0; v <= T + 0.01; v += 5) ticks.push(`<span style="left:${pct(v)}">${v}s</span>`);
-  const rows = seq.map(m => `<div class="g-lab ${pcOf[m.id]}"><span class="dot"></span>${esc(m.c.name)}</div>
-    <div class="g-track">${markHTML}${steps.filter(x => x.id === m.id).map(x => `<span class="gb ${pcOf[m.id]}${x.qs ? ' hand' : ''}${/해방/.test(x.t) ? ' lib' : ''}" style="left:${pct(x.s)};width:${pct(x.d)}" title="${esc(m.c.name)} · ${esc(x.full)} (${x.s.toFixed(1)}~${(x.s + x.d).toFixed(1)}초)">${x.d * G_PX >= 18 ? esc(stepAbbr(x.t)) : ''}</span>`).join('')}
-    ${total < T - 0.2 ? `<span class="gb idle" style="left:${pct(total)};width:${pct(T - total)}" title="공명 해방 쿨타임 대기">대기</span>` : ''}</div>`).join('');
-  return `<div class="gantt-wrap" role="img" aria-label="사이클 타임라인: ${esc(seq.map(m => m.c.name).join(', '))}, 약 ${Math.round(T)}초">
-    <div class="gantt" style="min-width:${Math.round(96 + 8 + T * G_PX)}px"><div></div><div class="g-axis">${ticks.join('')}</div>${rows}</div></div>
-    <div class="note">타임라인은 각 캐릭터의 필드 시간을 동작 종류(평타·강공·해방 등)에 따라 나눈 추정치입니다. 칸에 마우스를 올리면 동작과 시간이, 세로 점선은 반주 → 변주 교체 시점입니다.</div>`;
-}
-function rotationHTML(r) {
+function rotationHTML(r, key) {
   const [M, Sb, P] = r.team;
   const members = r.team.filter(Boolean);
   if (members.length === 1) {
@@ -2305,13 +2407,14 @@ function rotationHTML(r) {
   const notes = tr.map(t => `<div class="note team-note">${esc(t.t)}${t.src ? ` <span class="muted">출처: ${esc(t.src)}</span>` : ''}</div>${t.seq ? teamSeqHTML(t.seq, pcOf) : ''}`).join('');
   const chainNote = M.c.id === 'hsin' && M.chain >= 2 ? '<div class="note">여우의 별자리 2체인: 전투 개막 시 강화 강공격이 충전된 상태라 필드 시간이 약 2초 짧아집니다.</div>' : '';
   return `<details class="buffs"><summary>딜 사이클 · 약 ${r.rot.toFixed(0)}초 (${seq.map(m => esc(m.c.name)).join(' → ')})</summary>
-    ${legend}${ganttHTML(r, seq, pcOf)}${notes}<ol class="rot-list">${items}</ol>${chainNote}
+    ${legend}${key ? `<div style="margin:4px 0 10px"><button class="btn sm primary" data-tlopen="${key}">타임라인으로 크게 보기 →</button></div>` : ''}${notes}<ol class="rot-list">${items}</ol>${chainNote}
     ${r.autoRot < r.rot ? `<div class="note">필드 시간 합은 약 ${r.autoRot.toFixed(0)}초지만, 공명 해방 쿨타임 때문에 한 바퀴는 최소 ${r.rot.toFixed(0)}초로 계산합니다.</div>` : ''}<div class="note">필드 시간은 가이드 기준 추정치이고, 파티 사이클 시간은 세 캐릭터 필드 시간의 합입니다. 출처: Prydwen 로테이션 가이드, 아카라이브 명조 채널.</div></details>`;
 }
 
 function bindPartyEvents() {
   $$('#parties [data-swap]').forEach(b => b.addEventListener('click', () => { const [pi, si] = b.dataset.swap.split(':').map(Number); openSwap({ pi, si }); }));
   $$('#parties [data-cfg]').forEach(b => b.addEventListener('click', () => openCharCfg(b.dataset.cfg)));
+  $$('#parties [data-tlopen]').forEach(b => b.addEventListener('click', () => { state.tlSel = b.dataset.tlopen; switchTab('timeline'); window.scrollTo(0, 0); }));
   $$('#parties [data-mode]').forEach(s => s.addEventListener('change', () => { if (s.value) state.forced[s.dataset.mode] = s.value; else delete state.forced[s.dataset.mode]; save(); renderBuild(); }));
   $$('#parties [data-lock]').forEach(b => b.addEventListener('click', () => {
     const p = state.parties[+b.dataset.lock]; p.locked = !p.locked; save(); renderBuild();
@@ -2741,14 +2844,14 @@ function renderRoster() {
 function renderDB() {
   $$('#seg-db button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.dbView));
   const body = $('#db-body');
-  const bl = arr => arr.map(b => `${esc(TO_N[b.to || 'self'])} ${esc(buffLabel(b))} ${buffVal(b)}`).join('<br>');
+  const bl = arr => arr.map(buffDescHTML).join('');
   if (state.dbView === 'chars') {
-    body.innerHTML = `<table class="db"><thead><tr><th>공명자</th><th>속성 · 무기</th><th>역할</th><th>반주 스킬 (게임 원문)</th><th>계산에 쓰는 파티 버프</th></tr></thead><tbody>${CHARS.map(c => {
-      const buffs = c.modes ? Object.values(c.modes).map(m => `<b>${esc(m.n)}</b>: ${bl(m.b)}`).join('<br>') : bl(c.b || []);
-      return `<tr><td style="min-width:150px"><div style="display:flex;gap:8px;align-items:center"><div style="width:40px;flex:0 0 40px">${portraitHTML(c)}</div><b>${esc(c.name)}</b></div></td>
-        <td>${elTag(c.el)}<br><span class="muted">${WT[c.wt] || ''} · ${c.q}성</span></td><td>${ROLE_N[c.role]}</td>
-        <td style="min-width:260px">${c.outro ? `<b>${esc(c.outro.n)}</b><br><span class="muted">${esc(c.outro.d)}</span>` : `<span class="muted">${esc(c.note || '데이터 없음')}</span>`}</td>
-        <td style="min-width:220px">${buffs || '<span class="muted">파티 버프 없음 (딜 전용)</span>'}${c.note && c.outro ? `<div class="note">${esc(c.note)}</div>` : ''}</td></tr>`;
+    body.innerHTML = `<table class="db dbc"><thead><tr><th>공명자</th><th>속성 · 무기</th><th>역할</th><th>반주 스킬 (게임 원문)</th><th>계산에 쓰는 버프</th></tr></thead><tbody>${CHARS.map(c => {
+      const buffs = c.modes ? Object.values(c.modes).map(m => `<div class="bf-mode">${esc(m.n)} 모드</div>${bl(m.b)}`).join('') : bl(c.b || []);
+      return `<tr><td class="c-name" style="min-width:150px"><div style="display:flex;gap:8px;align-items:center"><div style="width:40px;flex:0 0 40px">${portraitHTML(c)}</div><b>${esc(c.name)}</b></div></td>
+        <td class="nw c-el">${elTag(c.el)}<div class="muted">${WT[c.wt] || ''} · ${c.q}성</div></td><td class="nw c-role">${ROLE_N[c.role]}</td>
+        <td class="c-out" data-l="반주 스킬 (게임 원문)" style="min-width:260px">${c.outro ? `<b>${esc(c.outro.n)}</b><br><span class="muted">${esc(c.outro.d)}</span>` : `<span class="muted">${esc(c.note || '데이터 없음')}</span>`}</td>
+        <td class="c-buf" data-l="계산에 쓰는 버프" style="min-width:260px">${buffs || '<span class="muted">파티 버프 없음 (딜 전용)</span>'}${c.note && c.outro ? `<div class="note">${esc(c.note)}</div>` : ''}</td></tr>`;
     }).join('')}</tbody></table>`;
   } else if (state.dbView === 'chains') {
     body.innerHTML = `<table class="db"><thead><tr><th>공명자</th><th>체인</th><th>효과 (게임 원문)</th><th>계산 반영</th></tr></thead><tbody>${CHARS.filter(c => RAW_CHAIN[c.rid]).map(c => {
@@ -2799,7 +2902,7 @@ function switchTab(t) {
   state.tab = t;
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
-  ({ 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
+  ({ 'timeline': renderTimeline, 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
 }
 function copyText() {
@@ -2832,6 +2935,7 @@ function init() {
   $$('#tabs .tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
   $('#btn-optimize').addEventListener('click', () => { $('#btn-optimize').textContent = '계산 중…'; setTimeout(() => { optimize(); $('#btn-optimize').textContent = '자동 편성'; switchTab('tower-build'); }, 30); });
   bindShare();
+  $('#tl-sel').addEventListener('change', e => { state.tlSel = e.target.value; renderTimeline(); });
   $('#swap-close').addEventListener('click', closeSwap);
   $('#char-close').addEventListener('click', () => closeDlg('#dlg-char'));
   $('#btn-license').addEventListener('click', () => openLicense());
@@ -2867,6 +2971,46 @@ function init() {
   if (!had || !state.parties.some(p => p.ids.some(Boolean))) optimize(true);
   switchTab(state.tab || 'tower-build');
   refreshTower(false);
+}
+
+/* ---------- 딜 사이클 탭 (큰 타임라인) ---------- */
+function tlSources() {
+  const out = [];
+  state.parties.forEach((p, i) => { if (p.ids.filter(Boolean).length >= 2) out.push({ key: 'p' + i, label: `${i + 1}파티 · ${p.ids.filter(Boolean).map(id => CH[id].name).join(' · ')}`, get: () => evalParty(p) }); });
+  PRESETS.filter(p => p.m.every(id => CH[id])).forEach(p => out.push({ key: 'k' + p.id, label: `추천 · ${p.t}`, get: () => bestTeam(p.m, { ...ctxFor(null), zone: null }) }));
+  return out;
+}
+function renderTimeline() {
+  const src = tlSources();
+  if (!src.find(x => x.key === state.tlSel)) state.tlSel = src.length ? src[0].key : '';
+  $('#tl-sel').innerHTML = src.map(x => `<option value="${x.key}" ${x.key === state.tlSel ? 'selected' : ''}>${esc(x.label)}</option>`).join('');
+  const cur = src.find(x => x.key === state.tlSel);
+  const r = cur ? cur.get() : null;
+  if (!r || r.team.filter(Boolean).length < 2) { $('#tl-body').innerHTML = '<div class="card note">2명 이상인 파티를 골라 주세요.</div>'; return; }
+  const [M, Sb, P] = r.team;
+  const seq = (r.ord === 1 ? [Sb, P, M] : [P, Sb, M]).filter(Boolean);
+  const ids = seq.map(m => m.id);
+  const pcOf = {}; seq.forEach((m, i) => { pcOf[m.id] = 'p' + (i + 1); });
+  const nm = {}; seq.forEach(m => { nm[m.id] = m.c.name; });
+  const { steps, total } = cycleSteps(seq, ids);
+  const T = Math.max(total, r.rot);
+  // 같은 캐릭터가 연속으로 하는 동작은 한 덩어리로
+  const runs = []; steps.forEach(x => { const l = runs[runs.length - 1]; if (l && l.id === x.id && l.qs === x.qs) { l.d += x.d; } else runs.push({ id: x.id, s: x.s, d: x.d, qs: x.qs }); });
+  const legend = `<div class="seq-legend" style="margin:0"><span class="muted">색 구분</span>${seq.map((m, i) => `<span class="lg p${i + 1}">${portraitHTML(m.c)}<span class="ord">${i + 1}</span>${esc(m.c.name)} <span class="num muted" style="font-weight:500">약 ${m.ft}초</span></span>`).join('')}</div>`;
+  const bar = `<div class="tl-bar">${runs.map(x => `<span class="tl-seg ${pcOf[x.id]}${x.qs ? ' hand' : ''}" style="flex:${x.d.toFixed(2)} 1 0" title="${esc(nm[x.id])} ${x.s.toFixed(1)}~${(x.s + x.d).toFixed(1)}초${x.qs ? ' (퀵스왑)' : ''}">${x.d / T > 0.1 ? esc(nm[x.id]) : ''}</span>`).join('')}${total < T - 0.2 ? `<span class="tl-seg idle" style="flex:${(T - total).toFixed(2)} 1 0" title="공명 해방 쿨타임 대기">대기</span>` : ''}</div>`;
+  const ticks = []; for (let v = 0; v <= T + 0.01; v += 5) ticks.push(`<span style="left:${(v / T * 100).toFixed(2)}%">${v}초</span>`);
+  const rows = []; let prev = null;
+  steps.forEach(x => {
+    if (prev && prev.id !== x.id) rows.push(`<li class="tl-swap"><span></span><span>↓ ${esc(nm[prev.id])} → <b>${esc(nm[x.id])}</b> ${x.qs ? '<span class="sw">퀵스왑</span>' : /반주/.test(prev.t) ? '반주 → 변주로 교체' : '교체'}</span></li>`);
+    rows.push(`<li class="tl-row ${pcOf[x.id]}${x.qs ? ' hand' : ''}${/해방/.test(x.t) ? ' lib' : ''}"><span class="tl-t num">${x.s.toFixed(1)}초</span><span class="tl-who"><i class="dot"></i>${esc(nm[x.id])}</span><span class="tl-act">${esc(x.t)}${x.sub ? ` <small>${esc(x.sub)}</small>` : ''}${x.qs ? ' <span class="sw">퀵스왑</span>' : ''}</span></li>`);
+    prev = x;
+  });
+  const notes = TEAM_ROT.filter(t => t.has.every(id => ids.includes(id))).map(t => `<div class="note team-note">${esc(t.t)}${t.src ? ` <span class="muted">출처: ${esc(t.src)}</span>` : ''}</div>`).join('');
+  $('#tl-body').innerHTML = `<div class="card tl-card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h2 style="margin:0">${esc(seq.map(m => m.c.name).join(' → '))}</h2><span class="num"><b style="font-size:18px">약 ${Math.round(T)}초</b> <span class="muted">· 1사이클 ${fmt(r.totalDmg)}</span></span></div>
+      ${legend}${bar}<div class="tl-ticks">${ticks.join('')}</div>${notes}</div>
+    <div class="card"><h3 style="margin:0 0 8px">순서대로 따라 하기</h3><ol class="tl-list">${rows.join('')}</ol>
+      <p class="note">시간은 각 캐릭터의 필드 시간을 동작 종류(평타·강공·해방 등)에 맞게 나눈 추정치입니다. 점선 테두리는 퀵스왑으로 잠깐 꺼내는 구간, 굵은 줄은 공명 해방입니다.</p></div>`;
 }
 
 /* ---------- 패치 노트 (관리자 라이선스는 편집 가능) ----------
