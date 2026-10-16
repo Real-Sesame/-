@@ -1,0 +1,59 @@
+# 띵조 AUTO TEAM MAKER — 신규 공명자 자동 갱신
+# 매일 한 번 명조 게임 데이터(Arikatsu/WutheringWaves_Data)를 확인해
+# 앱에 없는 공명자가 생기면 chars-extra.json을 갱신하고 커밋합니다.
+# (Actions 탭 → "신규 공명자 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
+name: 신규 공명자 자동 갱신
+
+on:
+  schedule:
+    - cron: '23 3 * * *'   # 매일 12:23 (한국 시간)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-chars
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 이미지 처리 도구 설치
+        run: pip install --quiet pillow
+
+      - name: 게임 데이터 받기 (필요한 파일만)
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/Arikatsu/WutheringWaves_Data.git gamedata
+          cd gamedata
+          git sparse-checkout set --no-cone \
+            /BinData/role/roleinfo.json /BinData/role/roletag.json \
+            /BinData/role_level/ /BinData/skill/skill.json /BinData/skill/skilllevel.json \
+            /BinData/skillTree/skilltree.json /BinData/item/iteminfo.json \
+            /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
+            /Textmaps/ko/multi_text/MultiText.json
+          echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
+          echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          git log -1 --format='데이터: %s'
+
+      - name: 신규 공명자 확인
+        run: python tools/update_chars.py gamedata Index.html chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
+
+      - name: 바뀐 내용이 있으면 커밋
+        run: |
+          if git diff --quiet -- chars-extra.json && git ls-files --error-unmatch chars-extra.json >/dev/null 2>&1; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add chars-extra.json
+          git commit -m "신규 공명자 자동 갱신 (게임 데이터 $GAME_VER)"
+          git push
