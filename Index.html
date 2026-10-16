@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>띵조 AUTO TEAM MAKER Ver. 1.0.06</title>
+<title>띵조 AUTO TEAM MAKER Ver. 1.0.07</title>
 <meta name="description" content="명조(Wuthering Waves) 역경의 탑·필드 파티 자동 편성과 1사이클 예상 피해 계산기">
 <meta name="theme-color" content="#05060b">
 <meta property="og:title" content="띵조 AUTO TEAM MAKER">
@@ -316,6 +316,18 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
   .tl-swap { grid-template-columns: 50px 1fr; }
 }
 .patch { display: grid; gap: 12px; }
+/* 추천 조합 대체안 */
+.pv-list { border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 10px; display: grid; gap: 8px; }
+.pv-h { font-size: 13px; font-weight: 700; }
+.pv { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "c t b" "i i i"; gap: 6px 10px; align-items: center; padding: 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.pv.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.pv-team { display: flex; gap: 4px; }
+.pv-m { display: flex; flex-direction: column; align-items: center; width: 46px; font-size: 10px; line-height: 1.2; text-align: center; word-break: keep-all; }
+.pv-m .portrait { width: 38px; border-radius: 8px; }
+.pv-m.missing .portrait { opacity: .35; filter: grayscale(1); }
+.pv > .chip { grid-area: c; } .pv-team { grid-area: t; } .pv > .btn { grid-area: b; }
+.pv-info { grid-area: i; min-width: 0; font-size: 13px; }
+
 /* 육성 계산 */
 .grow-layout { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 16px; align-items: start; }
 @media (max-width: 860px) { .grow-layout { grid-template-columns: 1fr; } }
@@ -441,7 +453,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
     <div class="top-row">
       <div class="brand">
         <h1>띵조 <b>AUTO</b> TEAM MAKER</h1>
-        <small><span class="chip num" id="ver-chip">Ver. 1.0.06</span> 명조 파티 자동 편성 · 예상 딜 계산</small>
+        <small><span class="chip num" id="ver-chip">Ver. 1.0.07</span> 명조 파티 자동 편성 · 예상 딜 계산</small>
       </div>
       <div class="top-actions">
         <span class="chip" id="owned-chip">보유 0명</span>
@@ -621,6 +633,8 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
           </ul></article>
         <article class="card" id="h-field"><h2>필드 파티 · 추천 조합</h2>
           <ul class="prose">
+            <li><b>추천 조합</b>: 정석 조합 아래에 캐릭터가 부족할 때 쓰는 <b>대체</b> 조합과 배포 캐릭터 위주의 <b>입문</b> 조합이 함께 나옵니다. 정석을 짤 수 없으면 내 보유 캐릭터로 짤 수 있는 조합 중 피해가 가장 큰 것에 "내 캐릭터로 최선" 표시가 붙고, 정석 대비 몇 % 피해인지 보여 줍니다. 대체 조합도 바로 편성에 넣을 수 있습니다.</li>
+            <li><b>추천 조합 가중치</b>: 자동 편성은 추천 조합과 같은 파티에 점수를 조금 더 줍니다(기본 5%). 설정 · 계산식에서 끄거나 강도를 바꿀 수 있습니다.</li>
             <li><b>필드 파티</b>: 탐사·필드 사냥용입니다. 딜과 함께 힐·실드, 광역, 이동 편의를 점수에 넣습니다. 캐릭터 중복 제한은 없습니다.</li>
             <li><b>추천 조합</b>: 커뮤니티에서 정설로 쓰는 조합 모음입니다. 히유키 최고점, 여우의 별자리 전자(뉴비·정석), 합일(쇄명 출시 후) 등이 있고, 가지고 있지 않은 캐릭터는 흐리게 표시됩니다. "편성에 넣기"로 원하는 파티 칸에 바로 넣을 수 있습니다.</li>
           </ul></article>
@@ -668,6 +682,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
           <div class="field"><label for="set-lv">적 레벨</label><input type="number" id="set-lv" min="60" max="120" step="1"><span class="hint">방어력 = 8 × 레벨 + 792</span></div>
           <div class="field"><label for="set-res">적 기본 저항(%)</label><input type="number" id="set-res" min="0" max="60" step="1"><span class="hint">탑 구역 보정은 별도 적용</span></div>
           <div class="field"><label for="set-rot">사이클 시간(초)</label><input type="number" id="set-rot" min="0" max="60" step="1"><span class="hint">0이면 자동: 세 캐릭터의 필드 시간 합으로 계산합니다. 1사이클 피해량은 그대로이고, 참고용 초당 피해 = 1사이클 피해 ÷ 사이클 시간</span></div>
+          <div class="field"><label for="set-pbias">추천 조합 가중치</label><select id="set-pbias"><option value="0">끄기</option><option value="3">약하게 (3%)</option><option value="5">보통 (5%)</option><option value="10">강하게 (10%)</option></select><span class="hint">자동 편성에서 추천 조합(정석·대체·입문)과 같은 파티의 점수를 올려 줍니다. 정석은 100%, 대체는 70%, 입문은 60%만큼 적용됩니다.</span></div>
           <div class="field"><label for="set-up">출시 전 캐릭터</label><select id="set-up"><option value="0">자동 편성에서 제외</option><option value="1">포함해서 미리 보기</option></select><span class="hint">쇄명(10/22 출시)은 출시일이 지나면 자동으로 포함됩니다. 릴리(3.8)는 추정 수치입니다.</span></div>
         </div>
       </div>
@@ -1097,30 +1112,124 @@ const ZONES = {  // 구역(탑) 정의: area = 게임 데이터의 AreaNum
 
 /* 추천 조합 (커뮤니티 정설 + 빌드 가이드) */
 const PRESETS = [
-  { id: 'hiyuki', t: '히유키 최고점', tag: '역경의 탑', m: ['hiyuki', 'lucilla', 'suisui'], alt: { suisui: 'chisa' },
-    d: '서리 효과 파티. 루실라 반주가 서리 피해를 60% 부스트하고, 수수가 전체 피해 25% 심화와 이상 효과 스택 상한을 올립니다. 수수가 없으면 치사로 대체합니다.' },
-  { id: 'hsin_newbie', t: '여우의 별자리 · 전자 (뉴비 추천)', tag: '입문', m: ['hsin', 'rover_electro', 'buling'],
-    d: '방랑자·전도와 복링이 전자 효과를 계속 쌓아 줍니다. 방랑자는 무료, 복링은 4성이라 진입 장벽이 가장 낮은 구성입니다.' },
-  { id: 'hsin_flare', t: '여우의 별자리 · 전자 (정석)', tag: '역경의 탑', m: ['hsin', 'rover_electro', 'suisui'], alt: { suisui: 'chisa' },
-    d: '복링 자리에 수수(또는 치사)를 넣어 전자 효과 스택 상한과 전체 피해 심화를 챙깁니다.' },
-  { id: 'hsin_unison', t: '여우의 별자리 · 합일 (쇄명 출시 후 최고점)', tag: '역경의 탑', m: ['hsin', 'suoming', 'shorekeeper'], alt: { shorekeeper: 'lily' },
-    d: '쇄명이 합일을 얻고 퇴장하면 반주와 여우의 별자리 변주가 동시에 터집니다. 릴리(3.8) 출시 후에는 합일 대응이 되는 릴리로 파수인을 교체합니다.' },
-  { id: 'xuanling', t: '양양·현령 암흑 파티', tag: '역경의 탑', m: ['xuanling', 'chisa', 'suisui'], d: '현령 반주가 암흑 효과를 거는 캐릭터의 인멸 피해를 부스트합니다. 치사·수수 모두 이상 효과 지원 서포터입니다.' },
-  { id: 'aemeath', t: '에이메스 불꽃 파티', tag: '역경의 탑', m: ['aemeath', 'denia', 'chisa'], alt: { chisa: 'suisui' }, d: '데니아 불꽃 모드 반주가 불꽃 효과 피해를 60% 부스트합니다.' },
-  { id: 'sigrika', t: '시그리카 에코 파티', tag: '역경의 탑', m: ['sigrika', 'qiuyuan', 'ciaccona'], alt: { ciaccona: 'shorekeeper' }, d: '구원 반주가 에코 피해 50% 부스트, 시그리카가 파티 기류·에코 피해를 올려 줍니다.' },
-  { id: 'phrolova', t: '플로로 인멸 파티', tag: '역경의 탑', m: ['phrolova', 'cantarella', 'lucilla'], alt: { lucilla: 'roccia' }, d: '칸타렐라 반주(인멸·스킬)와 루실라 에코 모드로 에코 피해를 극대화합니다.' },
-  { id: 'cartethyia', t: '카르티시아 풍식 파티', tag: '역경의 탑', m: ['cartethyia', 'ciaccona', 'rover_aero'], alt: { rover_aero: 'chisa' }, d: '샤콘 반주가 풍식 피해 100% 부스트. 방랑자·기류는 힐과 풍식 스택 상한을 담당합니다.' },
-  { id: 'qingxiao', t: '청초 조화 밀집 파티', tag: '역경의 탑', m: ['qingxiao', 'denia', 'mornye'], d: '데니아 조화 밀집 반주(최대 40%)와 모니에 반주 25%가 겹치는 구성입니다.' },
-  { id: 'lucy', t: '루시 엣지러너', tag: '역경의 탑', m: ['lucy', 'rebecca', 'mornye'], alt: { mornye: 'shorekeeper' }, d: '레베카 반주(강공격 최대 35%)와 해킹 연계 파티입니다.' },
-  { id: 'jingran', t: '경연 강공격 파티', tag: '역경의 탑', m: ['jingran', 'iuno', 'shorekeeper'], alt: { shorekeeper: 'verina' }, d: '유노 반주 강공격 50% 부스트와 실드 연계.' },
-  { id: 'galbrena', t: '갈브레나 용융 파티', tag: '역경의 탑', m: ['galbrena', 'lupa', 'mornye'], d: '루파 반주와 추적 사냥 버프를 받는 모노 용융 구성.' },
-  { id: 'zani', t: '젠니 광학 파티', tag: '역경의 탑', m: ['zani', 'phoebe', 'rover_spectro'], alt: { rover_spectro: 'shorekeeper' }, d: '페비 고해 모드가 광학 효과 피해 100% 부스트.' },
-  { id: 'jinhsi_unison', t: '금희 합일 파티', tag: '역경의 탑', m: ['jinhsi', 'hsin', 'shorekeeper'], d: '금희도 합일을 얻으므로 여우의 별자리 합일 모드와 짝을 이룹니다.' },
+  // v: 대체 조합. k = mid(캐릭풀이 적을 때) / f2p(입문·무과금). 출처: 사용자 제보, Prydwen 캐릭터 가이드 팀 추천
+  { id: 'hiyuki', t: '히유키 서리 파티', tag: '역경의 탑', m: ['hiyuki', 'lucilla', 'suisui'],
+    d: '서리 효과 파티. 루실라 반주가 서리 피해를 60% 부스트하고, 수수가 전체 피해 25% 부스트와 이상 효과 스택 상한을 올립니다.',
+    v: [{ k: 'mid', m: ['hiyuki', 'lucilla', 'chisa'], n: '수수 대신 치사' },
+        { k: 'mid', m: ['hiyuki', 'sanhua', 'suisui'], n: '루실라 대신 산화: 협주를 빨리 채워 히유키가 더 자주 나옵니다' },
+        { k: 'mid', m: ['hiyuki', 'lynae', 'suisui'], n: '루실라 대신 린네' },
+        { k: 'f2p', m: ['hiyuki', 'sanhua', 'baizhi'], n: '배포 캐릭터만으로 짜는 입문 조합' },
+        { k: 'f2p', m: ['hiyuki', 'sanhua', 'verina'], n: '설지 대신 벨리나' }] },
+  { id: 'hsin_flare', t: '여우의 별자리 · 전자', tag: '역경의 탑', m: ['hsin', 'rover_electro', 'suisui'],
+    d: '방랑자·전도가 전자 효과를 계속 쌓고, 수수가 전자 효과 스택 상한과 전체 피해를 올립니다.',
+    v: [{ k: 'mid', m: ['hsin', 'rover_electro', 'chisa'], n: '수수 대신 치사(퀵스왑에 능숙하면 유연함)' },
+        { k: 'f2p', m: ['hsin', 'rover_electro', 'buling'], n: '방랑자는 무료, 복링은 4성이라 진입 장벽이 가장 낮습니다(여전복)' }] },
+  { id: 'hsin_unison', t: '여우의 별자리 · 합일 (쇄명 출시 후 최고점)', tag: '역경의 탑', m: ['hsin', 'suoming', 'shorekeeper'],
+    d: '쇄명이 합일을 얻고 퇴장하면 반주와 여우의 별자리 변주가 동시에 터집니다.',
+    v: [{ k: 'mid', m: ['hsin', 'suoming', 'lily'], n: '릴리(3.8) 출시 후 합일 대응 힐러로 교체' },
+        { k: 'mid', m: ['hsin', 'jinhsi', 'shorekeeper'], n: '쇄명 대신 금희 합일' },
+        { k: 'f2p', m: ['hsin', 'suoming', 'verina'], n: '파수인 대신 벨리나' }] },
+  { id: 'xuanling', t: '양양·현령 암흑 파티', tag: '역경의 탑', m: ['xuanling', 'chisa', 'suisui'],
+    d: '현령 반주가 암흑 효과를 거는 캐릭터의 인멸 피해를 부스트합니다. 치사·수수 모두 이상 효과 지원 서포터입니다.',
+    v: [{ k: 'mid', m: ['xuanling', 'rebecca', 'suisui'], n: '치사 대신 레베카(무료, 치사+수수에 가까운 성능)' },
+        { k: 'mid', m: ['xuanling', 'lynae', 'mornye'], n: '모니에는 린네와 함께일 때만' },
+        { k: 'f2p', m: ['xuanling', 'mortefi', 'verina'], n: '모르테피 강공격 반주 + 벨리나' }] },
+  { id: 'aemeath', t: '에이메스 불꽃 파티', tag: '역경의 탑', m: ['aemeath', 'denia', 'chisa'],
+    d: '데니아 불꽃 모드 반주가 불꽃 효과 피해를 60% 부스트합니다.',
+    v: [{ k: 'mid', m: ['aemeath', 'denia', 'suisui'], n: '치사 대신 수수' },
+        { k: 'mid', m: ['aemeath', 'denia', 'lupa'], n: '치사 대신 루파' },
+        { k: 'mid', m: ['aemeath', 'lynae', 'mornye'], n: '조화 파동 모드 파티' },
+        { k: 'f2p', m: ['aemeath', 'lupa', 'verina'], n: '모노 용융 계열, 힐러는 벨리나' }] },
+  { id: 'sigrika', t: '시그리카 에코 파티', tag: '역경의 탑', m: ['sigrika', 'qiuyuan', 'ciaccona'],
+    d: '구원 반주가 에코 피해 50% 부스트, 시그리카가 파티 기류·에코 피해를 올려 줍니다.',
+    v: [{ k: 'mid', m: ['sigrika', 'qiuyuan', 'lucilla'], n: '샤콘 대신 루실라(에코 모드)' },
+        { k: 'mid', m: ['sigrika', 'qiuyuan', 'shorekeeper'], n: '샤콘 대신 파수인' },
+        { k: 'mid', m: ['sigrika', 'lynae', 'mornye'], n: '구원이 없을 때' },
+        { k: 'f2p', m: ['sigrika', 'qiuyuan', 'verina'], n: '힐러를 벨리나로' }] },
+  { id: 'phrolova', t: '플로로 인멸 파티', tag: '역경의 탑', m: ['phrolova', 'cantarella', 'lucilla'],
+    d: '칸타렐라 반주(인멸·스킬)와 루실라 에코 모드로 에코 피해를 극대화합니다.',
+    v: [{ k: 'mid', m: ['phrolova', 'lucilla', 'qiuyuan'], n: '루실라는 구원과 함께일 때 가장 강함' },
+        { k: 'mid', m: ['phrolova', 'cantarella', 'roccia'], n: '루실라 대신 로코코' },
+        { k: 'mid', m: ['phrolova', 'cantarella', 'shorekeeper'], n: '서포터를 파수인으로' },
+        { k: 'f2p', m: ['phrolova', 'danjin', 'shorekeeper'], n: '단근 인멸 반주' },
+        { k: 'f2p', m: ['phrolova', 'danjin', 'verina'], n: '파수인 대신 벨리나' }] },
+  { id: 'cartethyia', t: '카르티시아 풍식 파티', tag: '역경의 탑', m: ['cartethyia', 'ciaccona', 'rover_aero'],
+    d: '샤콘 반주가 풍식 피해 100% 부스트. 방랑자·기류는 힐과 풍식 스택 상한을 담당합니다.',
+    v: [{ k: 'mid', m: ['cartethyia', 'ciaccona', 'chisa'], n: '방랑자·기류 대신 치사(전용 무기가 있을 때 더 강함)' },
+        { k: 'mid', m: ['cartethyia', 'ciaccona', 'shorekeeper'], n: '광역 다수 웨이브에서는 파수인' },
+        { k: 'f2p', m: ['cartethyia', 'sanhua', 'rover_aero'], n: '샤콘이 없을 때 가장 좋은 무과금 조합' }] },
+  { id: 'qingxiao', t: '청초 조화 밀집 파티', tag: '역경의 탑', m: ['qingxiao', 'denia', 'mornye'],
+    d: '데니아 조화 밀집 반주(최대 40%)와 모니에 반주 25%가 겹치는 구성입니다. 데니아는 모니에 없이 쓰면 손실이 큽니다.',
+    v: [{ k: 'mid', m: ['qingxiao', 'lynae', 'mornye'], n: '데니아 대신 린네' },
+        { k: 'mid', m: ['qingxiao', 'lynae', 'shorekeeper'], n: '모니에 대신 파수인(손실 적음)' },
+        { k: 'mid', m: ['qingxiao', 'lynae', 'ciaccona'], n: '모니에 대신 샤콘' }] },
+  { id: 'lucy', t: '루시 엣지러너', tag: '역경의 탑', m: ['lucy', 'rebecca', 'mornye'],
+    d: '레베카 반주(강공격 최대 35%)와 해킹 연계 파티입니다. 루시·레베카는 고정이고 세 번째 칸만 바뀝니다.',
+    v: [{ k: 'mid', m: ['lucy', 'rebecca', 'shorekeeper'], n: '모니에에 아주 가까운 2순위' },
+        { k: 'f2p', m: ['lucy', 'rebecca', 'verina'], n: '세 번째 칸을 벨리나로' }] },
+  { id: 'jingran', t: '경연 강공격 파티', tag: '역경의 탑', m: ['jingran', 'iuno', 'shorekeeper'],
+    d: '유노 반주 강공격 50% 부스트와 실드 연계.',
+    v: [{ k: 'mid', m: ['jingran', 'iuno', 'verina'], n: '파수인 대신 벨리나' },
+        { k: 'mid', m: ['jingran', 'lupa', 'mornye'], n: '모노 용융(루파는 유노와 같이 쓰지 않기)' },
+        { k: 'f2p', m: ['jingran', 'mortefi', 'verina'], n: '모르테피 강공격 반주' },
+        { k: 'f2p', m: ['jingran', 'rebecca', 'verina'], n: '레베카 강공격 반주' }] },
+  { id: 'galbrena', t: '갈브레나 용융 파티', tag: '역경의 탑', m: ['galbrena', 'lupa', 'mornye'],
+    d: '루파 반주와 추적 사냥 버프를 받는 모노 용융 구성.',
+    v: [{ k: 'mid', m: ['galbrena', 'lupa', 'mortefi'], n: '모니에 대신 모르테피' },
+        { k: 'mid', m: ['galbrena', 'phrolova', 'shorekeeper'], n: '플로로 듀얼 딜' },
+        { k: 'f2p', m: ['galbrena', 'mortefi', 'verina'], n: '무과금 조합' }] },
+  { id: 'zani', t: '젠니 광학 파티', tag: '역경의 탑', m: ['zani', 'phoebe', 'rover_spectro'],
+    d: '페비 고해 모드가 광학 효과 피해 100% 부스트. 페비가 젠니 딜을 약 2배로 올립니다.',
+    v: [{ k: 'mid', m: ['zani', 'phoebe', 'shorekeeper'], n: '퀵스왑 없이 쓸 때' },
+        { k: 'f2p', m: ['zani', 'mortefi', 'rover_spectro'], n: '모르테피 강공격 반주' }] },
+  { id: 'jinhsi', t: '금희 파티', tag: '역경의 탑', m: ['jinhsi', 'zhezhi', 'shorekeeper'],
+    d: '절지가 협동 공격과 해방 심화를 맡는 금희 정석 조합입니다.',
+    v: [{ k: 'mid', m: ['jinhsi', 'hsin', 'shorekeeper'], n: '여우의 별자리 합일 모드와 짝' },
+        { k: 'mid', m: ['jinhsi', 'yinlin', 'shorekeeper'], n: '절지 대신 음림(퀵스왑에 유리)' },
+        { k: 'f2p', m: ['jinhsi', 'yuanwu', 'verina'], n: '무과금: 연무 + 벨리나' },
+        { k: 'f2p', m: ['jinhsi', 'mortefi', 'verina'], n: '모르테피는 투자가 많을 때만' }] },
+  { id: 'camellya', t: '카멜리아 파티', tag: '역경의 탑', m: ['camellya', 'lynae', 'mornye'],
+    d: '린네·모니에가 정석. 카멜리아는 사이클이 길어 반주 버프가 끝까지 유지되지 않는 편입니다.',
+    v: [{ k: 'mid', m: ['camellya', 'roccia', 'shorekeeper'], n: '로코코 인멸 반주' },
+        { k: 'mid', m: ['camellya', 'sanhua', 'shorekeeper'], n: '로코코 대신 산화(무과금에 강함)' },
+        { k: 'f2p', m: ['camellya', 'sanhua', 'verina'], n: '배포 캐릭터 조합' },
+        { k: 'f2p', m: ['camellya', 'danjin', 'verina'], n: '산화 대신 단근' }] },
+  { id: 'carlotta', t: '카를로타 파티', tag: '역경의 탑', m: ['carlotta', 'lynae', 'mornye'],
+    d: '린네·모니에가 정석. 린네가 없으면 출시 당시 조합인 절지·파수인을 씁니다.',
+    v: [{ k: 'mid', m: ['carlotta', 'zhezhi', 'shorekeeper'], n: '가장 흔한 조합' },
+        { k: 'mid', m: ['carlotta', 'zhezhi', 'verina'], n: '파수인 대신 벨리나' },
+        { k: 'f2p', m: ['carlotta', 'yangyang', 'verina'], n: '양양 반주로 공명 에너지 보충' },
+        { k: 'f2p', m: ['carlotta', 'taoqi', 'buling'], n: '도기 스킬 반주 + 복링' }] },
+  { id: 'jiyan', t: '기염 파티', tag: '역경의 탑', m: ['jiyan', 'iuno', 'ciaccona'],
+    d: '유노 강공격 반주와 샤콘 기류 지원을 받는 최고점 조합입니다.',
+    v: [{ k: 'mid', m: ['jiyan', 'ciaccona', 'shorekeeper'], n: '풍식 파티' },
+        { k: 'mid', m: ['jiyan', 'ciaccona', 'rover_aero'], n: '파수인 대신 방랑자·기류' },
+        { k: 'f2p', m: ['jiyan', 'mortefi', 'verina'], n: '모르테피 강공격 반주' },
+        { k: 'f2p', m: ['jiyan', 'rebecca', 'verina'], n: '레베카 강공격 반주' }] },
+  { id: 'xiangli_yao', t: '상리요 파티', tag: '역경의 탑', m: ['xiangli_yao', 'lynae', 'mornye'],
+    d: '린네가 음림 반주와 거의 같은 버프를 줘서 최고의 파트너입니다.',
+    v: [{ k: 'mid', m: ['xiangli_yao', 'yinlin', 'shorekeeper'], n: '음림 해방 반주' },
+        { k: 'mid', m: ['xiangli_yao', 'yangyang', 'shorekeeper'], n: '한정 아닌 조합(퀵스왑 필요)' },
+        { k: 'f2p', m: ['xiangli_yao', 'jianxin', 'verina'], n: '감심 해방 38% 반주(공명 효율 더 필요)' }] },
+  { id: 'changli', t: '장리 용융 파티', tag: '역경의 탑', m: ['changli', 'brant', 'lupa'],
+    d: '루파가 장리를 받쳐 주고 장리 반주가 다음 캐릭터를 강화합니다.',
+    v: [{ k: 'mid', m: ['changli', 'brant', 'shorekeeper'], n: '브렌트 듀얼 딜' },
+        { k: 'mid', m: ['changli', 'encore', 'shorekeeper'], n: '앙코와 듀얼 용융' },
+        { k: 'f2p', m: ['changli', 'yangyang', 'verina'], n: '무과금 듀얼 딜' }] },
   // 필드
   { id: 'f_hsin', t: '필드 · 여우의 별자리 무과금 사냥', tag: '필드', m: ['hsin', 'rover_electro', 'buling'], d: '광역 전자 효과와 복링 힐로 필드 몹 정리가 편합니다.' },
   { id: 'f_heal', t: '필드 · 무한 탐사', tag: '필드', m: ['cartethyia', 'rover_aero', 'verina'], d: '힐러 둘로 생존 걱정 없이 탐사합니다. 카르티시아는 받는 치유도 늘려 줍니다.' },
   { id: 'f_newbie', t: '필드 · 무료 캐릭터만', tag: '필드', m: ['rover_havoc', 'sanhua', 'baizhi'], d: '배포 캐릭터만으로 짠 기본 필드 파티.' }
 ];
+// 자동 편성 가중치용: 추천 조합(정석·대체·입문) 목록
+function presetTeams() {
+  const out = [];
+  PRESETS.filter(p => p.tag !== '필드').forEach(p => {
+    out.push({ p, k: 'best', m: p.m });
+    (p.v || []).forEach(v => out.push({ p, k: v.k, m: v.m, n: v.n }));
+  });
+  return out.filter(x => x.m.every(id => CH[id]));
+}
 
 /* =====================================================================
    딜 사이클 데이터 (출처: Prydwen 캐릭터 가이드 로테이션, 아카라이브 명조 채널 사이클 글)
@@ -1343,7 +1452,7 @@ const ECHO_PRESETS = {
   start: { n: '입문', cr: 28, cd: 160, elem: 30, atk: 20, flat: 200 }
 };
 const MIN_ROT = 25;
-const DEFAULT_SETTINGS = { preset: 'std', enemyLv: 100, baseRes: 10, rot: 0, weapon: 'sig', upcoming: false, parties: 3, towerMode: true };
+const DEFAULT_SETTINGS = { preset: 'std', enemyLv: 100, baseRes: 10, rot: 0, weapon: 'sig', upcoming: false, parties: 3, towerMode: true, presetBias: 5 };
 
 // --- 캐릭터 인덱스 구성 ---
 const CH = {};
@@ -1974,8 +2083,22 @@ function deactivateLicense() {
 /* =====================================================================
    버전 · 패치 노트 (수정할 때마다 맨 위에 추가하고 APP_VERSION을 올립니다)
    ===================================================================== */
-const APP_VERSION = '1.0.06';
+const APP_VERSION = '1.0.07';
 const PATCH_NOTES = /*PATCH_NOTES_START*/[
+  { v: '1.0.07', d: '2026-10-16', s: '추천 조합에 대체·입문 조합을 넣고, 자동 편성이 추천 조합을 조금 더 우선하도록 했습니다.',
+    g: [
+      { h: '추천 조합', i: [
+        '정석 조합 아래에 캐릭터가 부족할 때 쓰는 "대체" 조합과 배포 캐릭터 위주의 "입문" 조합을 함께 보여 줍니다. 예: 히유키 · 산화 · 수수(루실라 대신 산화), 히유키 · 산화 · 설지/벨리나(입문).',
+        '각 대체 조합의 1사이클 피해와 정석 대비 %를 보여 주고, 정석을 짤 수 없으면 보유 캐릭터로 짤 수 있는 조합 중 피해가 가장 큰 것에 "내 캐릭터로 최선" 표시를 붙입니다. 대체 조합도 바로 편성에 넣을 수 있습니다.',
+        '카멜리아, 카를로타, 기염, 상리요, 장리, 금희 추천 조합을 새로 넣었습니다(대체·입문 포함).',
+        '여전복(여우의 별자리 · 방랑자·전도 · 복링)은 "여우의 별자리 · 전자"의 입문 조합으로 합쳤습니다.',
+        '출처: 사용자 제보, Prydwen 캐릭터 가이드 팀 추천.'] },
+      { h: '자동 편성', i: [
+        '추천 조합(정석·대체·입문)과 같은 파티는 자동 편성 점수가 조금 올라갑니다(기본 5%, 정석 100% · 대체 70% · 입문 60% 비율).',
+        '보유 캐릭터로 짤 수 있는 추천 조합은 후보에서 빠지지 않도록 항상 넣어 계산합니다.',
+        '편성된 파티가 추천 조합이면 파티 카드에 "추천 조합" 표시가 붙습니다.',
+        '설정 · 계산식의 "추천 조합 가중치"에서 끄기 / 3% / 5% / 10%를 고를 수 있습니다.'] }
+    ] },
   { v: '1.0.06', d: '2026-10-14', s: '공명자 육성에 필요한 재화와 파밍에 드는 결정 웨이브 플레이트를 계산하는 "육성 계산" 탭을 추가했습니다.',
     g: [
       { h: '육성 계산', i: [
@@ -2220,6 +2343,13 @@ function evalParty(p) {
   return r;
 }
 
+/* ---------- 추천 조합 매칭 ---------- */
+const sameTeam = (a, b) => { const x = a.filter(Boolean).map(gk).sort().join('|'); return x === b.filter(Boolean).map(gk).sort().join('|') && a.filter(Boolean).length === b.filter(Boolean).length; };
+const PB_TIER = { best: 1, mid: .7, f2p: .6 };
+function presetMatch(ids) { return presetTeams().find(x => sameTeam(ids, x.m)) || null; }
+// 설정의 가중치(%)만큼 추천 조합 점수를 올림. 정석 100%, 대체 70%, 입문 60% 비율
+function presetBias(ids) { const w = (state.settings.presetBias ?? 5) / 100; if (!w) return 1; const m = presetMatch(ids); return m ? 1 + w * PB_TIER[m.k] : 1; }
+
 /* ---------- 자동 편성 ---------- */
 function optimize(silent) {
   ensureParties();
@@ -2229,6 +2359,9 @@ function optimize(silent) {
   if (pool.length < 3 && !state.parties.some(p => p.locked)) { if (!silent) toast('보유 캐릭터를 3명 이상 선택해 주세요.'); renderBuild(); return; }
   const baseCtx = { ...ctxFor(null), zone: null };
   const cands = candidateTeams(pool, baseCtx, { k: pool.length > 30 ? 8 : 10 }).slice(0, 240);
+  // 추천 조합(정석·대체·입문) 중 보유 캐릭터로 짤 수 있는 것도 후보에 넣고, 점수에 가중치를 줍니다
+  const poolSet = new Set(pool);
+  presetTeams().forEach(x => { if (x.m.every(id => poolSet.has(id)) && new Set(x.m.map(gk)).size === 3 && !cands.some(t => sameTeam(t.ids, x.m))) cands.push({ ids: x.m.slice() }); });
   const bal = true; // 파티 간 균형을 맞추는 방향으로 편성
   const tf = v => bal ? Math.log(Math.max(v, 1e-4)) : v;
   const sn = curSeason().data;
@@ -2247,7 +2380,7 @@ function optimize(silent) {
       return sc.map(x => ({ ...x, _s: 0.35 * tf(x.raw / best) }));
     }
     const sc = cands.map(t => {
-      const raw = sl.zones.reduce((a, z) => { const r = bestTeam(t.ids, ctxFor(z)); return a + r.score * teamPenalty(r); }, 0) / sl.zones.length;
+      const raw = sl.zones.reduce((a, z) => { const r = bestTeam(t.ids, ctxFor(z)); return a + r.score * teamPenalty(r); }, 0) / sl.zones.length * presetBias(t.ids);
       return { ids: t.ids, raw };
     });
     const best = Math.max(...sc.map(x => x.raw), 1);
@@ -2369,6 +2502,7 @@ function partyHTML(p, r, pi) {
   let body = '';
   if (r) {
     const chips = [];
+    const pm = presetMatch(p.ids); if (pm) chips.push(`<span class="chip acc">추천 조합 · ${esc(pm.p.t)}${pm.k === 'best' ? '' : pm.k === 'mid' ? ' (대체)' : ' (입문)'}</span>`);
     chips.push(r.hasHeal ? '<span class="chip ok">힐러 있음</span>' : r.hasShield ? '<span class="chip ok">실드 있음</span>' : '<span class="chip warn">힐·실드 없음</span>');
     Object.entries(r.modes || {}).forEach(([id, k]) => chips.push(`<span class="chip acc">${esc(CH[id].name)} · ${esc(CH[id].modes[k].n)}</span>`));
     if (r.invalid) chips.push('<span class="chip warn">합일 상대 없음</span>');
@@ -2468,7 +2602,7 @@ function rotationHTML(r, key) {
   const [M, Sb, P] = r.team;
   const members = r.team.filter(Boolean);
   if (members.length === 1) {
-    return `<details class="buffs"><summary>딜 사이클 · 약 ${r.rot.toFixed(0)}초</summary><ol class="rot-list">${memberRotHTML(M, { first: true })}</ol>
+    return `<details class="buffs"><summary>딜 사이클 · 약 ${r.rot.toFixed(0)}초</summary><ol class="rot-list">${memberRotHTML(members[0], { first: true })}</ol>
       <div class="note">단일 캐릭터 칸은 변주·반주 버프 없이 본인 딜만 계산합니다.</div></details>`;
   }
   const seq = (r.ord === 1 ? [Sb, P, M] : [P, Sb, M]).filter(Boolean);
@@ -2481,7 +2615,7 @@ function rotationHTML(r, key) {
   const ids = members.map(m => m.id);
   const tr = TEAM_ROT.filter(t => t.has.every(id => ids.includes(id)));
   const notes = tr.map(t => `<div class="note team-note">${esc(t.t)}${t.src ? ` <span class="muted">출처: ${esc(t.src)}</span>` : ''}</div>${t.seq ? teamSeqHTML(t.seq, pcOf) : ''}`).join('');
-  const chainNote = M.c.id === 'hsin' && M.chain >= 2 ? '<div class="note">여우의 별자리 2체인: 전투 개막 시 강화 강공격이 충전된 상태라 필드 시간이 약 2초 짧아집니다.</div>' : '';
+  const chainNote = M && M.c.id === 'hsin' && M.chain >= 2 ? '<div class="note">여우의 별자리 2체인: 전투 개막 시 강화 강공격이 충전된 상태라 필드 시간이 약 2초 짧아집니다.</div>' : '';
   return `<details class="buffs"><summary>딜 사이클 · 약 ${r.rot.toFixed(0)}초 (${seq.map(m => esc(m.c.name)).join(' → ')})</summary>
     ${legend}${key ? `<div style="margin:4px 0 10px"><button class="btn sm primary" data-tlopen="${key}">타임라인으로 크게 보기 →</button></div>` : ''}${notes}<ol class="rot-list">${items}</ol>${chainNote}
     ${r.autoRot < r.rot ? `<div class="note">필드 시간 합은 약 ${r.autoRot.toFixed(0)}초지만, 공명 해방 쿨타임 때문에 한 바퀴는 최소 ${r.rot.toFixed(0)}초로 계산합니다.</div>` : ''}<div class="note">필드 시간은 가이드 기준 추정치이고, 파티 사이클 시간은 세 캐릭터 필드 시간의 합입니다. 출처: Prydwen 로테이션 가이드, 아카라이브 명조 채널.</div></details>`;
@@ -2783,22 +2917,32 @@ function renderPresets() {
   const list = PRESETS.filter(p => state.presetFilter === 'all' || p.tag === state.presetFilter);
   ensureParties();
   const opts = state.parties.map((p, i) => SLOT[p.slot].type === 'team' ? `<option value="${i}">${i + 1}파티 · ${esc(SLOT[p.slot].label)} ${esc(SLOT[p.slot].fl)}</option>` : '').join('');
+  const TIER_N = { mid: '대체', f2p: '입문' };
   $('#preset-grid').innerHTML = list.map(p => {
     const r = bestTeam(p.m, ctx);
     const missing = p.m.filter(id => !state.owned.has(id));
-    const alt = p.alt ? Object.entries(p.alt).map(([a, b]) => `${CH[a].name} → ${CH[b].name}`).join(', ') : '';
-    const altR = p.alt ? bestTeam(p.m.map(id => p.alt[id] || id), ctx) : null;
     const modes = Object.entries(r.modes || {}).map(([id, mk]) => `<span class="chip acc">${esc(CH[id].modes[mk].n)}</span>`).join('');
     const up = p.m.filter(id => isUpcoming(CH[id])).map(id => `<span class="chip warn">${esc(CH[id].name)} ${esc(releaseLabel(CH[id]))}</span>`).join('');
+    const vs = (p.v || []).filter(v => v.m.every(id => CH[id]));
+    const vRes = vs.map(v => bestTeam(v.m, ctx));
+    // 정석을 못 짜면, 보유 캐릭터로 짤 수 있는 대체 조합 중 피해가 가장 큰 것을 표시
+    let firstOwned = -1; if (missing.length) vs.forEach((v, i) => { if (v.m.every(id => state.owned.has(id)) && (firstOwned < 0 || vRes[i].totalDmg > vRes[firstOwned].totalDmg)) firstOwned = i; });
+    const vHTML = vs.length ? `<div class="pv-list"><div class="pv-h">대체 조합 <span class="muted">캐릭터가 부족할 때</span></div>${vs.map((v, i) => {
+      const vr = vRes[i]; const miss = v.m.filter(id => !state.owned.has(id)).length; const pct = r.totalDmg ? Math.round(vr.totalDmg / r.totalDmg * 100) : 0;
+      return `<div class="pv ${i === firstOwned ? 'pick' : ''}"><span class="chip ${v.k === 'f2p' ? 'ok' : ''}">${TIER_N[v.k]}</span>
+        <div class="pv-team">${v.m.map(id => `<span class="pv-m ${state.owned.has(id) ? '' : 'missing'}" title="${esc(CH[id].name)}">${portraitHTML(CH[id])}<span>${esc(CH[id].name)}</span></span>`).join('')}</div>
+        <div class="pv-info"><div class="note">${esc(v.n || '')}</div><div><b class="num">${fmt(vr.totalDmg)}</b> <span class="muted num">(정석의 ${pct}%)</span> ${miss ? `<span class="chip warn">미보유 ${miss}</span>` : '<span class="chip ok">전원 보유</span>'}${i === firstOwned ? ' <span class="chip acc">내 캐릭터로 최선</span>' : ''}</div></div>
+        <button class="btn sm" data-pvload="${p.id}:${i}">편성에 넣기</button></div>`; }).join('')}</div>` : '';
     return `<article class="preset">
       <div><div class="chips" style="margin-bottom:6px"><span class="chip">${esc(p.tag)}</span>${modes}${missing.length ? `<span class="chip warn">미보유 ${missing.length}</span>` : '<span class="chip ok">전원 보유</span>'}${up}</div><h3>${esc(p.t)}</h3></div>
       <div class="mini-team">${p.m.map((id, i) => `<div class="mini ${state.owned.has(id) ? '' : 'missing'}">${portraitHTML(CH[id])}<div>${esc(CH[id].name)}</div><div class="muted">${['메인', '서브', '서포터'][i]}</div></div>`).join('')}</div>
       <p>${esc(p.d)}</p>
-      ${alt ? `<p>대체: ${esc(alt)} <span class="num">(${fmt(altR.totalDmg)})</span></p>` : ''}
       <div class="foot"><div><span class="num" style="font-weight:600;font-size:17px">${fmt(r.totalDmg)}</span> <span class="note">1사이클 피해 · 약 ${Math.round(r.rot)}초 · 초당 ${fmt(r.dps)} (탑 버프 제외)</span></div>
         <span class="gear" style="max-width:100%"><select id="pl-${p.id}" aria-label="넣을 파티">${opts}</select><button class="btn sm" data-pload="${p.id}">편성에 넣기</button></span></div>
+      ${vHTML}
     </article>`;
   }).join('');
+  $$('#preset-grid [data-pvload]').forEach(b => b.addEventListener('click', () => { const [pid, i] = b.dataset.pvload.split(':'); const p = PRESETS.find(x => x.id === pid); const v = p.v.filter(v => v.m.every(id => CH[id]))[+i]; loadTeam(v.m.slice(), +$(`#pl-${p.id}`).value); }));
   $$('#preset-grid [data-pload]').forEach(b => b.addEventListener('click', () => { const p = PRESETS.find(x => x.id === b.dataset.pload); loadTeam(p.m.slice(), +$(`#pl-${p.id}`).value); }));
 }
 
@@ -2950,13 +3094,14 @@ function renderDB() {
 /* ---------- 설정 · 테마 ---------- */
 function bindSettings() {
   const s = state.settings;
-  $('#set-preset').value = s.preset; $('#set-lv').value = s.enemyLv; $('#set-res').value = s.baseRes; $('#set-rot').value = s.rot; $('#set-up').value = s.upcoming ? '1' : '0';
+  $('#set-preset').value = s.preset; $('#set-lv').value = s.enemyLv; $('#set-res').value = s.baseRes; $('#set-rot').value = s.rot; $('#set-up').value = s.upcoming ? '1' : '0'; $('#set-pbias').value = String(s.presetBias ?? 5);
   const upd = () => {
     s.preset = $('#set-preset').value; s.enemyLv = +$('#set-lv').value || 100; s.baseRes = +$('#set-res').value || 0;
-    s.rot = Math.max(0, +$('#set-rot').value || 0); s.upcoming = $('#set-up').value === '1';
+    s.rot = Math.max(0, +$('#set-rot').value || 0); s.upcoming = $('#set-up').value === '1'; s.presetBias = +$('#set-pbias').value;
     save(); renderBuild(); toast('설정을 반영했습니다.');
   };
   ['#set-preset', '#set-lv', '#set-res', '#set-rot', '#set-up'].forEach(sel => $(sel).addEventListener('change', upd));
+  $('#set-pbias').addEventListener('change', () => { upd(); optimize(true); });
 }
 function effectiveTheme() { const t = document.documentElement.getAttribute('data-theme'); if (t) return t; return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
 function paintThemeBtn() { $('#btn-theme').textContent = effectiveTheme() === 'dark' ? '라이트 모드' : '다크 모드'; }
