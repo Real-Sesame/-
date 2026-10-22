@@ -225,6 +225,13 @@ else:
             nb = sum(x['k'] in ('char', 'weapon') for x in items)
             TRIED[lang] = {'articles': len(arts), 'banners': nb, 'events': sum(x['k'] == 'event' for x in items),
                            'titles': [(a.get('articleTitle') or '')[:60] for a in sorted(arts, key=lambda a: -int(a.get('articleId') or 0))[:8]]}
+            if lang != 'en':  # 형식 확인용: 날짜가 든 줄 몇 개
+                smp = []
+                for a in sorted(arts, key=lambda a: -int(a.get('articleId') or 0)):
+                    if re.search(r'(튜닝|업데이트 내용)', a.get('articleTitle') or '') and len(smp) < 3:
+                        L = lines_of(a)
+                        smp.append([l[:110] for i, l in enumerate(L) if re.search(r'\d{4}|기간|\[', l) or (i and re.search(r'기간', L[i - 1]))][:40])
+                TRIED[lang]['sample'] = smp
             if nb:
                 used = lang; break
     if not used:
