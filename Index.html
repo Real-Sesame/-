@@ -2770,7 +2770,7 @@ function bannerHTML(x) {
   const now = Date.now(); const on = (x.S ?? 0) <= now && now < x.E;
   return `<article class="bn cal-k-${x.k} ${on ? 'now' : ''}">
     <div class="bn-top"><span class="chip ${x.k === 'char' ? 'acc' : ''}">${CAL_K[x.k]}</span>${on ? '<span class="chip ok">진행 중</span>' : x.S && x.S > now ? '<span class="chip warn">예정</span>' : x.E <= now ? '<span class="chip">종료</span>' : ''}</div>
-    <h4>${esc(x.n)}</h4>
+    <h4>${/[가-힣]/.test(x.n) ? esc(x.n) : `${(x.f5 || []).map(id => featHTML(x, id, false)).join(' · ')} ${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝 <span class="muted" style="font-weight:500;font-size:12px">${esc(x.n)}</span>`}</h4>
     <div class="bn-f">${(x.f5 || []).map(id => featHTML(x, id, true)).join('')}</div>
     ${(x.f4 || []).length ? `<div class="note">4성 확률 UP: ${(x.f4 || []).map(id => featHTML(x, id, false)).join(', ')}</div>` : ''}
     <div class="bn-time">${x.S ? fmtDT(x.S) : (x.sv ? x.sv + ' 버전 업데이트 후' : '?')} ~ ${fmtDT(x.E)} · <span class="bn-left">${on ? leftTxt(x.E) : x.S && x.S > now ? untilTxt(x.S) : '종료'}</span>${x.url ? ` · <a href="${esc(x.url)}" target="_blank" rel="noopener">공지</a>` : ''}</div>
