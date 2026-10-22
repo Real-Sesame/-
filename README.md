@@ -23,8 +23,11 @@
 - `.github/workflows/update-chars.yml`과 `tools/update_chars.py`가 저장소에 있으면, GitHub Actions가 매일 한 번 명조 게임 데이터를 확인해 앱에 없는 공명자가 생겼을 때 `chars-extra.json`을 자동으로 갱신 · 커밋합니다.
 - 사이트는 열릴 때 `chars-extra.json`을 읽어 새 공명자를 보유 캐릭터 · 뽑기 추천 · 육성 계산 · 도감에 추가합니다(역할 · 버프는 추정치, "자동 추가 · 추정" 표시).
 - 바로 돌려 보려면 **Actions → 신규 공명자 자동 갱신 → Run workflow**.
-- 처음 한 번 **Settings → Actions → General → Workflow permissions**가 **Read and write permissions**인지 확인하세요(자동 커밋에 필요).
-- 저장소에 60일 동안 아무 변경이 없으면 GitHub가 예약 실행을 멈춥니다. 그럴 땐 Actions 탭에서 다시 켜 주세요.
+- `Index.html`이나 `tools/update_chars.py`를 새로 올리면 그때도 자동으로 한 번 돌아, 새 `Index.html`에 이미 들어간 공명자는 `chars-extra.json`에서 빠집니다.
+- 필요한 권한(커밋 · 사이트 재배포 · 예약 유지)은 워크플로 파일이 직접 받으므로 저장소 설정을 따로 바꿀 필요가 없습니다.
+- 갱신 커밋 뒤에는 사이트(GitHub Pages) 재배포를 자동으로 요청합니다.
+- GitHub는 60일 동안 변경이 없는 저장소의 예약 실행을 멈추지만, 이 워크플로가 매번 스스로를 다시 켜 두므로 따로 손댈 필요가 없습니다.
+- 실행이 실패하면 GitHub가 저장소 주인 이메일로 알려 줍니다.
 - `update-chars.yml`은 꼭 `.github/workflows/` 안에 있어야 합니다. 저장소 맨 위에 있으면 실행되지 않습니다(`update_chars.py`는 맨 위나 `tools/` 어디든 됩니다).
 - `.github` 폴더는 웹 업로드 화면에서 숨김 폴더라 끌어다 놓기가 안 될 수 있습니다. 그럴 땐 **Add file → Create new file**에 이름을 `.github/workflows/update-chars.yml`로 적고 내용을 붙여 넣으면 됩니다.
 
