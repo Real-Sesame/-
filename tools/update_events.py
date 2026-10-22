@@ -148,6 +148,7 @@ def parse_range(s):
 
 
 items, versions = [], {}
+TRIED = {}  # 언어별로 읽은 결과(진단용)
 VER_IN_TITLE = re.compile(r'(?:Version|버전|Ver\.?|V)\s*(\d+\.\d+)|(\d+\.\d+)\s*버전', re.I)
 
 
@@ -214,11 +215,15 @@ else:
             print(f'공지 {len(arts)}개 ({lang})')
         except Exception as e:
             print(f'공지 목록 실패 ({lang}): {e}', file=sys.stderr); arts = []
+            TRIED[lang] = {'error': str(e)[:200]}
         if arts:
             items.clear(); versions.clear()
             for a in sorted(arts, key=lambda a: int(a.get('articleId') or 0)):
                 handle(a)
-            if any(x['k'] in ('char', 'weapon') for x in items):
+            nb = sum(x['k'] in ('char', 'weapon') for x in items)
+            TRIED[lang] = {'articles': len(arts), 'banners': nb, 'events': sum(x['k'] == 'event' for x in items),
+                           'titles': [(a.get('articleTitle') or '')[:60] for a in sorted(arts, key=lambda a: -int(a.get('articleId') or 0))[:8]]}
+            if nb:
                 used = lang; break
     if not used:
         print('공지를 읽지 못해 기존 events.json을 그대로 둡니다.'); sys.exit(0)
@@ -251,7 +256,7 @@ names = {f'{k}:{i}': n for (k, i), n in KO_NAME.items() if n and any(i in (x.get
 
 doc = {'schema': 1, 'src': 'wutheringwaves.kurogames.com', 'lang': used, 'tz': 'UTC+8 (아시아 서버 기준)', 'versions': versions,
        'names': names, 'items': out,
-       'stats': {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out)}}
+       'stats': {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out), 'tried': TRIED}}
 old = None
 if os.path.exists(args.out):
     try:
