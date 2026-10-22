@@ -256,7 +256,7 @@ names = {f'{k}:{i}': n for (k, i), n in KO_NAME.items() if n and any(i in (x.get
 
 doc = {'schema': 1, 'src': 'wutheringwaves.kurogames.com', 'lang': used, 'tz': 'UTC+8 (아시아 서버 기준)', 'versions': versions,
        'names': names, 'items': out,
-       'stats': {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out), 'tried': TRIED}}
+       'stats': {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out)}, 'diag': TRIED}
 old = None
 if os.path.exists(args.out):
     try:
