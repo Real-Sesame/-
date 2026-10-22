@@ -31,6 +31,13 @@
 - `update-chars.yml`은 꼭 `.github/workflows/` 안에 있어야 합니다. 저장소 맨 위에 있으면 실행되지 않습니다(`update_chars.py`는 맨 위나 `tools/` 어디든 됩니다).
 - `.github` 폴더는 웹 업로드 화면에서 숨김 폴더라 끌어다 놓기가 안 될 수 있습니다. 그럴 땐 **Add file → Create new file**에 이름을 `.github/workflows/update-chars.yml`로 적고 내용을 붙여 넣으면 됩니다.
 
+## 이벤트 · 픽업 일정 자동 갱신 (Ver. 1.0.13~)
+
+- `.github/workflows/update-events.yml`과 `tools/update_events.py`가 3시간마다 명조 공식 홈페이지 공지(픽업 공지 · 패치 노트 · 이벤트 예고)를 읽어 `events.json`을 갱신 · 커밋합니다.
+- 사이트의 **이벤트 일정** 탭이 이 파일을 읽어 진행 중 · 예정 픽업, 이벤트, 역경의 탑 시즌을 목록 · 달력으로 보여 줍니다.
+- 한국어 공지를 읽지 못하면 영어 공지로 대신합니다. 공지 형식이 크게 바뀌면 일부 일정이 빠질 수 있습니다.
+- 바로 돌려 보려면 **Actions → 이벤트 · 픽업 일정 자동 갱신 → Run workflow**.
+
 ## 참고
 
 - 사용자 설정(보유 캐릭터, 파티, 라이선스 인증)은 각자 브라우저에만 저장됩니다.
