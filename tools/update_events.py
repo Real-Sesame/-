@@ -204,7 +204,9 @@ def handle(a):
             items.append({'k': 'event', 'n': name, 't': re.sub(r',?\s*(Coming Soon|is now underway|곧 오픈|오픈 예정).*$', '', kind_txt, flags=re.I).strip(' ,!'), **r, 'a': aid})
 
 
-langs = [l.strip() for l in args.lang.split(',') if l.strip()]
+langs = []
+for l in (l.strip() for l in args.lang.split(',') if l.strip()):
+    langs += ['ko', 'kr', 'ko-kr', 'ko-KR', 'kor'] if l == 'ko' else [l]  # 한국어 공지 폴더 이름 후보
 used, arts = None, []
 if args.from_dir:
     arts = local_articles(args.from_dir); used = 'local'
@@ -250,7 +252,7 @@ for x in items:
 for x in out:
     if not x.get('sv'):
         x.pop('sv', None)
-    x['url'] = NEWS.format(lang=used if used in ('ko', 'en') else 'ko', id=x['a'])
+    x['url'] = NEWS.format(lang='en' if used == 'en' else 'ko', id=x['a'])
 out.sort(key=lambda x: (x.get('s') or x['e'], x['k']))
 names = {f'{k}:{i}': n for (k, i), n in KO_NAME.items() if n and any(i in (x.get('f5', []) + x.get('f4', [])) for x in out)}
 
