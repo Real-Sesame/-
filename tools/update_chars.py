@@ -76,6 +76,29 @@ try:
     tags = {t['Id']: T(t['TagName']) for t in load('BinData/role/roletag.json')}
 except Exception:
     tags = {}
+# Lv.90 기본 스탯 · 공명 노드 보너스 (에코 옵션 계산용, 없으면 앱 기본값 사용)
+try:
+    _g90 = [g for g in load('BinData/property/rolepropertygrowth.json') if g['Level'] == 90 and g['BreachLevel'] == 6][0]
+    _bp = {b['Id']: b for b in load('BinData/property/baseproperty.json') if b.get('Lv') == 1}
+except Exception:
+    _g90, _bp = None, {}
+NODE_K = {8: 'cr', 9: 'cd', 22: 'el', 23: 'el', 24: 'el', 25: 'el', 26: 'el', 27: 'el', 35: 'heal', 10002: 'hp', 10007: 'atk', 10010: 'def'}
+
+
+def base_of(r):
+    b = _bp.get(r.get('PropertyId'))
+    if not b or not _g90: return None
+    return [round(b['Atk'] * _g90['AtkRatio'] / 10000), round(b['LifeMax'] * _g90['LifeMaxRatio'] / 10000), round(b['Def'] * _g90['DefRatio'] / 10000), b['Crit'] / 100, b['CritDamage'] / 100]
+
+
+def node_of(r):
+    d = {}
+    for n in tree:
+        if n['NodeType'] != 4 or n['NodeGroup'] != r['SkillTreeGroupId']: continue
+        for p in n.get('Property', []):
+            k = NODE_K.get(p['Id'])
+            if k: d[k] = round(d.get(k, 0) + (p['Value'] * 100 if p.get('IsRatio') else p['Value'] / 100), 2)
+    return d
 
 EL_BY_ID = {1: 'glacio', 2: 'fusion', 3: 'electro', 4: 'aero', 5: 'spectro', 6: 'havoc'}
 EL_KO = {'응결': 'glacio', '용융': 'fusion', '전도': 'electro', '기류': 'aero', '회절': 'spectro', '인멸': 'havoc'}
@@ -243,6 +266,10 @@ for r in roles_all:
            'ap': ap_, 'b': b, 'tags': [tags.get(t, str(t)) for t in tag_ids],
            'outro': {'n': T(outro['SkillName']) if outro else '', 'd': outro_txt}, 'prio': r.get('Priority', 0)}
     if merge: ent['merge'] = merge
+    bs = base_of(r)
+    if bs: ent['base'] = bs
+    nd = node_of(r)
+    if nd: ent['node'] = nd
     ws = sorted([w for w in new_weapons if w['WeaponType'] == r['WeaponType']], key=lambda w: -w['ItemId'])
     if ws:
         w = ws[0]; ent['w'] = w['ItemId']

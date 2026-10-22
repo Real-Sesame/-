@@ -2,6 +2,7 @@
 # 매일 한 번 명조 게임 데이터(Arikatsu/WutheringWaves_Data)를 확인해
 # 앱에 없는 공명자가 생기면 chars-extra.json을 갱신하고 커밋합니다.
 # (Actions 탭 → "신규 공명자 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
+# ※ 이 파일은 반드시 저장소의 .github/workflows/ 폴더 안에 있어야 GitHub가 실행합니다.
 name: 신규 공명자 자동 갱신
 
 on:
@@ -39,13 +40,17 @@ jobs:
             /BinData/role_level/ /BinData/skill/skill.json /BinData/skill/skilllevel.json \
             /BinData/skillTree/skilltree.json /BinData/item/iteminfo.json \
             /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
+            /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
             /Textmaps/ko/multi_text/MultiText.json
           echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
           echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
           git log -1 --format='데이터: %s'
 
       - name: 신규 공명자 확인
-        run: python tools/update_chars.py gamedata Index.html chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
+        run: |
+          # 스크립트는 tools/ 폴더나 저장소 맨 위 어디에 있어도 됩니다
+          SCRIPT=tools/update_chars.py; [ -f "$SCRIPT" ] || SCRIPT=update_chars.py
+          python "$SCRIPT" gamedata Index.html chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
 
       - name: 바뀐 내용이 있으면 커밋
         run: |
