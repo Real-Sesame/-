@@ -2,7 +2,7 @@
 """
 띵조 AUTO TEAM MAKER — 명조 이벤트 · 픽업(이벤트 획득) 일정 자동 수집
 
-명조 공식 홈페이지 공지(한국어, 없으면 영어)를 읽어
+명조 공식 홈페이지 공지를 읽어 (영어 공지가 빠짐없이 올라와 기준으로 쓰고, 같은 일정이 한국어 공지(kr)에 있으면 이름을 한국어로 바꿈)
   · 픽업 공지: [배너 이름] … 5성 공명자/무기 … ✦기간✦ 시작 - 종료
   · 패치 노트 · 이벤트 예고: [이벤트 이름] … ✦기간: 시작 - 종료
   · 업데이트 점검 시간(버전 시작 시각)
@@ -24,6 +24,7 @@ UA = {'User-Agent': 'Mozilla/5.0 (ddingjo-atm events bot; +https://github.com/Re
 ap = argparse.ArgumentParser()
 ap.add_argument('data'); ap.add_argument('out')
 ap.add_argument('--from-dir', default='', help='테스트용: 내려받아 둔 기사 JSON 폴더')
+ap.add_argument('--from-dir-ko', default='', help='테스트용: 한국어 기사 JSON 폴더')
 ap.add_argument('--lang', default='ko,en')
 ap.add_argument('--now', default='', help='테스트용 기준 시각 (YYYY-MM-DD)')
 args = ap.parse_args()
@@ -112,9 +113,9 @@ def local_articles(d):
 
 
 # ---------------------------------------------------------------- 공지 해석
-DATE = r'\d{4}[-./]\d{1,2}[-./]\d{1,2}\s+\d{1,2}:\d{2}'
+DATE = r'(?:\d{4}[-./]\d{1,2}[-./]\d{1,2}|\d{4}년\s*\d{1,2}월\s*\d{1,2}일)\s*\d{1,2}:\d{2}'
 VERSION_START = r'(?:Version\s*|버전\s*|Ver\.?\s*)?(?P<v>\d+\.\d+)\s*(?:버전\s*)?(?:[Uu]pdate|업데이트)(?:\s*(?:후|이후|after))?'
-RANGE = re.compile(rf'(?:(?P<a>{DATE})|{VERSION_START})\s*(?:\(\s*(?:server time|서버 시간|UTC[+-]\d+)\s*\))?\s*[-~–—〜]\s*(?P<b>{DATE})(?P<tail>[^\n]{{0,30}})')
+RANGE = re.compile(rf'(?:(?P<a>{DATE})|{VERSION_START})\s*(?:\(\s*(?:server time|서버 시간|한국 시간|UTC[+-]\d+)\s*\))?\s*[-~–—〜]\s*(?P<b>{DATE})(?P<tail>[^\n]{{0,30}})')
 DUR = re.compile(r'(Duration|Event Period|Time|기간|일정|시간)', re.I)
 MAINT = re.compile(r'(Maintenance Time|점검 시간|업데이트 시간|업데이트 점검)', re.I)
 HEAD = re.compile(r'^\s*[\[【]([^\]】]{1,60})[\]】]\s*(.{0,70})$')
@@ -128,13 +129,21 @@ def lines_of(a):
     return [l.strip() for l in t.split('\n') if l.strip()]
 
 
+TZDEF = [8]  # 공지에 시간대가 없을 때: 영어 공지 = 서버 시간(아시아 UTC+8), 한국어 공지 = 한국 시간(UTC+9)
+
+
 def tz_of(s):
     m = re.search(r'UTC\s*([+-])\s*(\d{1,2})', s)
-    return (1 if m.group(1) == '+' else -1) * int(m.group(2)) if m else 8  # 서버 시간 = 아시아 서버 UTC+8
+    if m:
+        return (1 if m.group(1) == '+' else -1) * int(m.group(2))
+    if '한국 시간' in s or 'KST' in s:
+        return 9
+    return TZDEF[0]
 
 
 def iso(s, tz):
-    s = re.sub(r'[./]', '-', s.strip())
+    s = re.sub(r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*', r'\1-\2-\3 ', s.strip())
+    s = re.sub(r'[./]', '-', s)
     d = dt.datetime.strptime(re.sub(r'\s+', ' ', s), '%Y-%m-%d %H:%M')
     return d.replace(tzinfo=dt.timezone(dt.timedelta(hours=tz))).isoformat()
 
@@ -147,12 +156,11 @@ def parse_range(s):
     return {'s': iso(m.group('a'), tz) if m.group('a') else None, 'sv': None if m.group('a') else m.group('v'), 'e': iso(m.group('b'), tz)}
 
 
-items, versions = [], {}
 TRIED = {}  # 언어별로 읽은 결과(진단용)
 VER_IN_TITLE = re.compile(r'(?:Version|버전|Ver\.?|V)\s*(\d+\.\d+)|(\d+\.\d+)\s*버전', re.I)
 
 
-def handle(a):
+def handle(a, items, versions):
     title = (a.get('articleTitle') or '').strip(); aid = str(a.get('articleId'))
     L = lines_of(a)
     vm = VER_IN_TITLE.search(title); tver = (vm.group(1) or vm.group(2)) if vm else None
@@ -166,7 +174,7 @@ def handle(a):
             continue
         if not DUR.search(line):
             continue
-        seg = line if re.search(r'\d{4}[-./]\d', line) else (line + ' ' + (L[i + 1] if i + 1 < len(L) else ''))
+        seg = line if re.search(r'\d{4}(?:[-./]\d|년)', line) else (line + ' ' + (L[i + 1] if i + 1 < len(L) else ''))
         if re.search(r'(Permanent|상시|영구)', seg, re.I):
             continue
         r = parse_range(seg)
@@ -204,68 +212,117 @@ def handle(a):
             items.append({'k': 'event', 'n': name, 't': re.sub(r',?\s*(Coming Soon|is now underway|곧 오픈|오픈 예정).*$', '', kind_txt, flags=re.I).strip(' ,!'), **r, 'a': aid})
 
 
-langs = []
-for l in (l.strip() for l in args.lang.split(',') if l.strip()):
-    langs += ['ko', 'kr', 'ko-kr', 'ko-KR', 'kor'] if l == 'ko' else [l]  # 한국어 공지 폴더 이름 후보
-used, arts = None, []
-if args.from_dir:
-    arts = local_articles(args.from_dir); used = 'local'
-else:
-    for lang in langs:
-        try:
-            arts = fetch_articles(lang)
-            print(f'공지 {len(arts)}개 ({lang})')
-        except Exception as e:
-            print(f'공지 목록 실패 ({lang}): {e}', file=sys.stderr); arts = []
-            TRIED[lang] = {'error': str(e)[:200]}
-        if arts:
-            items.clear(); versions.clear()
-            for a in sorted(arts, key=lambda a: int(a.get('articleId') or 0)):
-                handle(a)
-            nb = sum(x['k'] in ('char', 'weapon') for x in items)
-            TRIED[lang] = {'articles': len(arts), 'banners': nb, 'events': sum(x['k'] == 'event' for x in items),
-                           'titles': [(a.get('articleTitle') or '')[:60] for a in sorted(arts, key=lambda a: -int(a.get('articleId') or 0))[:8]]}
-            if lang != 'en':  # 형식 확인용: 날짜가 든 줄 몇 개
-                smp = []
-                for a in sorted(arts, key=lambda a: -int(a.get('articleId') or 0)):
-                    if re.search(r'(튜닝|업데이트 내용)', a.get('articleTitle') or '') and len(smp) < 3:
-                        L = lines_of(a)
-                        smp.append([l[:110] for i, l in enumerate(L) if re.search(r'\d{4}|기간|\[', l) or (i and re.search(r'기간', L[i - 1]))][:40])
-                TRIED[lang]['sample'] = smp
-            if nb:
-                used = lang; break
-    if not used:
-        print('공지를 읽지 못해 기존 events.json을 그대로 둡니다.'); sys.exit(0)
-if used == 'local':
+def parse(arts, tz):
+    items, versions = [], {}; TZDEF[0] = tz
     for a in sorted(arts, key=lambda a: int(a.get('articleId') or 0)):
-        handle(a)
+        handle(a, items, versions)
+    for x in items:  # 버전 업데이트로 시작하는 일정에 시작 시각 채우기
+        if not x.get('s') and x.get('sv') and x['sv'] in versions:
+            x['s'] = versions[x['sv']]
+    return items, versions
 
-# 버전 업데이트로 시작하는 일정에 시작 시각 채우기 · 정리
-out, seen = [], {}
-cut = NOW - dt.timedelta(days=PAST_DAYS)
-for x in items:
-    if not x.get('s') and x.get('sv') and x['sv'] in versions:
-        x['s'] = versions[x['sv']]
-    e = dt.datetime.fromisoformat(x['e'])
-    if e < cut:
-        continue
-    if x.get('s') and dt.datetime.fromisoformat(x['s']) >= e:
-        continue
-    key = (x['k'], norm(x['n']), x['e'][:10])
-    if key in seen:
-        out[seen[key]] = {**out[seen[key]], **{k: v for k, v in x.items() if v}}
-        continue
-    seen[key] = len(out); out.append(x)
-for x in out:
-    if not x.get('sv'):
-        x.pop('sv', None)
-    x['url'] = NEWS.format(lang='en' if used == 'en' else 'ko', id=x['a'])
+
+def tidy(items, lang):
+    out, seen = [], {}
+    cut = NOW - dt.timedelta(days=PAST_DAYS)
+    for x in items:
+        e = dt.datetime.fromisoformat(x['e'])
+        if e < cut or (x.get('s') and dt.datetime.fromisoformat(x['s']) >= e):
+            continue
+        key = (x['k'], norm(x['n']), x['e'][:10])
+        if key in seen:
+            out[seen[key]] = {**out[seen[key]], **{k: v for k, v in x.items() if v}}
+            continue
+        seen[key] = len(out); out.append(x)
+    for x in out:
+        if not x.get('sv'):
+            x.pop('sv', None)
+        x.setdefault('url', NEWS.format(lang=lang, id=x['a']))
+    return out
+
+
+T = lambda x: dt.datetime.fromisoformat(x).timestamp() if x else None
+near = lambda a, b: a is not None and b is not None and abs(a - b) <= 120  # 같은 시각(초 단위, 2분 오차)
+
+
+KIND_KW = [(r'login', r'출석'), (r'explor', r'탐색|탐사|탐험'), (r'combat|battle', r'전투'), (r'leisure|mini', r'미니|캐주얼'), (r'web', r'웹'),
+           (r'co-?op|multi', r'멀티|협력'), (r'photo', r'촬영|사진'), (r'fishing', r'낚시'), (r'resonator|character', r'캐릭터|공명자'), (r'weapon', r'무기')]
+
+
+def kind_score(a, b):
+    a, b = (a or '').lower(), b or ''
+    return sum(1 for e, k in KIND_KW if re.search(e, a) and re.search(k, b)) - sum(1 for e, k in KIND_KW if bool(re.search(e, a)) != bool(re.search(k, b)))
+
+
+def korean_overlay(base, ko):
+    """영어 공지로 만든 일정에, 같은 일정(종류 · 시작/종료 시각 · 픽업 대상이 같음)이 한국어 공지에 있으면 이름을 한국어로.
+       한국어 일정 하나는 한 번만 쓰고, 시각이 같은 후보가 여럿이면 이벤트 종류(출석 · 탐색 · 전투 …)가 맞는 쪽을 고름"""
+    pairs = []
+    for xi, x in enumerate(base):
+        if x['k'] == 'maint':
+            continue
+        for yi, y in enumerate(ko):
+            if y['k'] != x['k'] or not near(T(x['e']), T(y['e'])):
+                continue
+            if x['k'] in ('char', 'weapon'):
+                if not set(x.get('f5', [])) & set(y.get('f5', [])):
+                    continue
+                sc = 10
+            else:
+                same_start = near(T(x.get('s')), T(y.get('s'))) or (x.get('sv') and x.get('sv') == y.get('sv'))
+                if not same_start:
+                    continue
+                sc = 5 + kind_score(x.get('t'), y.get('t'))
+            pairs.append((sc, xi, yi))
+    used_x, used_y, hit = set(), set(), 0
+    for sc, xi, yi in sorted(pairs, reverse=True):
+        if xi in used_x or yi in used_y or sc < 4:
+            continue
+        x, y = base[xi], ko[yi]
+        x['n'], x['t'] = y['n'], y.get('t') or x.get('t'); x['ko'] = 1
+        if y.get('url'):
+            x['url'] = y['url']
+        used_x.add(xi); used_y.add(yi); hit += 1
+    return hit
+
+
+used = None
+if args.from_dir:
+    arts = local_articles(args.from_dir)
+    items, versions = parse(arts, 8); used = 'local'; out = tidy(items, 'en')
+    if args.from_dir_ko:
+        ko_items = tidy(parse(local_articles(args.from_dir_ko), 9)[0], 'kr')
+        print('한국어 일정', len(ko_items), '· 이름 바꿈', korean_overlay(out, ko_items))
+else:
+    got = {}
+    for lang in [l.strip() for l in args.lang.split(',') if l.strip()]:
+        cands = ['kr', 'ko'] if lang in ('ko', 'kr') else [lang]  # 한국어 공지 폴더는 kr
+        for code in cands:
+            try:
+                arts = fetch_articles(code)
+            except Exception as e:
+                TRIED[code] = {'error': str(e)[:120]}; continue
+            items, versions = parse(arts, 9 if code in ('kr', 'ko') else 8)
+            TRIED[code] = {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in items), 'events': sum(x['k'] == 'event' for x in items)}
+            print(f'공지 {len(arts)}개 ({code}) · 픽업 {TRIED[code]["banners"]} · 이벤트 {TRIED[code]["events"]}')
+            got['ko' if code in ('kr', 'ko') else code] = (items, versions, code); break
+    # 영어 공지가 가장 빠짐없이 올라오므로 기준으로 쓰고, 한국어 공지에 같은 일정이 있으면 이름을 한국어로 바꿈
+    base_lang = 'en' if 'en' in got and TRIED[got['en'][2]]['banners'] else ('ko' if 'ko' in got and TRIED[got['ko'][2]]['banners'] else None)
+    if not base_lang:
+        print('공지를 읽지 못해 기존 events.json을 그대로 둡니다.'); sys.exit(0)
+    items, versions, code = got[base_lang]
+    out = tidy(items, 'en' if base_lang == 'en' else 'kr')
+    used = base_lang
+    if base_lang == 'en' and 'ko' in got:
+        ko_items = tidy(got['ko'][0], 'kr')
+        n = korean_overlay(out, ko_items); used = 'en+ko'
+        print(f'한국어 이름으로 바꾼 일정: {n}개')
 out.sort(key=lambda x: (x.get('s') or x['e'], x['k']))
 names = {f'{k}:{i}': n for (k, i), n in KO_NAME.items() if n and any(i in (x.get('f5', []) + x.get('f4', [])) for x in out)}
 
 doc = {'schema': 1, 'src': 'wutheringwaves.kurogames.com', 'lang': used, 'tz': 'UTC+8 (아시아 서버 기준)', 'versions': versions,
        'names': names, 'items': out,
-       'stats': {'articles': len(arts), 'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out)}, 'diag': TRIED}
+       'stats': {'banners': sum(x['k'] in ('char', 'weapon') for x in out), 'events': sum(x['k'] == 'event' for x in out), 'read': TRIED}}
 old = None
 if os.path.exists(args.out):
     try:

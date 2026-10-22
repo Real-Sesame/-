@@ -2809,7 +2809,7 @@ function renderCalendar() {
   $$('#cal-view button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === view));
   $('#cal-past').checked = past;
   const st = $('#cal-status');
-  st.innerHTML = EVENTS ? `${eventsStatus === 'live' ? '최신 일정' : '저장된 일정'} · ${EVENTS.updated ? new Date(EVENTS.updated).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : ''} · 출처 <a href="https://wutheringwaves.kurogames.com/${EVENTS.lang === 'en' ? 'en' : 'ko'}/main/news/" target="_blank" rel="noopener">명조 공식 공지</a>${EVENTS.lang === 'en' ? ' (한국어 공지를 못 읽어 영어 공지 사용)' : ''}`
+  st.innerHTML = EVENTS ? `${eventsStatus === 'live' ? '최신 일정' : '저장된 일정'} · ${EVENTS.updated ? new Date(EVENTS.updated).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : ''} · 출처 <a href="https://wutheringwaves.kurogames.com/${EVENTS.lang === 'en' ? 'en' : 'kr'}/main/news/" target="_blank" rel="noopener">명조 공식 공지</a>${EVENTS.lang === 'en' ? ' (한국어 공지를 못 읽어 영어 공지 사용)' : EVENTS.lang === 'en+ko' ? ' · 한국어 공지에 없는 일정은 영어 이름으로 표시' : ''}`
     : eventsStatus === 'fail' || location.protocol === 'file:' ? '일정 파일을 불러오지 못했습니다. GitHub Pages 주소로 열면 자동으로 받아 옵니다.' : '일정을 불러오는 중…';
   const items = calItems(); const now = Date.now();
   const body = $('#cal-body');
