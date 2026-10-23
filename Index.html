@@ -328,29 +328,6 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
 .pv > .chip { grid-area: c; } .pv-team { grid-area: t; } .pv > .btn { grid-area: b; }
 .pv-info { grid-area: i; min-width: 0; font-size: 13px; }
 
-/* 하위 탭 (추천 조합) */
-.subtabs { margin-bottom: 14px; }
-.subtabs button { padding: 8px 16px; font-size: 14px; }
-/* 캐릭터별 추천 무기 */
-.pw-row img { width: 40px; height: 40px; border-radius: 8px; background: var(--line); flex: 0 0 auto; }
-.pw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
-.pw-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
-.pw-card.missing .pw-head .portrait { opacity: .45; filter: grayscale(1); }
-.pw-head { display: grid; grid-template-columns: 48px 1fr; gap: 10px; align-items: center; }
-.pw-head .portrait { width: 48px; border-radius: 10px; }
-.pw-head h3 { margin: 0; font-size: 16px; }
-.pw-sec { display: grid; gap: 6px; }
-.pw-sec > .pw-h { font-size: 12px; font-weight: 700; color: var(--muted); }
-.pw-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
-.pw-row.main { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.pw-row .nm { font-weight: 600; font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
-.pw-row .nm b.r5 { color: var(--r5); } .pw-row .nm b.r4 { color: var(--r4); }
-.pw-row .sub { font-size: 12px; color: var(--muted); }
-.pw-row .pct { text-align: right; font-size: 13px; white-space: nowrap; }
-.pw-row .pct .btn { margin-top: 3px; }
-.pw-row .pct .up { color: var(--good); } .pw-row .pct .down { color: var(--bad); }
-.pw-row.cur { outline: 2px dashed var(--good); outline-offset: -2px; }
-@media (max-width: 420px) { .pw-grid { grid-template-columns: 1fr; } }
 /* 육성 계산 */
 .grow-layout { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 16px; align-items: start; }
 @media (max-width: 860px) { .grow-layout { grid-template-columns: 1fr; } }
@@ -552,24 +529,8 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
 
   <!-- 추천 조합 -->
   <section data-panel="presets" hidden>
-    <div class="subtabs seg" id="preset-mode" role="tablist" aria-label="추천 종류"><button data-v="teams" role="tab">추천 조합</button><button data-v="weapons" role="tab">추천 무기</button></div>
-    <div id="preset-teams">
     <div class="filters" id="preset-filter"></div>
     <div class="preset-grid" id="preset-grid"></div>
-    </div>
-    <div id="preset-weapons" hidden>
-      <div class="card" style="margin-bottom:16px">
-        <h2>캐릭터별 추천 무기</h2>
-        <p class="desc">추천 무기는 캐릭터의 전용(기본) 무기입니다. 대체 무기는 같은 종류의 5성 · 4성 무기를 하나씩 쥐여 그 캐릭터가 들어간 추천 조합(없으면 단독)의 1사이클 피해를 계산해 순위를 매겼고, 오른쪽 %는 <b>전용 무기 대비 피해 차이</b>입니다(예: -4.8%는 전용 무기보다 피해가 4.8% 적음). 5성은 1재련, 4성은 5재련 기준입니다. 파티 전체에 버프를 주는 무기는 전용 무기보다 높게 나올 수 있고, 공명 효율 · 회복량처럼 피해로 나타나지 않는 효과는 반영되지 않습니다(서포터는 차이가 작거나 다르게 나올 수 있습니다). 보유 캐릭터는 "장착"을 누르면 그 무기로 편성을 계산합니다.</p>
-        <div class="toolbar" style="margin:0">
-          <div class="filters" id="pw-filter" style="margin:0"></div>
-          <label class="chk"><input type="checkbox" id="pw-own"> 보유 캐릭터만</label>
-          <input class="search" type="search" id="pw-q" placeholder="이름 · 무기 검색" aria-label="캐릭터 이름이나 무기 이름 검색" style="min-width:0;flex:0 1 200px">
-          <span class="note num" id="pw-prog" role="status"></span>
-        </div>
-      </div>
-      <div class="pw-grid" id="pw-grid"></div>
-    </div>
   </section>
 
   <section data-panel="timeline" hidden>
@@ -623,7 +584,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
       <nav class="help-toc card" aria-label="사용 설명 목차">
         <b>목차</b>
         <a href="#h-start">처음 시작하기</a><a href="#h-build">역경의 탑 편성</a><a href="#h-cfg">캐릭터 설정 · 에코 · 내 스탯</a>
-        <a href="#h-lic">라이선스 인증</a><a href="#h-solo">1~3층 단일 캐릭터</a><a href="#h-cycle">딜 사이클 보기</a><a href="#h-grow">육성 계산</a><a href="#h-gacha">추천 무기 · 편성 이미지</a><a href="#h-field">필드 파티 · 추천 조합</a>
+        <a href="#h-lic">라이선스 인증</a><a href="#h-solo">1~3층 단일 캐릭터</a><a href="#h-cycle">딜 사이클 보기</a><a href="#h-grow">육성 계산</a><a href="#h-gacha">새 공명자 · 편성 이미지</a><a href="#h-field">필드 파티 · 추천 조합</a>
         <a href="#h-tower">역경의 탑 정보</a><a href="#h-data">저장 · 백업</a><a href="#h-calc">계산 방식과 한계</a><a href="#h-faq">자주 묻는 질문</a>
       </nav>
       <div class="help-body">
@@ -686,9 +647,8 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
             <li><b>솔라리스 랭크</b>를 고르면 보스·단조 도전·주간 보스·시뮬레이션 훈련을 몇 번 돌아야 하는지와 필요한 결정 웨이브 플레이트, 자연 회복 기준 일수를 보여 줍니다. 몬스터 재료와 지역 특산물은 필드에서 얻으므로 플레이트 계산에서 뺍니다.</li>
             <li>1회 획득량은 추정 기본값입니다. 게임 보상 화면에서 본 숫자로 고치면 그 값으로 계산되고 저장됩니다.</li>
           </ul></article>
-        <article class="card" id="h-gacha"><h2>추천 무기 · 새 공명자 · 편성 이미지</h2>
+        <article class="card" id="h-gacha"><h2>새 공명자 · 편성 이미지</h2>
           <ul class="prose">
-            <li><b>추천 무기</b>: 추천 조합 탭의 "추천 무기"에서 캐릭터마다 추천(전용) 무기와 5성 · 4성 대체 무기, 전용 무기 대비 피해 차이를 볼 수 있습니다. 보유 캐릭터는 "장착"으로 바로 그 무기를 쓰게 할 수 있습니다.</li>
             <li><b>새 공명자 자동 추가</b>: GitHub Pages 주소로 열면 게임 업데이트로 생긴 새 공명자가 자동으로 목록에 들어옵니다(매일 확인). 역할·버프는 공식 태그와 반주 설명으로 추정한 값이라 "자동 추가 · 추정" 표시가 붙습니다. 보유 캐릭터 탭 위쪽에서 확인 상태를 볼 수 있습니다.</li>
             <li><b>편성 이미지 저장</b>: 역경의 탑 편성 탭의 버튼(또는 공유 창)을 누르면 파티별 초상화·피해량이 들어간 이미지가 저장됩니다.</li>
           </ul></article>
@@ -2286,11 +2246,11 @@ function deactivateLicense() {
    ===================================================================== */
 const APP_VERSION = '1.0.14';
 const PATCH_NOTES = /*PATCH_NOTES_START*/[
-  { v: '1.0.14', d: '2026-10-23', s: '"뽑기 추천" 탭과 "이벤트 일정" 탭을 없애 화면을 간단하게 정리했습니다.',
+  { v: '1.0.14', d: '2026-10-23', s: '"뽑기 추천" 탭, "이벤트 일정" 탭, 추천 조합의 "추천 무기"를 없애 화면을 간단하게 정리했습니다.',
     g: [
       { h: '정리', i: [
         '"뽑기 추천" 탭(캐릭터 추천 · 전용 무기 추천)과 "이벤트 일정" 탭을 없앴습니다.',
-        '추천 조합 탭의 "추천 무기"(캐릭터별 추천 · 대체 무기와 전용 무기 대비 피해 차이)는 그대로 있습니다.',
+        '추천 조합 탭의 "추천 무기"(캐릭터별 추천 · 대체 무기)를 없애고, 추천 조합 탭을 원래 조합 목록만 보이도록 되돌렸습니다. 캐릭터별 무기 설정은 지금처럼 캐릭터 설정 창에서 바꿀 수 있습니다.',
         '새 공명자 자동 확인 상태는 보유 캐릭터 탭 위쪽에 표시됩니다.'] }
     ] },
   { v: '1.0.13', d: '2026-10-22', s: '"이벤트 일정" 탭을 새로 만들고, 뽑기 추천을 캐릭터 / 전용 무기로 나눴으며, 추천 조합 탭에 캐릭터별 추천 무기를 넣었습니다.',
@@ -3349,10 +3309,6 @@ function loadTeam(ids, pi) {
 
 /* ---------- 추천 조합 ---------- */
 function renderPresets() {
-  const pm0 = state.presetMode || 'teams';
-  $$('#preset-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === pm0));
-  $('#preset-teams').hidden = pm0 !== 'teams'; $('#preset-weapons').hidden = pm0 !== 'weapons';
-  if (pm0 === 'weapons') { renderPresetWeapons(); return; }
   const tags =[['all', '전체'], ['역경의 탑', '역경의 탑'], ['입문', '입문'], ['필드', '필드']];
   $('#preset-filter').innerHTML = tags.map(([k, n]) => `<button class="fbtn" data-pf="${k}" aria-pressed="${state.presetFilter === k}">${n}</button>`).join('');
   $$('#preset-filter .fbtn').forEach(b => b.addEventListener('click', () => { state.presetFilter = b.dataset.pf; renderPresets(); }));
@@ -3387,89 +3343,6 @@ function renderPresets() {
   }).join('');
   $$('#preset-grid [data-pvload]').forEach(b => b.addEventListener('click', () => { const [pid, i] = b.dataset.pvload.split(':'); const p = PRESETS.find(x => x.id === pid); const v = p.v.filter(v => v.m.every(id => CH[id]))[+i]; loadTeam(v.m.slice(), +$(`#pl-${p.id}`).value); }));
   $$('#preset-grid [data-pload]').forEach(b => b.addEventListener('click', () => { const p = PRESETS.find(x => x.id === b.dataset.pload); loadTeam(p.m.slice(), +$(`#pl-${p.id}`).value); }));
-}
-
-/* ---------- 캐릭터별 추천 무기 ----------
-   추천 무기 = 캐릭터 데이터의 전용(기본) 무기(w). 대체 무기는 같은 종류의 무기를 하나씩 쥐여
-   그 캐릭터가 들어간 첫 추천 조합(없으면 단독)의 1사이클 피해로 순위를 매깁니다.
-   5성은 1재련, 4성은 5재련. 사용자가 입력한 속성 화면 수치(무기 포함)는 비교에서 빼고 계산합니다. */
-function weaponRecTeam(c) {
-  const p = PRESETS.find(x => x.m.includes(c.id) && x.m.every(id => CH[id]));
-  if (p) return { ids: p.m.slice(), t: p.t };
-  const v = PRESETS.flatMap(x => (x.v || []).map(v => ({ ...v, t: x.t }))).find(v => v.m.includes(c.id) && v.m.every(id => CH[id]));
-  return v ? { ids: v.m.slice(), t: v.t + ' (대체)' } : { ids: [c.id, null, null], t: '' };
-}
-function weaponRecFor(c) {
-  if (!c.wt) return null;
-  const team = weaponRecTeam(c); const ctx = { ...ctxFor(null), zone: null };
-  const o = state.ov[c.id] || {}; const keep = { c: o.c, sl: o.sl, echo: o.echo, s: o.s, s2: o.s2 };
-  Object.keys(keep).forEach(k => keep[k] === undefined && delete keep[k]);
-  const dmg = wid => { const r = bestTeam(team.ids, { ...ctx, ov: { ...state.ov, [c.id]: { ...keep, w: wid } } }); return r && !r.invalid ? r.totalDmg : 0; };
-  const list = weaponsForType(c.wt).map(w => ({ id: w.id, q: w.q, d: dmg(w.id) }));
-  const sig = list.find(x => x.id === c.w) || (c.w && RAW_WEAPONS[c.w] ? { id: c.w, q: RAW_WEAPONS[c.w].q, d: dmg(c.w) } : null);
-  const ref = sig && sig.d ? sig.d : Math.max(...list.map(x => x.d), 1);
-  const by = arr => arr.sort((a, b) => b.d - a.d || b.q - a.q);
-  const alt5 = by(list.filter(x => x.q === 5 && x.id !== c.w)).slice(0, 3);
-  let alt4 = by(list.filter(x => x.q === 4 && x.id !== c.w)).slice(0, 3);
-  if (c.w4 && c.w4 !== c.w && !alt4.some(x => x.id === c.w4)) { const x = list.find(y => y.id === c.w4); if (x) alt4 = by([...alt4.slice(0, 2), x]); }
-  const cur = o.w || (state.settings.weapon === 'sig' ? c.w : c.w4);
-  return { team, sig, ref, alt5, alt4, cur };
-}
-function pwRowHTML(c, x, rec, kind) {
-  const w = RAW_WEAPONS[x.id]; if (!w) return '';
-  const pct = rec.ref ? x.d / rec.ref * 100 : 0; const diff = pct - 100;
-  const chips = [];
-  if (kind === 'main') chips.push(`<span class="chip acc">${sigOwnerLabel(c)}</span>`);
-  if (isStdWeapon(x.id)) chips.push('<span class="chip">상설</span>');
-  if (x.id === c.w4 && kind !== 'main') chips.push('<span class="chip ok">추천 4성</span>');
-  if (x.id === rec.cur) chips.push('<span class="chip ok">사용 중</span>');
-  const diffTxt = kind === 'main' ? '<b class="num">기준</b><div class="muted num">피해 100%</div>' : `<b class="num ${diff >= -0.05 ? 'up' : 'down'}">${diff >= -0.05 ? '+' : ''}${Math.abs(diff) < 0.05 ? '0.0' : diff.toFixed(1)}%</b><div class="muted num">피해 ${pct.toFixed(1)}%</div>`;
-  return `<div class="pw-row ${kind === 'main' ? 'main' : ''} ${x.id === rec.cur ? 'cur' : ''}" title="${esc(w.d)}">${wIcon(x.id)}
-    <div style="min-width:0"><div class="nm"><b class="r${w.q}">★${w.q}</b> ${esc(w.n)} ${chips.join(' ')}</div><div class="sub">${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}% · 공격력 ${w.atk} · ${w.q === 5 ? '1재련' : '5재련'}</div></div>
-    <div class="pct">${diffTxt}${x.id !== rec.cur && state.owned.has(c.id) ? `<div><button class="btn sm" data-pwset="${c.id}:${x.id}">장착</button></div>` : ''}</div></div>`;
-}
-let pwRun = 0;
-async function renderPresetWeapons() {
-  const f = state.pwF || (state.pwF = { el: 'all', own: false, q: '' });
-  const els = [['all', '전체'], ...Object.entries(EL).map(([k, v]) => [k, v.n])];
-  $('#pw-filter').innerHTML = els.map(([k, n]) => `<button class="fbtn" data-pwel="${k}" aria-pressed="${f.el === k}">${esc(n)}</button>`).join('');
-  $$('#pw-filter .fbtn').forEach(b => b.addEventListener('click', () => { f.el = b.dataset.pwel; renderPresetWeapons(); }));
-  $('#pw-own').checked = f.own; $('#pw-q').value = f.q;
-  const q = f.q.trim().replace(/\s/g, '');
-  const list = CHARS.filter(c => c.wt && c.w && RAW_WEAPONS[c.w] && (f.el === 'all' || c.el === f.el) && (!f.own || state.owned.has(c.id)))
-    .filter(c => !q || c.name.replace(/[\s·]/g, '').includes(q) || [c.w, c.w4].some(id => RAW_WEAPONS[id] && RAW_WEAPONS[id].n.replace(/\s/g, '').includes(q)));
-  const key = JSON.stringify([state.settings, state.ov, state.forced, CHARS.length]);
-  if (!state.pwCache || state.pwCache.key !== key) state.pwCache = { key, r: {} };
-  const C = state.pwCache.r; const run = ++pwRun;
-  const grid = $('#pw-grid');
-  if (!list.length) { grid.innerHTML = '<div class="card note">조건에 맞는 캐릭터가 없습니다.</div>'; $('#pw-prog').textContent = ''; return; }
-  const todo = list.filter(c => !C[c.id]);
-  for (let i = 0; i < todo.length; i++) {
-    if (run !== pwRun) return;
-    if (i % 6 === 0) { $('#pw-prog').textContent = `무기 비교 계산 중… ${i} / ${todo.length}`; await new Promise(r => setTimeout(r, 0)); }
-    try { C[todo[i].id] = weaponRecFor(todo[i]); } catch (e) { C[todo[i].id] = null; console.warn('추천 무기 계산 실패', todo[i].id, e); }
-  }
-  if (run !== pwRun) return;
-  $('#pw-prog').textContent = `${list.length}명`;
-  grid.innerHTML = list.map(c => {
-    const r = C[c.id]; if (!r || !r.sig) return '';
-    return `<article class="pw-card ${state.owned.has(c.id) ? '' : 'missing'}">
-      <div class="pw-head">${portraitHTML(c)}<div style="min-width:0"><h3>${esc(c.name)} ${autoChip(c)}</h3><div class="note">${elTag(c.el)} · ${WT[c.wt]} · ${ROLE_N[c.role]}${state.owned.has(c.id) ? '' : ' · 미보유'}</div>
-        <div class="note">비교 기준: ${r.team.t ? esc(r.team.t) : '단독'}${r.team.t ? ` <span class="muted">(${r.team.ids.filter(Boolean).map(id => esc(CH[id].name)).join(' · ')})</span>` : ''}</div></div></div>
-      <div class="pw-sec"><div class="pw-h">추천 무기</div>${pwRowHTML(c, r.sig, r, 'main')}</div>
-      ${r.alt5.length ? `<div class="pw-sec"><div class="pw-h">5성 대체 무기 <span class="muted">· 추천 무기 대비 피해 차이</span></div>${r.alt5.map(x => pwRowHTML(c, x, r, 'alt')).join('')}</div>` : ''}
-      ${r.alt4.length ? `<div class="pw-sec"><div class="pw-h">4성 대체 무기 <span class="muted">· 추천 무기 대비 피해 차이</span></div>${r.alt4.map(x => pwRowHTML(c, x, r, 'alt')).join('')}</div>` : ''}
-    </article>`; }).join('');
-  $$('#pw-grid [data-pwset]').forEach(b => b.addEventListener('click', () => {
-    const [cid, wid] = b.dataset.pwset.split(':'); const c = CH[cid]; const w = RAW_WEAPONS[wid];
-    state.ov[cid] = { ...(state.ov[cid] || {}), w: +wid, r: w.q === 5 ? 1 : 5 };
-    save(); toast(`${c.name}에게 ${w.n}을(를) 장착했습니다. 편성 계산에 반영됩니다.`); renderPresetWeapons();
-  }));
-}
-function bindPresetWeapons() {
-  $$('#preset-mode button').forEach(b => b.addEventListener('click', () => { state.presetMode = b.dataset.v; renderPresets(); }));
-  $('#pw-own').addEventListener('change', e => { (state.pwF || (state.pwF = { el: 'all', own: false, q: '' })).own = e.target.checked; renderPresetWeapons(); });
-  let t; $('#pw-q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { (state.pwF || (state.pwF = { el: 'all', own: false, q: '' })).q = e.target.value; renderPresetWeapons(); }, 200); });
 }
 
 /* ---------- 역경의 탑 정보 + 자동 갱신 ---------- */
@@ -3684,7 +3557,6 @@ function init() {
   $('#btn-optimize').addEventListener('click', () => { $('#btn-optimize').textContent = '계산 중…'; setTimeout(() => { optimize(); $('#btn-optimize').textContent = '자동 편성'; switchTab('tower-build'); }, 30); });
   bindShare();
   bindGrow();
-  bindPresetWeapons();
   $('#btn-img').addEventListener('click', savePartyImage);
   $('#share-img').addEventListener('click', () => { closeDlg('#dlg-share'); savePartyImage(); });
   $('#tl-sel').addEventListener('change', e => { state.tlSel = e.target.value; renderTimeline(); });
@@ -3725,10 +3597,6 @@ function init() {
   refreshTower(false);
 }
 
-
-/* 무기 표시용 보조 */
-const isStdWeapon = id => +id % 100 === 15; // 상설 5성(기원 · 무기 선택권)
-function sigOwnerLabel(c) { return c.q === 5 && !isStdWeapon(c.w) ? '전용' : '추천 5성'; }
 
 /* ---------- 편성 결과 이미지 저장 ---------- */
 function loadImg(src) { return new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
