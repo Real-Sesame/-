@@ -316,18 +316,6 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
   .tl-swap { grid-template-columns: 50px 1fr; }
 }
 .patch { display: grid; gap: 12px; }
-/* 뽑기 추천 */
-.gc { padding: 14px 16px; }
-.gc.top { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset, var(--shadow); }
-.gc-head { display: grid; grid-template-columns: 34px 56px 1fr auto; gap: 12px; align-items: center; }
-.gc-rank { font-size: 22px; font-weight: 700; color: var(--accent); text-align: center; }
-.gc-p .portrait { width: 56px; border-radius: 12px; }
-.gc-d { text-align: right; }
-.gc-d b { font-size: 22px; } .gc-d b.up, .gc-ch .up { color: var(--good); }
-.gc-new { color: var(--accent); }
-.gc-ch { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
-.gc-ch li { display: grid; grid-template-columns: 170px 1fr auto; gap: 10px; align-items: center; font-size: 13px; padding: 6px 10px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
-@media (max-width: 640px) { .gc-head { grid-template-columns: 26px 46px 1fr; } .gc-d { grid-column: 2 / -1; text-align: left; } .gc-p .portrait { width: 46px; } .gc-ch li { grid-template-columns: 1fr; gap: 2px; } }
 /* 추천 조합 대체안 */
 .pv-list { border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 10px; display: grid; gap: 8px; }
 .pv-h { font-size: 13px; font-weight: 700; }
@@ -340,20 +328,11 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
 .pv > .chip { grid-area: c; } .pv-team { grid-area: t; } .pv > .btn { grid-area: b; }
 .pv-info { grid-area: i; min-width: 0; font-size: 13px; }
 
-/* 하위 탭 (뽑기 추천 · 추천 조합) */
+/* 하위 탭 (추천 조합) */
 .subtabs { margin-bottom: 14px; }
 .subtabs button { padding: 8px 16px; font-size: 14px; }
-/* 전용 무기 뽑기 추천 */
-.gw-owned { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
-.gw-owned:empty { display: none; }
-.gw-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 12px; }
-.gw-chip button { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; padding: 0 4px; }
-.gw-w { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.gw-w img, .pw-row img { width: 40px; height: 40px; border-radius: 8px; background: var(--line); flex: 0 0 auto; }
-.gw-for { display: inline-flex; align-items: center; gap: 6px; }
-.gw-for .portrait { width: 26px; border-radius: 6px; }
-.gw-others { margin: 6px 0 0; font-size: 12.5px; }
 /* 캐릭터별 추천 무기 */
+.pw-row img { width: 40px; height: 40px; border-radius: 8px; background: var(--line); flex: 0 0 auto; }
 .pw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
 .pw-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
 .pw-card.missing .pw-head .portrait { opacity: .45; filter: grayscale(1); }
@@ -372,41 +351,6 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
 .pw-row .pct .up { color: var(--good); } .pw-row .pct .down { color: var(--bad); }
 .pw-row.cur { outline: 2px dashed var(--good); outline-offset: -2px; }
 @media (max-width: 420px) { .pw-grid { grid-template-columns: 1fr; } }
-/* 이벤트 · 픽업 일정 */
-.cal-sec h3 { margin: 0 0 10px; font-size: 16px; }
-.cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.bn { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
-.bn.now { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.bn-top { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.bn h4 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
-.bn-f { display: flex; gap: 10px; flex-wrap: wrap; }
-.bn-m { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.bn-m .portrait, .bn-m img { width: 52px; height: 52px; border-radius: 10px; flex: 0 0 auto; background: var(--line); }
-.bn-m .portrait { height: auto; }
-.bn-m b { display: block; font-size: 14px; }
-.bn-time { font-size: 12.5px; color: var(--muted); }
-.bn-left { font-weight: 700; color: var(--accent-ink); }
-.ev-list { display: grid; gap: 6px; }
-.ev { display: grid; grid-template-columns: 8px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
-.ev .bar { width: 8px; align-self: stretch; border-radius: 4px; background: var(--k, var(--muted)); }
-.ev .t { min-width: 0; } .ev .t b { overflow-wrap: anywhere; } .ev .r { text-align: right; font-size: 12.5px; white-space: nowrap; }
-.ev.done { opacity: .55; }
-.cal-k-char { --k: #e8a33a; } .cal-k-weapon { --k: #b07de8; } .cal-k-event { --k: #3aa0e8; } .cal-k-tower { --k: #2fb380; } .cal-k-maint { --k: #8a93a3; }
-.mon-wrap { overflow-x: auto; }
-.mon-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.mon { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); min-width: 300px; }
-.mon > div { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 86px; padding: 4px; min-width: 0; font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
-.mon .dow { min-height: 0; text-align: center; font-weight: 700; color: var(--muted); padding: 4px 0; }
-.mon .dn { font-weight: 700; color: var(--muted); }
-.mon .out { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
-.mon .out .dn { opacity: .5; }
-.mon .today { box-shadow: 0 0 0 2px var(--accent) inset; }
-.mon .today .dn { color: var(--accent-ink); }
-.mon .chipx { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 4px; padding: 1px 4px; background: color-mix(in srgb, var(--k) 22%, transparent); border-left: 3px solid var(--k); color: var(--ink); }
-.mon .chipx.edge { font-weight: 700; }
-.cal-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 8px; }
-.cal-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--k); margin-right: 4px; vertical-align: -1px; }
-@media (max-width: 560px) { .mon > div { min-height: 64px; font-size: 10px; padding: 2px; } .mon .chipx { padding: 0 2px; } .cal-grid { grid-template-columns: 1fr; } }
 /* 육성 계산 */
 .grow-layout { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 16px; align-items: start; }
 @media (max-width: 860px) { .grow-layout { grid-template-columns: 1fr; } }
@@ -559,8 +503,6 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
       <button class="tab" role="tab" data-tab="presets">추천 조합</button>
       <button class="tab" role="tab" data-tab="timeline">딜 사이클</button>
       <button class="tab" role="tab" data-tab="grow">육성 계산</button>
-      <button class="tab" role="tab" data-tab="gacha">뽑기 추천</button>
-      <button class="tab" role="tab" data-tab="calendar">이벤트 일정</button>
       <button class="tab" role="tab" data-tab="tower-info">역경의 탑 정보</button>
       <button class="tab" role="tab" data-tab="roster">보유 캐릭터</button>
       <button class="tab" role="tab" data-tab="db">도감</button>
@@ -642,48 +584,6 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
     </div>
   </section>
 
-  <section data-panel="gacha" hidden>
-    <div class="subtabs seg" id="gacha-mode" role="tablist" aria-label="뽑기 추천 종류"><button data-v="char" role="tab">캐릭터 추천</button><button data-v="weapon" role="tab">전용 무기 추천</button></div>
-    <div id="gacha-char">
-    <div class="card" style="margin-bottom:16px">
-      <h2>다음에 뽑을 캐릭터 추천</h2>
-      <p class="desc">아직 없는 캐릭터를 한 명씩 보유 목록에 넣어 보고, 역경의 탑 자동 편성을 다시 돌렸을 때 파티 합산 1사이클 피해가 얼마나 오르는지 순위를 매깁니다. 새 캐릭터는 0체인·설정의 기본 무기 기준이고, 고정한 파티도 다시 짜서 비교합니다.</p>
-      <div class="toolbar" style="margin:0">
-        <span><span class="lbl">등급</span><span class="seg" id="gacha-q"><button data-v="5">5성</button><button data-v="4">4성</button><button data-v="all">전체</button></span></span>
-        <label class="chk"><input type="checkbox" id="gacha-up"> 출시 예정 캐릭터 포함</label>
-        <span class="note num" id="gacha-prog" role="status"></span>
-      </div>
-    </div>
-    <p class="note" id="gacha-extra" style="margin:-6px 2px 12px"></p>
-    <div class="stack" id="gacha-out"></div>
-    </div>
-    <div id="gacha-weapon" hidden>
-    <div class="card" style="margin-bottom:16px">
-      <h2>다음에 뽑을 전용 무기 추천</h2>
-      <p class="desc">보유 캐릭터에게 전용 5성 무기를 하나씩 쥐여 보고, 역경의 탑 자동 편성을 다시 돌렸을 때 파티 합산 1사이클 피해가 얼마나 오르는지 순위를 매깁니다. 무기를 따로 정하지 않은 캐릭터는 지금 4성 대체 무기를 쥔 것으로 보고 비교합니다(설정의 기본 무기와 상관없이). 새 무기는 1재련 기준이고, 고정한 파티도 다시 짜서 비교합니다.</p>
-      <div class="toolbar" style="margin:0">
-        <span class="note num" id="gachaw-prog" role="status"></span>
-      </div>
-      <div id="gachaw-owned" class="gw-owned"></div>
-    </div>
-    <div class="stack" id="gachaw-out"></div>
-    </div>
-  </section>
-
-  <!-- 이벤트 · 픽업 일정 -->
-  <section data-panel="calendar" hidden>
-    <div class="card" style="margin-bottom:16px">
-      <h2>명조 이벤트 · 픽업 일정</h2>
-      <p class="desc">명조 공식 홈페이지 공지(픽업 공지 · 패치 노트 · 이벤트 예고)를 GitHub Actions가 몇 시간마다 읽어 자동으로 갱신합니다. 시간은 아시아 서버 기준을 이 기기의 시간대(한국 시간)로 바꿔 보여 줍니다.</p>
-      <div class="toolbar" style="margin:0">
-        <span class="seg" id="cal-view"><button data-v="list">목록</button><button data-v="month">달력</button></span>
-        <label class="chk"><input type="checkbox" id="cal-past"> 끝난 일정도 보기</label>
-        <span class="note" id="cal-status" role="status"></span>
-      </div>
-    </div>
-    <div id="cal-body" class="stack"></div>
-  </section>
-
   <!-- 역경의 탑 정보 -->
   <section data-panel="tower-info" hidden>
     <div class="season-strip" id="info-season"></div>
@@ -698,6 +598,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
     <div class="card">
       <h2>보유 캐릭터</h2>
       <p class="desc">눌러서 보유/미보유를 바꾸세요. 보유한 캐릭터만 자동 편성에 들어갑니다. 설정은 이 브라우저에 저장됩니다.</p>
+      <p class="note" id="extra-status" style="margin:4px 0 10px"></p>
       <div class="toolbar">
         <button class="btn sm" id="own-all">전체 보유</button>
         <button class="btn sm" id="own-free">배포 캐릭터만</button>
@@ -722,7 +623,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
       <nav class="help-toc card" aria-label="사용 설명 목차">
         <b>목차</b>
         <a href="#h-start">처음 시작하기</a><a href="#h-build">역경의 탑 편성</a><a href="#h-cfg">캐릭터 설정 · 에코 · 내 스탯</a>
-        <a href="#h-lic">라이선스 인증</a><a href="#h-solo">1~3층 단일 캐릭터</a><a href="#h-cycle">딜 사이클 보기</a><a href="#h-grow">육성 계산</a><a href="#h-gacha">뽑기 추천 · 무기 · 일정</a><a href="#h-field">필드 파티 · 추천 조합</a>
+        <a href="#h-lic">라이선스 인증</a><a href="#h-solo">1~3층 단일 캐릭터</a><a href="#h-cycle">딜 사이클 보기</a><a href="#h-grow">육성 계산</a><a href="#h-gacha">추천 무기 · 편성 이미지</a><a href="#h-field">필드 파티 · 추천 조합</a>
         <a href="#h-tower">역경의 탑 정보</a><a href="#h-data">저장 · 백업</a><a href="#h-calc">계산 방식과 한계</a><a href="#h-faq">자주 묻는 질문</a>
       </nav>
       <div class="help-body">
@@ -785,16 +686,11 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
             <li><b>솔라리스 랭크</b>를 고르면 보스·단조 도전·주간 보스·시뮬레이션 훈련을 몇 번 돌아야 하는지와 필요한 결정 웨이브 플레이트, 자연 회복 기준 일수를 보여 줍니다. 몬스터 재료와 지역 특산물은 필드에서 얻으므로 플레이트 계산에서 뺍니다.</li>
             <li>1회 획득량은 추정 기본값입니다. 게임 보상 화면에서 본 숫자로 고치면 그 값으로 계산되고 저장됩니다.</li>
           </ul></article>
-        <article class="card" id="h-gacha"><h2>뽑기 추천 · 추천 무기 · 이벤트 일정 · 편성 이미지</h2>
+        <article class="card" id="h-gacha"><h2>추천 무기 · 새 공명자 · 편성 이미지</h2>
           <ul class="prose">
-            <li><b>뽑기 추천</b> 탭은 아직 없는 캐릭터를 한 명씩 보유 목록에 넣고 역경의 탑 자동 편성을 다시 돌려, 파티 합산 1사이클 피해가 몇 % 오르는지 순위로 보여 줍니다. 어떤 파티가 어떻게 바뀌는지(새 캐릭터는 노란색)도 함께 나옵니다.</li>
-            <li>새 캐릭터는 0체인·설정의 기본 무기로 계산합니다. 5성 / 4성 / 전체와 "출시 예정 캐릭터 포함"으로 범위를 고를 수 있습니다. 보유 캐릭터가 많을수록 계산에 몇 초~수십 초가 걸립니다.</li>
-            <li>뽑아도 지금 편성보다 나아지지 않는 캐릭터는 "변화 없음"으로 표시됩니다. 계산기 모델 기준이라 손맛·조작 편의는 반영되지 않습니다.</li>
-            <li><b>새 공명자 자동 추가</b>: GitHub Pages 주소로 열면 게임 업데이트로 생긴 새 공명자가 자동으로 목록에 들어옵니다(매일 확인). 역할·버프는 공식 태그와 반주 설명으로 추정한 값이라 "자동 추가 · 추정" 표시가 붙습니다. 뽑기 추천 탭 위쪽에서 확인 상태를 볼 수 있습니다.</li>
-            <li><b>편성 이미지 저장</b>: 역경의 탑 편성 탭의 버튼(또는 공유 창)을 누르면 파티별 초상화·피해량이 들어간 이미지가 저장됩니다. 휴대폰에서는 공유 창이 떠서 카톡·디스코드로 바로 보낼 수 있습니다.</li>
-            <li><b>전용 무기 추천</b>: 뽑기 추천 탭 위쪽의 "전용 무기 추천"을 누르면, 보유 캐릭터에게 전용 5성 무기를 하나씩 쥐여 봤을 때 탑 편성 피해가 몇 % 오르는지 순위로 보여 줍니다. 이미 가진 무기는 "이미 가지고 있어요"로 빼 주세요.</li>
-            <li><b>추천 무기</b>: 추천 조합 탭의 "추천 무기"에서 캐릭터마다 추천(전용) 무기와 5성 · 4성 대체 무기, 전용 무기 대비 피해 차이를 볼 수 있습니다.</li>
-            <li><b>이벤트 일정</b>: 공식 공지를 자동으로 읽어 진행 중 · 예정 픽업과 이벤트, 역경의 탑 시즌을 목록 · 달력으로 보여 줍니다(3시간마다 갱신, GitHub Pages 주소로 열었을 때).</li>
+            <li><b>추천 무기</b>: 추천 조합 탭의 "추천 무기"에서 캐릭터마다 추천(전용) 무기와 5성 · 4성 대체 무기, 전용 무기 대비 피해 차이를 볼 수 있습니다. 보유 캐릭터는 "장착"으로 바로 그 무기를 쓰게 할 수 있습니다.</li>
+            <li><b>새 공명자 자동 추가</b>: GitHub Pages 주소로 열면 게임 업데이트로 생긴 새 공명자가 자동으로 목록에 들어옵니다(매일 확인). 역할·버프는 공식 태그와 반주 설명으로 추정한 값이라 "자동 추가 · 추정" 표시가 붙습니다. 보유 캐릭터 탭 위쪽에서 확인 상태를 볼 수 있습니다.</li>
+            <li><b>편성 이미지 저장</b>: 역경의 탑 편성 탭의 버튼(또는 공유 창)을 누르면 파티별 초상화·피해량이 들어간 이미지가 저장됩니다.</li>
           </ul></article>
         <article class="card" id="h-field"><h2>필드 파티 · 추천 조합</h2>
           <ul class="prose">
@@ -2388,8 +2284,15 @@ function deactivateLicense() {
 /* =====================================================================
    버전 · 패치 노트 (수정할 때마다 맨 위에 추가하고 APP_VERSION을 올립니다)
    ===================================================================== */
-const APP_VERSION = '1.0.13';
+const APP_VERSION = '1.0.14';
 const PATCH_NOTES = /*PATCH_NOTES_START*/[
+  { v: '1.0.14', d: '2026-10-23', s: '"뽑기 추천" 탭과 "이벤트 일정" 탭을 없애 화면을 간단하게 정리했습니다.',
+    g: [
+      { h: '정리', i: [
+        '"뽑기 추천" 탭(캐릭터 추천 · 전용 무기 추천)과 "이벤트 일정" 탭을 없앴습니다.',
+        '추천 조합 탭의 "추천 무기"(캐릭터별 추천 · 대체 무기와 전용 무기 대비 피해 차이)는 그대로 있습니다.',
+        '새 공명자 자동 확인 상태는 보유 캐릭터 탭 위쪽에 표시됩니다.'] }
+    ] },
   { v: '1.0.13', d: '2026-10-22', s: '"이벤트 일정" 탭을 새로 만들고, 뽑기 추천을 캐릭터 / 전용 무기로 나눴으며, 추천 조합 탭에 캐릭터별 추천 무기를 넣었습니다.',
     g: [
       { h: '이벤트 일정 (새 탭)', i: [
@@ -2465,7 +2368,7 @@ const PATCH_NOTES = /*PATCH_NOTES_START*/[
         '예: 히유키 · 루실라 · 치사 1사이클 피해 777,583 → 845,766으로, 히유키 · 루실라 · 벨리나(806,733)보다 높게 나옵니다.'] },
       { h: '신규 공명자 자동 추가', i: [
         'GitHub 저장소의 자동 작업(GitHub Actions)이 매일 명조 게임 데이터를 확인해, 앱에 없는 공명자가 생기면 chars-extra.json을 갱신합니다.',
-        '사이트는 열릴 때 이 파일을 읽어 새 공명자를 보유 캐릭터 · 뽑기 추천 · 육성 계산 · 도감에 바로 추가합니다. 초상화, 속성 · 무기, 반주 스킬 원문, 공명 체인, 육성 재화는 게임 데이터 그대로입니다.',
+        '사이트는 열릴 때 이 파일을 읽어 새 공명자를 보유 캐릭터 · 육성 계산 · 도감에 바로 추가합니다. 초상화, 속성 · 무기, 반주 스킬 원문, 공명 체인, 육성 재화는 게임 데이터 그대로입니다.',
         '역할과 버프는 게임 공식 역할 태그(메인 딜러 · 생존 치료 · ○○ 피해 부스트 등)와 반주 스킬 설명으로 추정하며, "자동 추가 · 추정" 표시가 붙습니다. 정확한 수치는 다음 버전에서 직접 반영합니다.',
         '출시 전 미리 넣어 둔 릴리는 출시일(11/11)이 지나면 자동으로 출시 캐릭터로 바뀌고, 게임 데이터가 생기면 육성 재화 등이 연결됩니다.'] }
     ] },
@@ -2697,139 +2600,17 @@ async function refreshExtra() {
       const info = applyExtra(doc); if (!info) return;
       EXTRA_INFO = { ...info, added: [...((EXTRA_INFO && EXTRA_INFO.added) || []), ...info.added], merged: [...((EXTRA_INFO && EXTRA_INFO.merged) || []), ...info.merged] };
       const names = info.added.concat(info.merged).map(id => CH[id].name);
-      if (names.length) { state.gachaCache = null; toast(`게임 데이터 ${info.gameVer} 기준 새 공명자를 반영했습니다: ${names.join(', ')}`); switchTab(state.tab); }
+      if (names.length) { toast(`게임 데이터 ${info.gameVer} 기준 새 공명자를 반영했습니다: ${names.join(', ')}`); switchTab(state.tab); }
       else paintExtra();
       return;
     } catch (e) { /* 오프라인·파일 없음 → 내장 데이터만 사용 */ }
   }
 }
 function paintExtra() {
-  const el = $('#gacha-extra'); if (!el) return;
+  const el = $('#extra-status'); if (!el) return;
   const x = EXTRA_INFO; const auto = CHARS.filter(c => c.auto);
   el.innerHTML = x ? `신규 공명자 자동 확인: 게임 데이터 <b>${esc(x.gameVer || '-')}</b>${x.updated ? ` · ${esc(x.updated.slice(0, 10))} 갱신` : ''} · ${auto.length ? `자동 추가 ${auto.length}명 (${auto.map(c => esc(c.name)).join(', ')})` : '앱에 없는 공명자 없음'}`
     : '신규 공명자 자동 확인: GitHub Pages 주소로 열면 게임 업데이트 때 새 공명자가 자동으로 추가됩니다.';
-}
-/* ---------- 이벤트 · 픽업 일정 ----------
-   GitHub Actions(tools/update_events.py)가 명조 공식 공지를 읽어 events.json을 만들면 그 파일을 읽어 보여 줍니다.
-   역경의 탑 시즌(28일 주기)은 앱이 직접 계산해 함께 넣습니다. 마지막으로 받은 일정은 이 브라우저에 보관합니다. */
-const LS_EVENTS = 'ddingjo-atm-events';
-const EVENT_URLS = ['events.json', 'https://raw.githubusercontent.com/Real-Sesame/-/HEAD/events.json'];
-let EVENTS = (() => { try { const d = JSON.parse(lsGet(LS_EVENTS) || 'null'); return d && d.schema === 1 ? d : null; } catch (e) { return null; } })();
-let eventsStatus = EVENTS ? 'cache' : 'none';
-async function refreshEvents() {
-  for (const u of EVENT_URLS) {
-    if (location.protocol === 'file:' && !/^https:/.test(u)) continue;
-    try {
-      const res = await fetch(u + (u.includes('?') ? '&' : '?') + 'h=' + Math.floor(Date.now() / 18e5), { cache: 'no-cache' });
-      if (!res.ok) continue;
-      const txt = await res.text(); const d = JSON.parse(txt);
-      if (!d || d.schema !== 1 || !Array.isArray(d.items)) continue;
-      EVENTS = d; eventsStatus = 'live'; if (lsGet(LS_EVENTS) !== txt) lsSet(LS_EVENTS, txt);
-      if (state.tab === 'calendar') renderCalendar(); else if (state.tab === 'gacha') { state.gachaCache = null; state.gachaWCache = null; }
-      return;
-    } catch (e) { /* 오프라인 · 파일 없음 */ }
-  }
-  if (!EVENTS) eventsStatus = 'fail';
-  if (state.tab === 'calendar') renderCalendar();
-}
-const evT = x => x ? Date.parse(x) : NaN;
-const charByRid = rid => CHARS.find(c => c.rid === rid) || null;
-// 지금 픽업 중인 캐릭터(rid) · 무기(id)
-function featuredNow() {
-  const now = Date.now(); const r = { char: new Set(), weapon: new Set() };
-  ((EVENTS && EVENTS.items) || []).forEach(x => { if ((x.k === 'char' || x.k === 'weapon') && evT(x.s) <= now && now < evT(x.e)) (x.f5 || []).forEach(id => r[x.k].add(id)); });
-  return r;
-}
-const pickupChip = on => on ? '<span class="chip acc" title="지금 이벤트 획득(픽업) 중">지금 픽업</span>' : '';
-function calItems() {
-  const out = ((EVENTS && EVENTS.items) || []).filter(x => x && x.e && !isNaN(evT(x.e))).map(x => ({ ...x, S: isNaN(evT(x.s)) ? null : evT(x.s), E: evT(x.e) }));
-  // 역경의 탑 시즌: 지난 시즌 ~ 다음 시즌
-  const cur = seasonAt(Date.now());
-  [-1, 0, 1].forEach(k => { const z = seasonAt(cur.start + k * 28 * DAY + DAY); out.push({ k: 'tower', n: `역경의 탑 · 심경 구역 시즌 ${z.n}`, t: '28일 주기 (앱 계산)', S: z.start, E: z.end }); });
-  return out.sort((a, b) => (a.S ?? a.E) - (b.S ?? b.E) || a.E - b.E);
-}
-const CAL_K = { char: '캐릭터 픽업', weapon: '무기 픽업', event: '이벤트', tower: '역경의 탑', maint: '점검' };
-function fmtDT(t) { if (t == null || isNaN(t)) return '?'; const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
-function leftTxt(t) {
-  const ms = t - Date.now(); if (ms <= 0) return '종료';
-  const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 3600000);
-  return d ? `${d}일 ${h}시간 남음` : `${h}시간 ${Math.floor(ms % 3600000 / 60000)}분 남음`;
-}
-function untilTxt(t) { const ms = t - Date.now(); const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 3600000); return d ? `${d}일 ${h}시간 뒤 시작` : `${h}시간 뒤 시작`; }
-function featHTML(x, id, big) {
-  const N = (EVENTS && EVENTS.names) || {};
-  if (x.k === 'char') {
-    const c = charByRid(id); const nm = c ? c.name : (N['char:' + id] || '공명자 ' + id);
-    return big ? `<div class="bn-m">${c ? portraitHTML(c) : '<img alt="">'}<div><b>${esc(nm)}</b><span class="note">${c ? `${elTag(c.el)} · ${WT[c.wt] || ''}` : ''} ${c ? (state.owned.has(c.id) ? '<span class="chip ok">보유</span>' : '<span class="chip">미보유</span>') : ''}</span></div></div>` : esc(nm);
-  }
-  const w = RAW_WEAPONS[id]; const nm = w ? w.n : (N['weapon:' + id] || '무기 ' + id);
-  const users = CHARS.filter(c => c.w === id && c.q === 5).map(c => c.name);
-  return big ? `<div class="bn-m">${wIcon(id)}<div><b>${esc(nm)}</b><span class="note">${w ? WT[w.wt] : ''}${users.length ? ` · ${esc(users.join(', '))} 전용` : ''}</span></div></div>` : esc(nm);
-}
-function bannerHTML(x) {
-  const now = Date.now(); const on = (x.S ?? 0) <= now && now < x.E;
-  return `<article class="bn cal-k-${x.k} ${on ? 'now' : ''}">
-    <div class="bn-top"><span class="chip ${x.k === 'char' ? 'acc' : ''}">${CAL_K[x.k]}</span>${on ? '<span class="chip ok">진행 중</span>' : x.S && x.S > now ? '<span class="chip warn">예정</span>' : x.E <= now ? '<span class="chip">종료</span>' : ''}</div>
-    <h4>${/[가-힣]/.test(x.n) ? esc(x.n) : `${(x.f5 || []).map(id => featHTML(x, id, false)).join(' · ')} ${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝 <span class="muted" style="font-weight:500;font-size:12px">${esc(x.n)}</span>`}</h4>
-    <div class="bn-f">${(x.f5 || []).map(id => featHTML(x, id, true)).join('')}</div>
-    ${(x.f4 || []).length ? `<div class="note">4성 확률 UP: ${(x.f4 || []).map(id => featHTML(x, id, false)).join(', ')}</div>` : ''}
-    <div class="bn-time">${x.S ? fmtDT(x.S) : (x.sv ? x.sv + ' 버전 업데이트 후' : '?')} ~ ${fmtDT(x.E)} · <span class="bn-left">${on ? leftTxt(x.E) : x.S && x.S > now ? untilTxt(x.S) : '종료'}</span>${x.url ? ` · <a href="${esc(x.url)}" target="_blank" rel="noopener">공지</a>` : ''}</div>
-  </article>`;
-}
-function evRowHTML(x) {
-  const now = Date.now(); const on = (x.S ?? 0) <= now && now < x.E; const done = x.E <= now;
-  return `<div class="ev cal-k-${x.k} ${done ? 'done' : ''}"><span class="bar"></span>
-    <div class="t"><b>${esc(x.n)}</b> <span class="muted">${esc(x.t || CAL_K[x.k])}</span>${x.url ? ` <a class="note" href="${esc(x.url)}" target="_blank" rel="noopener">공지</a>` : ''}<div class="note">${x.S ? fmtDT(x.S) : (x.sv ? x.sv + ' 버전 업데이트 후' : '?')} ~ ${fmtDT(x.E)}</div></div>
-    <div class="r">${on ? `<span class="bn-left">${leftTxt(x.E)}</span>` : done ? '종료' : `<span class="muted">${untilTxt(x.S)}</span>`}</div></div>`;
-}
-function monthHTML(items) {
-  const base = new Date(); base.setDate(1); base.setMonth(base.getMonth() + (state.calMonth || 0)); base.setHours(0, 0, 0, 0);
-  const y = base.getFullYear(), m = base.getMonth();
-  const first = new Date(y, m, 1), start = new Date(y, m, 1 - first.getDay());
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const cells = [];
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i); const d0 = d.getTime(), d1 = d0 + DAY;
-    if (i >= 35 && d.getMonth() !== m) break;
-    const PR = { char: 0, weapon: 1, event: 2, tower: 3 };
-    const all = items.filter(x => (x.S ?? x.E - DAY) < d1 && x.E > d0 && x.k !== 'maint')
-      .sort((a, b) => PR[a.k] - PR[b.k] || ((b.S != null && b.S >= d0) - (a.S != null && a.S >= d0)) || a.E - b.E);
-    const MAXC = window.innerWidth < 560 ? 4 : 6; const hits = all.length > MAXC ? all.slice(0, MAXC - 1) : all; const more = all.length - hits.length;
-    cells.push(`<div class="${d.getMonth() !== m ? 'out' : ''} ${d0 === today.getTime() ? 'today' : ''}"><span class="dn">${d.getDate()}</span>${hits.map(x => {
-      const edge = (x.S != null && x.S >= d0 && x.S < d1) || (x.E > d0 && x.E <= d1);
-      const lbl = x.k === 'char' || x.k === 'weapon' ? (x.f5 || []).map(id => featHTML(x, id, false)).join('·') : x.n;
-      return `<span class="chipx cal-k-${x.k} ${edge ? 'edge' : ''}" title="${esc(x.n)} · ${fmtDT(x.S)} ~ ${fmtDT(x.E)}">${x.S != null && x.S >= d0 && x.S < d1 ? '▶ ' : ''}${lbl}${x.E > d0 && x.E <= d1 ? ' ◀' : ''}</span>`; }).join('')}${more > 0 ? `<span class="muted" title="${esc(all.slice(hits.length).map(x => x.n).join(', '))}">+${more}개 더</span>` : ''}</div>`);
-  }
-  return `<div class="card"><div class="mon-head"><button class="btn sm" data-calm="-1" aria-label="이전 달">‹ 이전</button><b>${y}년 ${m + 1}월</b><button class="btn sm" data-calm="1" aria-label="다음 달">다음 ›</button></div>
-    <div class="mon-wrap"><div class="mon">${['일', '월', '화', '수', '목', '금', '토'].map(d => `<div class="dow">${d}</div>`).join('')}${cells.join('')}</div></div>
-    <div class="cal-legend">${['char', 'weapon', 'event', 'tower'].map(k => `<span class="cal-k-${k}">${CAL_K[k]}</span>`).join('')}<span style="--k:transparent">▶ 시작 · ◀ 종료</span></div></div>`;
-}
-function renderCalendar() {
-  const view = state.calView || 'list'; const past = !!state.calPast;
-  $$('#cal-view button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === view));
-  $('#cal-past').checked = past;
-  const st = $('#cal-status');
-  st.innerHTML = EVENTS ? `${eventsStatus === 'live' ? '최신 일정' : '저장된 일정'} · ${EVENTS.updated ? new Date(EVENTS.updated).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : ''} · 출처 <a href="https://wutheringwaves.kurogames.com/${EVENTS.lang === 'en' ? 'en' : 'kr'}/main/news/" target="_blank" rel="noopener">명조 공식 공지</a>${EVENTS.lang === 'en' ? ' (한국어 공지를 못 읽어 영어 공지 사용)' : EVENTS.lang === 'en+ko' ? ' · 한국어 공지에 없는 일정은 영어 이름으로 표시' : ''}`
-    : eventsStatus === 'fail' || location.protocol === 'file:' ? '일정 파일을 불러오지 못했습니다. GitHub Pages 주소로 열면 자동으로 받아 옵니다.' : '일정을 불러오는 중…';
-  const items = calItems(); const now = Date.now();
-  const body = $('#cal-body');
-  if (view === 'month') { body.innerHTML = monthHTML(items); }
-  else {
-    const banners = items.filter(x => (x.k === 'char' || x.k === 'weapon') && (past || x.E > now));
-    const nowB = banners.filter(x => (x.S ?? 0) <= now && x.E > now), nextB = banners.filter(x => x.S && x.S > now), doneB = banners.filter(x => x.E <= now).reverse();
-    const evs = items.filter(x => x.k !== 'char' && x.k !== 'weapon' && (past || x.E > now));
-    const sec = (h, inner) => inner ? `<section class="cal-sec"><h3>${h}</h3>${inner}</section>` : '';
-    body.innerHTML = (EVENTS ? '' : '<div class="card note">픽업 · 이벤트 일정 파일이 아직 없습니다. 아래는 앱이 직접 계산한 역경의 탑 시즌입니다.</div>')
-      + sec('지금 진행 중인 픽업', nowB.length ? `<div class="cal-grid">${nowB.map(bannerHTML).join('')}</div>` : (EVENTS ? '<div class="card note">진행 중인 픽업 정보가 없습니다.</div>' : ''))
-      + sec('예정된 픽업', nextB.length ? `<div class="cal-grid">${nextB.map(bannerHTML).join('')}</div>` : '')
-      + sec('이벤트 · 역경의 탑', evs.length ? `<div class="ev-list">${evs.filter(x => x.E > now).concat(past ? evs.filter(x => x.E <= now).reverse() : []).map(evRowHTML).join('')}</div>` : '')
-      + (past ? sec('끝난 픽업', doneB.length ? `<div class="cal-grid">${doneB.map(bannerHTML).join('')}</div>` : '') : '');
-  }
-  $$('#cal-body [data-calm]').forEach(b => b.addEventListener('click', () => { state.calMonth = (state.calMonth || 0) + +b.dataset.calm; renderCalendar(); }));
-}
-function bindCalendar() {
-  $$('#cal-view button').forEach(b => b.addEventListener('click', () => { state.calView = b.dataset.v; state.calMonth = 0; renderCalendar(); }));
-  $('#cal-past').addEventListener('change', e => { state.calPast = e.target.checked; renderCalendar(); });
 }
 const autoChip = c => c && c.auto ? '<span class="chip warn" title="게임 데이터로 자동 추가 · 역할과 버프는 추정치">자동 추가 · 추정</span>' : '';
 
@@ -2852,7 +2633,7 @@ function load() {
     state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
     if (state.settings.rot === 25) state.settings.rot = 0; // 이전 버전 고정값 → 자동
     state.parties = (d.parties || []).filter(p => p && Array.isArray(p.ids)).map(p => ({ ...p, ids: p.ids.map(id => (id && CH[id]) ? id : null) }));
-    if (d.tab) state.tab = d.tab;
+    if (d.tab && document.querySelector(`#tabs .tab[data-tab="${d.tab}"]`)) state.tab = d.tab;
     state.guideHidden = !!d.guideHidden;
     if (d.grow) state.grow = d.grow; if (d.inv) state.inv = d.inv; if (d.growYield) state.growYield = d.growYield;
     return true;
@@ -3787,6 +3568,7 @@ function renderTowerInfo() {
 
 /* ---------- 보유 캐릭터 ---------- */
 function renderRoster() {
+  paintExtra();
   const filters = [['all', '전체'], ['5', '5성'], ['4', '4성'], ...Object.entries(EL).map(([k, v]) => [k, v.n]), ['main', '메인'], ['sub', '서브'], ['sup', '서포터']];
   $('#roster-filter').innerHTML = filters.map(([k, n]) => `<button class="fbtn" data-rf="${k}" aria-pressed="${state.rosterFilter === k}">${n}</button>`).join('');
   $$('#roster-filter .fbtn').forEach(b => b.addEventListener('click', () => { state.rosterFilter = b.dataset.rf; renderRoster(); }));
@@ -3868,7 +3650,7 @@ function switchTab(t) {
   state.tab = t;
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
-  ({ 'gacha': renderGacha, 'calendar': renderCalendar, 'grow': renderGrow, 'timeline': renderTimeline, 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
+  ({ 'grow': renderGrow, 'timeline': renderTimeline, 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
 }
 function copyText() {
@@ -3902,7 +3684,7 @@ function init() {
   $('#btn-optimize').addEventListener('click', () => { $('#btn-optimize').textContent = '계산 중…'; setTimeout(() => { optimize(); $('#btn-optimize').textContent = '자동 편성'; switchTab('tower-build'); }, 30); });
   bindShare();
   bindGrow();
-  bindGacha(); bindPresetWeapons(); bindCalendar();
+  bindPresetWeapons();
   $('#btn-img').addEventListener('click', savePartyImage);
   $('#share-img').addEventListener('click', () => { closeDlg('#dlg-share'); savePartyImage(); });
   $('#tl-sel').addEventListener('change', e => { state.tlSel = e.target.value; renderTimeline(); });
@@ -3944,154 +3726,9 @@ function init() {
 }
 
 
-/* ---------- 뽑기 추천: 한 명씩 추가했을 때 탑 편성 피해가 얼마나 오르는지 ---------- */
-const planTotal = parties => parties.reduce((a, p) => { const r = evalParty(p); return a + (r ? r.totalDmg : 0); }, 0);
-function gachaCandidates(f) {
-  return CHARS.filter(c => !state.owned.has(c.id) && !c.id.startsWith('rover_') && (f.q === 'all' || c.q === +f.q) && (f.up || !isUpcoming(c)));
-}
-let gachaRun = 0;
-async function runGacha() {
-  const f = state.gachaF || (state.gachaF = { q: '5', up: true });
-  const run = ++gachaRun; const box = $('#gacha-out');
-  const basePool = CHARS.filter(c => state.owned.has(c.id) && !isUpcoming(c)).map(c => c.id);
-  const key = JSON.stringify([basePool, f, state.settings, state.ov, state.forced, curSeason().n, CHARS.length]);
-  if (state.gachaCache && state.gachaCache.key === key) { box.innerHTML = state.gachaCache.html; $('#gacha-prog').textContent = state.gachaCache.prog; return; }
-  if (basePool.length < 3) { box.innerHTML = '<div class="card note">보유 캐릭터를 3명 이상 선택해 주세요.</div>'; return; }
-  const fresh = state.parties.map(p => ({ ...p, locked: false }));
-  const base = planParties(basePool, fresh); const baseT = planTotal(base);
-  const cands = gachaCandidates(f); const res = [];
-  for (let i = 0; i < cands.length; i++) {
-    if (run !== gachaRun) return;
-    $('#gacha-prog').textContent = `계산 중… ${i + 1} / ${cands.length} (${cands[i].name})`;
-    await new Promise(r => setTimeout(r, 0));
-    const c = cands[i]; const plan = planParties(basePool.concat(c.id), fresh); const t = planTotal(plan);
-    const changes = plan.map((p, j) => ({ j, before: base[j], after: p })).filter(x => !sameTeam(x.before.ids, x.after.ids) || x.before.ids.join() !== x.after.ids.join());
-    const better = t > baseT * 1.0005; // 뽑아도 지금 편성이 낫다면 그대로 두는 것으로 봄
-    res.push({ c, t: better ? t : baseT, d: better ? t / baseT - 1 : 0, plan, changes: better ? changes : [], used: better && plan.some(p => p.ids.includes(c.id)) });
-  }
-  if (run !== gachaRun) return;
-  res.sort((a, b) => b.d - a.d);
-  $('#gacha-prog').textContent = `기준: 지금 보유 캐릭터 ${basePool.length}명 · ${base.length}파티 합산 1사이클 피해 ${fmt(baseT)}`;
-  const nm = (ids, hi) => ids.filter(Boolean).map(id => id === hi ? `<b class="gc-new">${esc(CH[id].name)}</b>` : esc(CH[id].name)).join(' · ');
-  const FN = featuredNow();
-  box.innerHTML = res.length ? res.map((x, i) => {
-    const ch = x.changes.filter(y => evalParty(y.after) && evalParty(y.before));
-    return `<article class="card gc ${i < 3 && x.d > 0.001 ? 'top' : ''}">
-      <div class="gc-head"><span class="gc-rank num">${i + 1}</span><div class="gc-p">${portraitHTML(x.c)}</div>
-        <div style="min-width:0"><h3 style="margin:0">${esc(x.c.name)} ${x.c.q === 5 ? '<span class="chip">5성</span>' : '<span class="chip">4성</span>'} ${isUpcoming(x.c) ? `<span class="chip warn">${esc(releaseLabel(x.c))}</span>` : ''} ${autoChip(x.c)} ${pickupChip(FN.char.has(x.c.rid))}</h3>
-          <div class="note">${elTag(x.c.el)} · ${ROLE_N[x.c.role]}</div></div>
-        <div class="gc-d"><b class="num ${x.d > 0.001 ? 'up' : ''}">${x.d > 0.0005 ? '+' + (x.d * 100).toFixed(1) + '%' : '변화 없음'}</b><div class="note num">${fmt(x.t)}</div></div></div>
-      ${x.used && ch.length ? `<ul class="gc-ch">${ch.map(y => { const a = evalParty(y.after), b = evalParty(y.before); const sl = SLOT[y.after.slot];
-        return `<li><span class="muted">${y.j + 1}파티 · ${esc(sl.label)} ${esc(sl.fl)}</span><span>${nm(y.before.ids)} <b>→</b> ${nm(y.after.ids, x.c.id)}</span><span class="num ${a.totalDmg > b.totalDmg ? 'up' : ''}">${fmt(b.totalDmg)} → ${fmt(a.totalDmg)}</span></li>`; }).join('')}</ul>`
-        : '<p class="note" style="margin:6px 0 0">지금 보유 캐릭터로 짠 편성보다 나아지는 자리가 없습니다.</p>'}
-    </article>`; }).join('') : '<div class="card note">조건에 맞는 미보유 캐릭터가 없습니다.</div>';
-  state.gachaCache = { key, html: box.innerHTML, prog: $('#gacha-prog').textContent };
-}
-function renderGacha() {
-  const mode = state.gachaMode || 'char';
-  $$('#gacha-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === mode));
-  $('#gacha-char').hidden = mode !== 'char'; $('#gacha-weapon').hidden = mode !== 'weapon';
-  if (mode === 'weapon') { $('#gachaw-out').innerHTML = ''; $('#gachaw-prog').textContent = ''; paintGachaWOwned(); setTimeout(runGachaW, 30); return; }
-  const f = state.gachaF || (state.gachaF = { q: '5', up: true });
-  $$('#gacha-q button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === f.q));
-  $('#gacha-up').checked = !!f.up;
-  $('#gacha-out').innerHTML = ''; $('#gacha-prog').textContent = '';
-  paintExtra();
-  setTimeout(runGacha, 30);
-}
-function bindGacha() {
-  $$('#gacha-q button').forEach(b => b.addEventListener('click', () => { state.gachaF.q = b.dataset.v; renderGacha(); }));
-  $('#gacha-up').addEventListener('change', e => { state.gachaF.up = e.target.checked; renderGacha(); });
-  $$('#gacha-mode button').forEach(b => b.addEventListener('click', () => { state.gachaMode = b.dataset.v; save(); renderGacha(); }));
-}
-
-/* ---------- 전용 무기 뽑기 추천: 보유 캐릭터에게 전용 5성 무기를 쥐여 줬을 때 탑 편성 피해가 얼마나 오르는지 ----------
-   무기를 따로 정하지 않은 캐릭터는 4성 대체 무기(w4)를 쥔 것으로 보고 비교합니다.
-   같은 무기를 쓰는 캐릭터가 여럿이면(예: 뭇별의 교향곡) 가장 많이 오르는 캐릭터 기준으로 보여 줍니다. */
+/* 무기 표시용 보조 */
 const isStdWeapon = id => +id % 100 === 15; // 상설 5성(기원 · 무기 선택권)
 function sigOwnerLabel(c) { return c.q === 5 && !isStdWeapon(c.w) ? '전용' : '추천 5성'; }
-function gachaWBaseOv() {
-  const ov = {};
-  Object.entries(state.ov).forEach(([id, o]) => { ov[id] = { ...o }; });
-  CHARS.forEach(c => { if (!state.owned.has(c.id)) return; const o = ov[c.id] || (ov[c.id] = {}); if (!o.w && c.w4) { o.w = c.w4; delete o.r; } });
-  return ov;
-}
-function gachaWHas(c, baseOv) { return ((baseOv[c.id] || {}).w || c.w4) === c.w; }
-// 보유한 것으로 표시된 전용 무기 목록
-function paintGachaWOwned() {
-  const box = $('#gachaw-owned'); if (!box) return;
-  const own = CHARS.filter(c => state.owned.has(c.id) && c.w && RAW_WEAPONS[c.w] && RAW_WEAPONS[c.w].q === 5 && (state.ov[c.id] || {}).w === c.w);
-  box.innerHTML = own.length ? `<span class="muted">보유 중으로 표시:</span>${own.map(c => `<span class="gw-chip">${esc(RAW_WEAPONS[c.w].n)} <span class="muted">· ${esc(c.name)}</span><button data-gwun="${c.id}" aria-label="${esc(c.name)}의 ${esc(RAW_WEAPONS[c.w].n)} 보유 표시 해제" title="보유 표시 해제">×</button></span>`).join('')}` : '';
-  $$('#gachaw-owned [data-gwun]').forEach(b => b.addEventListener('click', () => {
-    const c = CH[b.dataset.gwun]; const o = { ...(state.ov[c.id] || {}) }; o.w = c.w4; delete o.r; state.ov[c.id] = o;
-    save(); toast(`${c.name}의 ${RAW_WEAPONS[c.w].n}을(를) 미보유로 바꿨습니다.`); renderGacha();
-  }));
-}
-let gachaWRun = 0;
-async function runGachaW() {
-  const run = ++gachaWRun; const box = $('#gachaw-out');
-  const basePool = CHARS.filter(c => state.owned.has(c.id) && !isUpcoming(c)).map(c => c.id);
-  const key = JSON.stringify(['w', basePool, state.settings, state.ov, state.forced, curSeason().n, CHARS.length]);
-  if (state.gachaWCache && state.gachaWCache.key === key) { box.innerHTML = state.gachaWCache.html; $('#gachaw-prog').textContent = state.gachaWCache.prog; bindGachaWOut(); return; }
-  if (basePool.length < 3) { box.innerHTML = '<div class="card note">보유 캐릭터를 3명 이상 선택해 주세요.</div>'; return; }
-  const baseOv = gachaWBaseOv();
-  // 무기별 후보 캐릭터 묶기 (이미 그 무기를 쥔 캐릭터가 있으면 보유한 무기로 봄)
-  const groups = new Map();
-  basePool.map(id => CH[id]).forEach(c => {
-    const w = RAW_WEAPONS[c.w]; if (!w || w.q !== 5) return;
-    if (!groups.has(c.w)) groups.set(c.w, { wid: c.w, chars: [], owned: false });
-    const g = groups.get(c.w); g.chars.push(c); if (gachaWHas(c, baseOv)) g.owned = true;
-  });
-  const cands = [...groups.values()].filter(g => !g.owned);
-  if (!cands.length) { box.innerHTML = '<div class="card note">보유 캐릭터의 전용 무기를 모두 가진 것으로 표시되어 있습니다.</div>'; $('#gachaw-prog').textContent = ''; return; }
-  const fresh = state.parties.map(p => ({ ...p, locked: false }));
-  const realOv = state.ov;
-  const planWith = ov => { state.ov = ov; try { const plan = planParties(basePool, fresh); return { plan, t: planTotal(plan) }; } finally { state.ov = realOv; } };
-  const evalWith = (ov, p) => { state.ov = ov; try { return evalParty(p); } finally { state.ov = realOv; } };
-  const base = planWith(baseOv);
-  const nTot = cands.reduce((a, g) => a + g.chars.length, 0); let done = 0; const res = [];
-  for (const g of cands) {
-    const tries = [];
-    for (const c of g.chars) {
-      if (run !== gachaWRun) return;
-      $('#gachaw-prog').textContent = `계산 중… ${++done} / ${nTot} (${RAW_WEAPONS[g.wid].n} → ${c.name})`;
-      await new Promise(r => setTimeout(r, 0));
-      const ov = { ...baseOv, [c.id]: { ...(baseOv[c.id] || {}), w: g.wid } }; delete ov[c.id].r;
-      const x = planWith(ov); tries.push({ c, ov, ...x });
-    }
-    tries.sort((a, b) => b.t - a.t); const best = tries[0];
-    const better = best.t > base.t * 1.0005;
-    const changes = better ? best.plan.map((p, j) => ({ j, before: base.plan[j], after: p })).filter(x => x.before.ids.join() !== x.after.ids.join() || x.after.ids.includes(best.c.id)) : [];
-    res.push({ g, best, d: better ? best.t / base.t - 1 : 0, t: better ? best.t : base.t, changes, others: tries.slice(1).map(x => ({ c: x.c, d: x.t > base.t * 1.0005 ? x.t / base.t - 1 : 0 })) });
-  }
-  if (run !== gachaWRun) return;
-  res.sort((a, b) => b.d - a.d);
-  $('#gachaw-prog').textContent = `기준: 보유 캐릭터 ${basePool.length}명 · 전용 무기 없이 ${base.plan.length}파티 합산 1사이클 피해 ${fmt(base.t)}`;
-  const nm = (ids, hi) => ids.filter(Boolean).map(id => id === hi ? `<b class="gc-new">${esc(CH[id].name)}</b>` : esc(CH[id].name)).join(' · ');
-  const FN = featuredNow();
-  box.innerHTML = res.map((x, i) => {
-    const w = RAW_WEAPONS[x.g.wid]; const c = x.best.c;
-    const ch = x.changes.map(y => ({ ...y, a: evalWith(x.best.ov, y.after), b: evalWith(baseOv, y.before) })).filter(y => y.a && y.b);
-    return `<article class="card gc ${i < 3 && x.d > 0.001 ? 'top' : ''}">
-      <div class="gc-head"><span class="gc-rank num">${i + 1}</span><div class="gc-p gw-w">${wIcon(x.g.wid)}</div>
-        <div style="min-width:0"><h3 style="margin:0">${esc(w.n)} <span class="chip">${WT[w.wt]}</span> ${isStdWeapon(x.g.wid) ? '<span class="chip">상설</span>' : ''} ${pickupChip(FN.weapon.has(x.g.wid))}</h3>
-          <div class="note gw-for">${portraitHTML(c)}<span>${esc(c.name)} ${sigOwnerLabel(c)} 무기 · 지금 ${esc((RAW_WEAPONS[(baseOv[c.id] || {}).w || c.w4] || {}).n || '4성 무기')} 대신</span></div></div>
-        <div class="gc-d"><b class="num ${x.d > 0.001 ? 'up' : ''}">${x.d > 0.0005 ? '+' + (x.d * 100).toFixed(1) + '%' : '변화 없음'}</b><div class="note num">${fmt(x.t)}</div></div></div>
-      ${ch.length && x.d > 0.0005 ? `<ul class="gc-ch">${ch.map(y => { const sl = SLOT[y.after.slot];
-        return `<li><span class="muted">${y.j + 1}파티 · ${esc(sl.label)} ${esc(sl.fl)}</span><span>${nm(y.before.ids)} <b>→</b> ${nm(y.after.ids, c.id)}</span><span class="num ${y.a.totalDmg > y.b.totalDmg ? 'up' : ''}">${fmt(y.b.totalDmg)} → ${fmt(y.a.totalDmg)}</span></li>`; }).join('')}</ul>`
-        : `<p class="note" style="margin:6px 0 0">${state.parties.length && !base.plan.some(p => p.ids.includes(c.id)) ? `${esc(c.name)}이(가) 지금 편성에 들어가지 않아 탑 피해는 그대로입니다.` : '탑 편성 피해가 거의 달라지지 않습니다.'}</p>`}
-      ${x.others.length ? `<p class="note gw-others">같은 무기를 쓰는 다른 보유 캐릭터: ${x.others.map(o => `${esc(o.c.name)} ${o.d > 0.0005 ? '+' + (o.d * 100).toFixed(1) + '%' : '변화 없음'}`).join(' · ')}</p>` : ''}
-      <div style="margin-top:8px"><button class="btn sm" data-gwown="${c.id}:${x.g.wid}">이미 가지고 있어요</button></div>
-    </article>`; }).join('');
-  state.gachaWCache = { key, html: box.innerHTML, prog: $('#gachaw-prog').textContent };
-  bindGachaWOut();
-}
-function bindGachaWOut() {
-  $$('#gachaw-out [data-gwown]').forEach(b => b.addEventListener('click', () => {
-    const [cid, wid] = b.dataset.gwown.split(':'); const c = CH[cid]; const o = { ...(state.ov[cid] || {}) }; o.w = +wid; o.r = 1; state.ov[cid] = o;
-    save(); toast(`${c.name}에게 ${RAW_WEAPONS[wid].n}을(를) 장착한 것으로 저장했습니다.`); renderGacha();
-  }));
-}
 
 /* ---------- 편성 결과 이미지 저장 ---------- */
 function loadImg(src) { return new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
@@ -4406,7 +4043,7 @@ async function downloadPatchedHTML() {
 function paintVersion() { const v = patchNotes()[0].v; const c = $('#ver-chip'); if (c) c.textContent = `Ver. ${v}`; }
 
 init();
-refreshExtra(); refreshEvents();
+refreshExtra();
 
 </script>
 </body>
