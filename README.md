@@ -31,6 +31,13 @@
 - `update-chars.yml`은 꼭 `.github/workflows/` 안에 있어야 합니다. 저장소 맨 위에 있으면 실행되지 않습니다(`update_chars.py`는 맨 위나 `tools/` 어디든 됩니다).
 - `.github` 폴더는 웹 업로드 화면에서 숨김 폴더라 끌어다 놓기가 안 될 수 있습니다. 그럴 땐 **Add file → Create new file**에 이름을 `.github/workflows/update-chars.yml`로 적고 내용을 붙여 넣으면 됩니다.
 
+## 사이트 구성 (Ver. 1.0.15~)
+
+- 주소 뒤 `#/…`로 화면이 바뀝니다: 홈 `#/`, 소개 `#/intro`, 공명자 가이드 `#/characters` · `#/character/<id>`, 파티 편성 `#/tools/<탭>`, 에코 계산기 `#/echo`, 튜닝 시뮬 `#/sim`, 자료실 `#/links`, 공지사항 `#/notice`.
+- 자료실 목록은 `Index.html`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
+- `assets/` : 캐릭터 카드 · 전신 · 픽업 배너 그림. `tools/build_assets.py`가 게임 UI 리소스 저장소(555me/Wuthering-Waves-GameAssets)에서 받아 만들고, 신규 공명자 자동 갱신 때 없는 그림만 새로 만듭니다.
+- `events.json` : 픽업 · 이벤트 · 버전 일정. `tools/update_events.py`(`.github/workflows/update-events.yml`)가 3시간마다 명조 공식 공지를 읽어 갱신합니다. 영어 공지를 기준으로 하고 한국어 공지에 같은 일정이 있으면 이름을 한국어로 바꾸며, 공지에 빠진 신규 배너는 게임 데이터의 튜닝 화면 정보로 채웁니다.
+
 ## 참고
 
 - 사용자 설정(보유 캐릭터, 파티, 라이선스 인증)은 각자 브라우저에만 저장됩니다.

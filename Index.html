@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>띵조 AUTO TEAM MAKER Ver. 1.0.12</title>
+<title>띵조 AUTO TEAM MAKER</title>
 <meta name="description" content="명조(Wuthering Waves) 역경의 탑·필드 파티 자동 편성과 1사이클 예상 피해 계산기">
-<meta name="theme-color" content="#05060b">
+<meta name="theme-color" content="#141413">
 <meta property="og:title" content="띵조 AUTO TEAM MAKER">
 <meta property="og:description" content="명조 파티 자동 편성 · 1사이클 예상 피해 · 딜 사이클 타임라인">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305060b'/%3E%3Cpath d='M32 8l6 18 18 6-18 6-6 18-6-18-18-6 18-6z' fill='%23ffcd3c'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbit&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 /* Layout: 상단 고정 헤더 + 탭, 본문은 카드형 파티 3~4열 → 모바일 1열. 수치는 모노 폰트로 정렬 */
@@ -456,25 +457,342 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
   .field-row .score { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* =====================================================================
+   사이트 셸 (가이드 사이트 스타일): 어두운 바탕 + 금색 포인트
+   ===================================================================== */
+:root { --f-body: "Pretendard Variable", Pretendard, "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; --f-display: var(--f-body); --gold: #e6c15a; --gold-2: #f3d98a; --site-w: 1200px; --head-h: 60px; }
+:root[data-theme="dark"] {
+  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
+  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
+  --sky: none; --star-op: 0; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
+  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
+  --sky: none; --star-op: 0; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+} }
+:root[data-theme="light"] { --gold: #9a6d00; --gold-2: #7a5500; }
+body { font-size: 15px; }
+.container { max-width: var(--site-w); margin: 0 auto; padding-inline: 20px; }
+.wrap { max-width: var(--site-w); }
+
+/* 헤더 */
+header.site { position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.site-in { max-width: var(--site-w); margin: 0 auto; padding: 0 20px; height: var(--head-h); display: flex; align-items: center; gap: 28px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 16px; white-space: nowrap; letter-spacing: -.2px; }
+.logo b { color: var(--gold); font-weight: 800; }
+.logo-mark { color: var(--gold); font-size: 15px; }
+.gnb { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.gnb a, .drawer a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; padding: 8px 12px; border-radius: 8px; white-space: nowrap; position: relative; }
+.gnb a:hover { color: var(--ink); background: var(--surface); }
+.gnb a[aria-current="page"] { color: var(--ink); }
+.gnb a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -11px; height: 2px; background: var(--gold); border-radius: 2px; }
+.site-act { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+a.btn { text-decoration: none; }
+.btn.gold { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+.btn.gold:hover { background: color-mix(in srgb, var(--gold) 14%, transparent); }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; width: 38px; height: 34px; cursor: pointer; display: inline-grid; place-content: center; gap: 4px; }
+.menu-btn { display: none; }
+.menu-btn span { display: block; width: 16px; height: 2px; background: var(--ink); border-radius: 2px; }
+.drawer { border-top: 1px solid var(--line); background: var(--bg); padding: 8px 12px 14px; display: grid; gap: 2px; }
+.drawer a { font-size: 15px; padding: 11px 12px; }
+.drawer a[aria-current="page"] { color: var(--gold); background: var(--surface); }
+@media (max-width: 1080px) { .gnb a { padding: 8px 8px; font-size: 13.5px; } .site-in { gap: 16px; } }
+@media (max-width: 940px) { .gnb { display: none; } .menu-btn { display: inline-grid; } #btn-license { display: none; } }
+@media (max-width: 420px) { .logo-t { font-size: 14px; } #btn-theme { padding: 4px 8px; font-size: 11px; } }
+
+/* 공통 페이지 머리말 · 섹션 */
+.view { display: block; }
+.page { padding-top: 36px; padding-bottom: 64px; }
+.eyebrow { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: .2px; display: flex; align-items: center; gap: 6px; }
+.eyebrow::before { content: ""; width: 14px; height: 1px; background: var(--gold); }
+.ph-t { margin: 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.25; font-weight: 800; letter-spacing: -.6px; }
+.ph-t em { font-style: normal; color: var(--gold); }
+.ph-d { margin: 10px 0 0; color: var(--muted); max-width: 640px; }
+.sec { margin-top: 56px; }
+.sec-h { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.sec-h h2 { margin: 0; font-size: 21px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -.3px; }
+.sec-h h2::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--gold); transform: rotate(45deg); }
+.sec-h p { margin: 6px 0 0 17px; color: var(--muted); font-size: 14px; }
+.more { color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.more:hover { color: var(--gold); }
+.more::after { content: " ›"; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; letter-spacing: .3px; padding: 3px 7px; border-radius: 5px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.tag.new { background: #d6453b; color: #fff; border-color: transparent; }
+.tag.re { background: #2c6be0; color: #fff; border-color: transparent; }
+.tag.gold { background: var(--gold); color: #1a1608; border-color: transparent; }
+.tag.next { background: transparent; color: var(--gold); border-color: var(--gold); }
+.stars { color: var(--gold); font-size: 11px; letter-spacing: 1px; }
+.stars.r4 { color: var(--r4); }
+
+/* 히어로 */
+.hero { position: relative; min-height: 520px; overflow: hidden; border-bottom: 1px solid var(--line); background: #0d0d0c; isolation: isolate; }
+.hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -2; transform: scale(1.02); }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(13,13,12,.96) 0%, rgba(13,13,12,.78) 34%, rgba(13,13,12,.15) 70%, rgba(13,13,12,.35) 100%), linear-gradient(0deg, rgba(20,20,19,1) 0%, rgba(20,20,19,0) 26%); }
+.hero-art { position: absolute; right: max(2vw, calc((100vw - var(--site-w)) / 2)); bottom: 0; height: 104%; max-width: 62%; object-fit: contain; object-position: bottom right; z-index: -1; filter: drop-shadow(0 10px 40px rgba(0,0,0,.5)); }
+.hero-in { position: relative; max-width: var(--site-w); margin: 0 auto; padding: 84px 20px 64px; color: #f1efe8; }
+.hero h1 { margin: 0; font-size: clamp(32px, 5.4vw, 56px); line-height: 1.18; font-weight: 800; letter-spacing: -1.2px; max-width: 640px; text-shadow: 0 2px 20px rgba(0,0,0,.5); }
+.hero h1 em { font-style: normal; color: var(--gold); display: block; }
+.hero .period { margin: 18px 0 0; color: #cfcbbf; font-size: 15px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.hero .cta { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+.btn.lg { padding: 12px 20px; font-size: 15px; border-radius: 10px; font-weight: 700; }
+.btn.solid-gold { background: var(--gold); color: #1a1608; border: 0; }
+.btn.solid-gold:hover { filter: brightness(1.06); }
+.btn.glass { background: rgba(255,255,255,.08); color: #f1efe8; border: 1px solid rgba(255,255,255,.22); }
+.btn.glass:hover { background: rgba(255,255,255,.14); }
+.hero .hero-meta { margin-top: 34px; display: flex; gap: 22px; flex-wrap: wrap; font-size: 13px; color: #b9b5aa; }
+.hero .hero-meta b { display: block; color: #f1efe8; font-size: 20px; font-weight: 800; }
+@media (max-width: 720px) {
+  .hero { min-height: 460px; }
+  .hero-in { padding: 46px 20px 40px; }
+  .hero-art { max-width: 92%; right: -12%; opacity: .55; }
+  .hero::before { background: linear-gradient(90deg, rgba(13,13,12,.92) 0%, rgba(13,13,12,.6) 70%, rgba(13,13,12,.4) 100%), linear-gradient(0deg, rgba(20,20,19,1) 0%, rgba(20,20,19,0) 30%); }
+}
+
+/* 캐릭터 카드 */
+.cc-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+.cc-grid.wide { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+@media (max-width: 1000px) { .cc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .cc-grid, .cc-grid.wide { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+@media (max-width: 400px) { .cc-grid, .cc-grid.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cc { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; text-decoration: none; color: #f1efe8; background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--elc, #888) 55%, #1c1c1a) 0%, #161615 70%); border: 1px solid var(--line); transition: transform .18s ease, border-color .18s ease; }
+.cc:hover { transform: translateY(-3px); border-color: var(--gold); }
+.cc img.art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.cc .ini { position: absolute; inset: 0; display: grid; place-content: center; font-size: 46px; font-weight: 800; color: rgba(255,255,255,.35); }
+.cc::after { content: ""; position: absolute; inset: auto 0 0 0; height: 55%; background: linear-gradient(0deg, rgba(10,10,9,.95), rgba(10,10,9,0)); }
+.cc .cc-top { position: absolute; z-index: 1; top: 8px; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }
+.cc .cc-b { position: absolute; z-index: 1; left: 10px; right: 10px; bottom: 9px; }
+.cc .cc-n { font-weight: 800; font-size: 15px; line-height: 1.25; letter-spacing: -.3px; overflow-wrap: anywhere; }
+.cc .cc-s { font-size: 11.5px; color: #c8c4b8; margin-top: 2px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.el-i { width: 8px; height: 8px; border-radius: 50%; background: var(--elc); display: inline-block; flex: 0 0 auto; }
+.cc.missing img.art { filter: grayscale(.85) brightness(.7); }
+
+/* 픽업 배너 */
+.bnr-main { position: relative; border-radius: 16px; overflow: hidden; min-height: 400px; border: 1px solid var(--line); background: #0d0d0c; isolation: isolate; display: flex; }
+.bnr-main .bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -2; }
+.bnr-main::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(10,10,9,.92) 0%, rgba(10,10,9,.65) 38%, rgba(10,10,9,0) 70%); }
+.bnr-main .art { position: absolute; right: 2%; bottom: 0; height: 108%; max-width: 60%; object-fit: contain; object-position: bottom right; z-index: -1; }
+.bnr-info { padding: 30px 32px; color: #f1efe8; display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
+.bnr-info h3 { margin: 0; font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -1px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bnr-info .up { font-size: 14px; color: #1a1608; background: var(--gold); border-radius: 6px; padding: 3px 7px; font-weight: 800; }
+.bnr-time { font-size: 14px; color: #cfcbbf; }
+.bnr-time small { color: #9b978c; margin-left: 4px; }
+.bnr-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.bnr-chips span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }
+.cd { margin-top: auto; }
+.cd .lbl { font-size: 12px; color: #b9b5aa; margin-bottom: 4px; display: block; }
+.cd .t { font-size: 34px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.cd .t small { font-size: 15px; font-weight: 600; color: #b9b5aa; margin: 0 8px 0 2px; }
+.bnr-4 { position: absolute; right: 18px; bottom: 16px; display: flex; gap: 6px; align-items: flex-end; flex-direction: column; }
+.bnr-4 .lbl { font-size: 11px; font-weight: 700; color: #f1efe8; text-shadow: 0 1px 4px #000; }
+.bnr-4 .row { display: flex; gap: 6px; }
+.bnr-4 .portrait, .bnr-4 img.wi { width: 46px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.4); }
+.bnr-4 img.wi { height: 46px; object-fit: contain; }
+.bnr-thumbs { margin-top: 12px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.bnr-th { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #151514; min-height: 86px; text-align: left; color: #f1efe8; cursor: pointer; padding: 10px 12px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; isolation: isolate; font: inherit; }
+.bnr-th .bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -2; opacity: .7; }
+.bnr-th::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(10,10,9,.92), rgba(10,10,9,.2)); }
+.bnr-th b { font-size: 15px; }
+.bnr-th small { font-size: 11.5px; color: #c8c4b8; }
+.bnr-th[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.bnr-th .tags { position: absolute; top: 8px; left: 10px; display: flex; gap: 4px; }
+.bnr-th.next { background: repeating-linear-gradient(135deg, #1a1a18 0 10px, #1d1d1b 10px 20px); }
+@media (max-width: 760px) {
+  .bnr-main { min-height: 460px; }
+  .bnr-main .art { max-width: 96%; right: -14%; opacity: .7; }
+  .bnr-main::before { background: linear-gradient(90deg, rgba(10,10,9,.9) 0%, rgba(10,10,9,.55) 75%, rgba(10,10,9,.3) 100%); }
+  .bnr-info { padding: 22px 20px; }
+  .bnr-4 { left: 20px; right: auto; align-items: flex-start; }
+  .cd .t { font-size: 26px; }
+  .bnr-thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 기능 소개 카드 */
+.feat { display: grid; grid-template-columns: 1.1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+.feat-tx { padding: 30px 32px; display: flex; flex-direction: column; gap: 10px; }
+.feat-tx h3 { margin: 0; font-size: 26px; line-height: 1.3; font-weight: 800; letter-spacing: -.5px; }
+.feat-tx h3 em { font-style: normal; color: var(--gold); }
+.feat-tx p { margin: 0; color: var(--muted); }
+.feat-tx .btn { align-self: flex-start; margin-top: 8px; }
+.feat-vis { background: var(--surface-2); padding: 24px; display: grid; gap: 12px; align-content: center; border-left: 1px solid var(--line); }
+.stat-bar { display: grid; gap: 4px; }
+.stat-bar .top { display: flex; justify-content: space-between; font-size: 13px; }
+.stat-bar .top b { font-variant-numeric: tabular-nums; }
+.stat-bar .top span { color: var(--muted); }
+.stat-bar .track { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.stat-bar .fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-2)); border-radius: 6px; }
+.feat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.mini-feat { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--ink); transition: border-color .15s; }
+.mini-feat:hover { border-color: var(--gold); }
+.mini-feat .k { font-size: 12px; font-weight: 700; color: var(--gold); }
+.mini-feat b { font-size: 17px; }
+.mini-feat span { color: var(--muted); font-size: 13.5px; }
+@media (max-width: 820px) { .feat { grid-template-columns: 1fr; } .feat-vis { border-left: 0; border-top: 1px solid var(--line); } .feat-row { grid-template-columns: 1fr; } }
+
+/* 가로 슬라이드(자료실 등) */
+.hscroll { position: relative; }
+.hs-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: thin; }
+.hs-track > * { scroll-snap-align: start; }
+.hs-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; z-index: 2; font-size: 18px; line-height: 1; }
+.hs-btn.l { left: -14px; } .hs-btn.r { right: -14px; }
+@media (max-width: 700px) { .hs-btn { display: none; } .hs-track { grid-auto-columns: 78%; } }
+.lk { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; min-height: 112px; transition: border-color .15s; }
+.lk:hover { border-color: var(--gold); }
+.lk .cat { font-size: 12px; color: var(--gold); font-weight: 700; }
+.lk b { font-size: 15.5px; }
+.lk span { font-size: 13px; color: var(--muted); }
+.lk .host { margin-top: auto; font-size: 11.5px; color: var(--faint); }
+
+/* 필터 바 */
+.fbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin: 22px 0 18px; }
+.fbar .grp { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fbar .grp > .lbl { font-size: 12px; color: var(--faint); margin-right: 2px; }
+.fchip { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.fchip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+.fbar input[type=search] { margin-left: auto; min-width: 0; width: 220px; max-width: 100%; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
+@media (max-width: 640px) { .fbar input[type=search] { width: 100%; margin-left: 0; } }
+
+/* 캐릭터 상세 */
+.ch-hero { position: relative; min-height: 440px; overflow: hidden; background: #0d0d0c; isolation: isolate; border-bottom: 1px solid var(--line); }
+.ch-hero .bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -3; opacity: .85; }
+.ch-hero .elbg { position: absolute; inset: 0; z-index: -3; background: radial-gradient(70% 90% at 75% 40%, color-mix(in srgb, var(--elc) 45%, #0d0d0c) 0%, #0d0d0c 70%); }
+.ch-hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(13,13,12,.95) 0%, rgba(13,13,12,.7) 38%, rgba(13,13,12,0) 72%), linear-gradient(0deg, rgba(20,20,19,1) 0%, rgba(20,20,19,0) 30%); }
+.ch-hero .art { position: absolute; right: max(2vw, calc((100vw - var(--site-w)) / 2)); bottom: 0; height: 106%; max-width: 58%; object-fit: contain; object-position: bottom right; z-index: -2; }
+.ch-hero-in { max-width: var(--site-w); margin: 0 auto; padding: 40px 20px 40px; color: #f1efe8; display: flex; flex-direction: column; gap: 12px; min-height: 440px; }
+.crumb { font-size: 13px; color: #b9b5aa; } .crumb a { color: #b9b5aa; text-decoration: none; } .crumb a:hover { color: var(--gold); }
+.ch-hero h1 { margin: auto 0 0; font-size: clamp(34px, 6vw, 60px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; }
+.ch-attr { display: flex; gap: 8px; flex-wrap: wrap; }
+.ch-attr span { font-size: 13px; padding: 5px 11px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); display: inline-flex; align-items: center; gap: 6px; }
+.ch-outro { max-width: 560px; color: #cfcbbf; font-size: 14px; }
+@media (max-width: 720px) { .ch-hero .art { max-width: 100%; right: -18%; opacity: .5; } }
+.ch-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; padding-top: 28px; padding-bottom: 64px; }
+@media (max-width: 960px) { .ch-body { grid-template-columns: 1fr; } }
+.box { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 20px; }
+.box + .box { margin-top: 16px; }
+.box h3 { margin: 0 0 14px; font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.box h3::before { content: ""; width: 3px; height: 16px; background: var(--gold); border-radius: 2px; }
+.box h3 small { font-weight: 500; color: var(--muted); font-size: 12.5px; margin-left: auto; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.kv div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.kv span { display: block; font-size: 12px; color: var(--muted); }
+.kv b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.wp { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: start; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.wp + .wp { margin-top: 10px; }
+.wp img { width: 56px; height: 56px; border-radius: 10px; background: var(--line); object-fit: contain; }
+.wp b.r5 { color: var(--r5); } .wp b.r4 { color: var(--r4); }
+.wp .d { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.sk { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.sk div { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.sk span { font-size: 11.5px; color: var(--gold); font-weight: 700; display: block; }
+.chain { display: grid; gap: 8px; }
+.chain details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 12px; }
+.chain summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; gap: 10px; align-items: center; }
+.chain summary::-webkit-details-marker { display: none; }
+.chain summary .s { color: var(--gold); font-variant-numeric: tabular-nums; min-width: 22px; }
+.chain p { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
+.mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.mat { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 6px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.team-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.team-row + .team-row { margin-top: 10px; }
+.team-row .mems { display: flex; gap: 6px; }
+.team-row .mems a { width: 52px; text-decoration: none; color: var(--ink); font-size: 11px; text-align: center; }
+.team-row .mems .portrait { width: 52px; border-radius: 10px; }
+.team-row .tt { flex: 1; min-width: 180px; }
+.team-row .tt b { display: block; }
+.team-row .tt > span:not(.tag) { font-size: 12.5px; color: var(--muted); }
+
+/* 에코 계산기 · 튜닝 시뮬 */
+.two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 920px) { .two { grid-template-columns: 1fr; } }
+.ec-pick { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.ec-pick select { padding: 8px 12px; border-radius: 10px; min-width: 200px; }
+.score { display: grid; place-items: center; text-align: center; padding: 18px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 18%, var(--surface-2)), var(--surface-2)); border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line)); margin-bottom: 14px; }
+.score .g { font-size: 44px; font-weight: 900; color: var(--gold); line-height: 1; }
+.score .v { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.sim-ctrl { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sim-pity { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.sim-pity div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.sim-pity span { display: block; font-size: 12px; color: var(--muted); }
+.sim-pity b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.pulls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .pulls { gap: 5px; } .pull .n { font-size: 9.5px; padding: 2px; } .pull.r3::before { font-size: 11px; } }
+.pull { aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; position: relative; background: #1a1a18; border: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: center; animation: pullIn .35s ease both; }
+.pull img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.pull img.w { object-fit: contain; padding: 14%; }
+.pull .n { position: relative; z-index: 1; font-size: 11px; font-weight: 700; padding: 3px 4px; text-align: center; width: 100%; background: linear-gradient(0deg, rgba(0,0,0,.85), transparent); color: #fff; line-height: 1.2; }
+.pull.r5 { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 22px color-mix(in srgb, var(--gold) 45%, transparent); background: linear-gradient(180deg, #3b2f10, #1a1608); }
+.pull.r4 { border-color: #9a7ae0; background: linear-gradient(180deg, #2b2142, #15111f); }
+.pull.r3 { background: linear-gradient(180deg, #1f2733, #12161d); }
+.pull.r3 .n { color: #9ab; }
+.pull.r3::before { content: "★3"; position: absolute; top: 22%; left: 0; right: 0; text-align: center; color: #5d6b7c; font-weight: 800; font-size: 14px; }
+@keyframes pullIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pull { animation: none; } }
+.hist { max-height: 300px; overflow: auto; display: grid; gap: 4px; font-size: 13px; }
+.hist div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 8px; background: var(--surface-2); }
+.hist .r5 { color: var(--gold); font-weight: 700; } .hist .r4 { color: var(--r4); }
+
+/* 공지 · 소개 */
+.nt { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.nt + .nt { margin-top: 10px; }
+.nt summary { padding: 16px 18px; cursor: pointer; display: flex; gap: 12px; align-items: center; list-style: none; }
+.nt summary::-webkit-details-marker { display: none; }
+.nt summary b { flex: 1; min-width: 0; }
+.nt summary time { color: var(--faint); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nt .body { padding: 0 18px 16px; color: var(--muted); font-size: 14px; }
+.nt .body ul { margin: 6px 0; padding-left: 18px; }
+.intro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+/* 파티 편성 도구 */
+.tools-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 32px 0 18px; }
+.tools-head .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tools-tabs { position: sticky; top: var(--head-h); z-index: 40; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.tools-tabs .tab[aria-selected="true"] { border-bottom-color: var(--gold); }
+[data-view="tools"] { padding-bottom: 64px; }
+
+/* 바닥글 */
+.site-foot { border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 60%, var(--bg)); margin-top: 40px; }
+.foot-in { padding: 28px 20px 36px; display: grid; gap: 12px; }
+.foot-brand { font-weight: 800; display: flex; gap: 8px; align-items: center; }
+.foot-nav { display: flex; gap: 16px; flex-wrap: wrap; }
+.foot-nav a { color: var(--muted); text-decoration: none; font-size: 13.5px; }
+.foot-nav a:hover { color: var(--gold); }
+.foot-note { margin: 0; color: var(--faint); font-size: 12.5px; max-width: 760px; }
+.empty-note { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <div class="top-row">
-      <div class="brand">
-        <h1>띵조 <b>AUTO</b> TEAM MAKER</h1>
-        <small><span class="chip num" id="ver-chip">Ver. 1.0.12</span> 명조 파티 자동 편성 · 예상 딜 계산</small>
-      </div>
-      <div class="top-actions">
-        <span class="chip" id="owned-chip">보유 0명</span>
-        <button class="btn sm ghost" id="btn-license">라이선스 인증</button>
-        <button class="btn sm ghost" id="btn-theme" aria-label="화면 테마 바꾸기">다크 모드</button>
-        <button class="btn sm" id="btn-share">공유</button>
-        <button class="btn primary" id="btn-optimize">자동 편성</button>
-      </div>
+<header class="site" id="site-top">
+  <div class="site-in">
+    <a class="logo" href="#/" aria-label="홈으로"><span class="logo-mark" aria-hidden="true">✦</span><span class="logo-t">띵조 <b>AUTO</b> TEAM MAKER</span></a>
+    <nav class="gnb" id="gnb" aria-label="주 메뉴"><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
+    <div class="site-act">
+      <button class="btn sm ghost" id="btn-theme" aria-label="화면 테마 바꾸기">다크 모드</button>
+      <button class="btn sm gold" id="btn-license">라이선스 인증</button>
+      <button class="icon-btn menu-btn" id="btn-menu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
     </div>
-    <nav class="tabs" role="tablist" id="tabs">
+  </div>
+  <nav class="drawer" id="drawer" aria-label="모바일 메뉴" hidden><a href="#/" data-nav="home">홈</a><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
+</header>
+
+<main id="main">
+  <section class="view" data-view="home" hidden></section>
+  <section class="view" data-view="intro" hidden></section>
+  <section class="view" data-view="characters" hidden></section>
+  <section class="view" data-view="character" hidden></section>
+  <section class="view" data-view="echo" hidden></section>
+  <section class="view" data-view="sim" hidden></section>
+  <section class="view" data-view="links" hidden></section>
+  <section class="view" data-view="notice" hidden></section>
+  <div class="wrap view" data-view="tools" hidden>
+  <div class="tools-head">
+    <div><p class="eyebrow">파티 편성 도구</p><h1 class="ph-t">내 캐릭터로 짜는 <em>최적의 파티</em></h1><p class="ph-d">역경의 탑 · 필드 파티 자동 편성, 1사이클 예상 피해, 딜 사이클, 육성 계산을 한곳에서.</p></div>
+    <div class="top-actions">
+      <span class="chip" id="owned-chip">보유 0명</span>
+      <button class="btn sm" id="btn-share">공유</button>
+      <button class="btn primary" id="btn-optimize">자동 편성</button>
+    </div>
+  </div>
+  <nav class="tabs tools-tabs" role="tablist" id="tabs">
       <button class="tab" role="tab" data-tab="tower-build" aria-selected="true">역경의 탑 편성</button>
       <button class="tab" role="tab" data-tab="field">필드 파티</button>
       <button class="tab" role="tab" data-tab="presets">추천 조합</button>
@@ -487,10 +805,6 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
       <button class="tab" role="tab" data-tab="help">사용 설명</button>
       <button class="tab" role="tab" data-tab="patch">패치 노트</button>
     </nav>
-  </div>
-</header>
-
-<main class="wrap">
   <!-- 역경의 탑 편성 -->
   <section data-panel="tower-build">
     <div class="season-strip" id="build-season"></div>
@@ -649,6 +963,7 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
           </ul></article>
         <article class="card" id="h-gacha"><h2>새 공명자 · 편성 이미지</h2>
           <ul class="prose">
+            <li><b>사이트 메뉴</b>: 위쪽 메뉴에서 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항으로 갈 수 있고, 이 편성 도구는 "파티 편성" 메뉴에 있습니다.</li>
             <li><b>새 공명자 자동 추가</b>: GitHub Pages 주소로 열면 게임 업데이트로 생긴 새 공명자가 자동으로 목록에 들어옵니다(매일 확인). 역할·버프는 공식 태그와 반주 설명으로 추정한 값이라 "자동 추가 · 추정" 표시가 붙습니다. 보유 캐릭터 탭 위쪽에서 확인 상태를 볼 수 있습니다.</li>
             <li><b>편성 이미지 저장</b>: 역경의 탑 편성 탭의 버튼(또는 공유 창)을 누르면 파티별 초상화·피해량이 들어간 이미지가 저장됩니다.</li>
           </ul></article>
@@ -756,7 +1071,15 @@ HP 비례     = HP × 환산 비율   (HP = 기본 HP × (1 + HP% 합) + 고정 
     <div class="card"><h2>패치 노트</h2><p class="note">버전은 수정할 때마다 마지막 두 자리를 하나씩 올립니다. 1.0.01·1.0.02는 베타, 1.0.03부터 정식 버전입니다.</p>
     <div class="patch" id="patch-list" style="margin-top:12px"></div></div>
   </section>
+  </div>
 </main>
+<footer class="site-foot">
+  <div class="container foot-in">
+    <div class="foot-brand"><span class="logo-mark" aria-hidden="true">✦</span> 띵조 AUTO TEAM MAKER <span class="chip num" id="ver-chip">Ver. 1.0.15</span></div>
+    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/tools/help">사용 설명</a><a href="#/tools/patch">패치 노트</a></nav>
+    <p class="foot-note">팬이 만든 비공식 사이트입니다. 명조: 워더링 웨이브의 이미지 · 이름 · 게임 데이터의 권리는 KURO GAMES에 있습니다. 예상 피해와 확률은 비교용 추정치입니다.</p>
+  </div>
+</footer>
 
 <dialog id="dlg-swap">
   <div class="dlg-head"><h3 id="swap-title">캐릭터 교체</h3><button class="btn sm" id="swap-close">닫기</button></div>
@@ -2244,8 +2567,25 @@ function deactivateLicense() {
 /* =====================================================================
    버전 · 패치 노트 (수정할 때마다 맨 위에 추가하고 APP_VERSION을 올립니다)
    ===================================================================== */
-const APP_VERSION = '1.0.14';
+const APP_VERSION = '1.0.15';
 const PATCH_NOTES = /*PATCH_NOTES_START*/[
+  { v: '1.0.15', d: '2026-10-26', s: '사이트를 가이드 사이트 형태로 새로 꾸몄습니다. 홈 · 소개 · 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항이 생기고, 기존 도구는 "파티 편성" 메뉴로 모였습니다.',
+    g: [
+      { h: '새 디자인', i: [
+        '어두운 바탕에 금색 포인트, 위쪽 메뉴(휴대폰은 ☰ 메뉴)로 바꿨습니다. 주소가 #/characters, #/tools/grow처럼 화면마다 달라져 즐겨찾기 · 공유가 됩니다.',
+        '캐릭터 카드 · 전신 그림 · 픽업 배너 배경을 게임 UI 리소스에서 받아 넣었습니다(assets 폴더). 새 공명자가 생기면 그림도 자동으로 만들어집니다.'] },
+      { h: '홈', i: [
+        '현재 버전 이름과 기간, 픽업 캐릭터 일러스트를 크게 보여 줍니다.',
+        '공명자 가이드(픽업 · 최근 공명자), 캐릭터 이벤트 튜닝(신규 · 복각 표시, 종료까지 남은 시간, 4성 UP, 다음 버전 예정 공명자), 에코 계산기 · 파티 편성 · 튜닝 시뮬 · 자료실 바로가기가 있습니다.',
+        '픽업 일정은 명조 공식 공지를 3시간마다 읽어 자동으로 갱신하고, 공지에 빠진 신규 배너는 게임 데이터의 튜닝 화면 정보로 채웁니다.'] },
+      { h: '공명자 가이드', i: [
+        '속성 · 무기 · 등급 · 역할 · 보유 여부 · 이름으로 거를 수 있는 공명자 목록을 만들었습니다.',
+        '공명자마다 Lv.90 기본 스탯과 공명 노드, 스킬 이름, 반주 스킬, 공명 체인, 추천 무기(전용 · 4성), 추천 에코 세트, 추천 · 대체 조합, 육성 재료를 한 페이지에 보여 줍니다. 보유 추가 · 육성 계산 · 무기 설정으로 바로 갈 수 있습니다.'] },
+      { h: '에코 계산기 · 튜닝 시뮬', i: [
+        '에코 계산기: 에코 5개를 넣으면 속성 화면 스탯(무기 · 세트 상시 효과 포함), 크리티컬 점수와 등급, 목표치 대비 막대, 다음에 올릴 옵션을 보여 줍니다. 파티 편성 계산에 반영하는 기능은 라이선스 인증 후 쓸 수 있습니다.',
+        '튜닝 시뮬: 진행 중인 캐릭터 · 무기 픽업으로 1회 · 10회 · 80회 튜닝을 돌려 보고, 천장 · 50% 확정 상태, 5성 평균, 쓴 별의 소리를 기록합니다. 66회 이후 확률 상승폭은 추정치입니다.'] },
+      { h: '자료실 · 공지사항 · 소개', i: ['공식 공지 · 지도 · 데이터베이스 · 공략 사이트 모음, 사이트 공지와 업데이트 내역, 사이트 소개 페이지를 만들었습니다.'] }
+    ] },
   { v: '1.0.14', d: '2026-10-23', s: '"뽑기 추천" 탭, "이벤트 일정" 탭, 추천 조합의 "추천 무기"를 없애 화면을 간단하게 정리했습니다.',
     g: [
       { h: '정리', i: [
@@ -3525,6 +3865,7 @@ function switchTab(t) {
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
   ({ 'grow': renderGrow, 'timeline': renderTimeline, 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
+  if (typeof curView !== 'undefined' && curView === 'tools') { const h = '#/tools/' + t; if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { } }
 }
 function copyText() {
   const lines = [`[띵조 AUTO TEAM MAKER Ver. ${APP_VERSION}] ` + seasonStripHTML().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()];
@@ -3545,8 +3886,456 @@ function copyStr(txt, msg) {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => toast(msg), fb); else fb();
 }
 
+/* =====================================================================
+   사이트 셸: 화면 전환(#/주소) · 홈 · 소개 · 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항
+   기존 파티 편성 도구는 #/tools/<탭> 으로 그대로 씁니다.
+   ===================================================================== */
+
+/* ---------- 일러스트 (assets/, tools/build_assets.py가 자동으로 만듦) ---------- */
+let ART = { card: new Set(), full: new Set(), bg: new Set() };
+const artUrl = (kind, rid) => rid && ART[kind] && ART[kind].has(+rid) ? `assets/${kind}/${rid}.webp` : '';
+async function loadArt() {
+  try {
+    const r = await fetch('assets/art.json', { cache: 'no-cache' }); if (!r.ok) return;
+    const d = await r.json(); ART = { card: new Set(d.card || []), full: new Set(d.full || []), bg: new Set(d.bg || []) };
+    if (curView && curView !== 'tools') route(true);
+  } catch (e) { /* 파일로 열었거나 오프라인 */ }
+}
+const charByRid = rid => CHARS.find(c => c.rid === +rid) || null;
+const elColor = c => (EL[c.el] || {}).c || '#888';
+
+/* ---------- 픽업 · 버전 일정 (tools/update_events.py → events.json) ---------- */
+const LS_EVENTS = 'ddingjo-atm-events';
+const EVENT_URLS = ['events.json', 'https://raw.githubusercontent.com/Real-Sesame/-/HEAD/events.json'];
+let EVENTS = (() => { try { const d = JSON.parse(lsGet(LS_EVENTS) || 'null'); return d && d.schema === 1 ? d : null; } catch (e) { return null; } })();
+async function refreshEvents() {
+  for (const u of EVENT_URLS) {
+    if (location.protocol === 'file:' && !/^https:/.test(u)) continue;
+    try {
+      const res = await fetch(u + (u.includes('?') ? '&' : '?') + 'h=' + Math.floor(Date.now() / 18e5), { cache: 'no-cache' });
+      if (!res.ok) continue;
+      const txt = await res.text(); const d = JSON.parse(txt);
+      if (!d || d.schema !== 1 || !Array.isArray(d.items)) continue;
+      EVENTS = d; if (lsGet(LS_EVENTS) !== txt) lsSet(LS_EVENTS, txt);
+      if (curView === 'home' || curView === 'sim') route(true);
+      return;
+    } catch (e) { /* 오프라인 */ }
+  }
+}
+const evT = x => x ? Date.parse(x) : NaN;
+function evItems() {
+  return ((EVENTS && EVENTS.items) || []).filter(x => x && x.e && !isNaN(evT(x.e))).map(x => ({ ...x, S: isNaN(evT(x.s)) ? null : evT(x.s), E: evT(x.e) }));
+}
+function bannersNow(kind) {
+  const now = Date.now();
+  return evItems().filter(x => x.k === kind && (x.S ?? 0) <= now && now < x.E).sort((a, b) => (a.rr || 0) - (b.rr || 0) || a.E - b.E);
+}
+function currentVersion() {
+  const vi = (EVENTS && EVENTS.vinfo) || {}; const now = Date.now();
+  const list = Object.entries(vi).map(([v, x]) => ({ v, ...x, S: evT(x.s), E: evT(x.e) })).sort((a, b) => a.S - b.S);
+  return list.find(x => x.S <= now && (isNaN(x.E) || now < x.E)) || list[list.length - 1] || null;
+}
+const ymdKo = t => { const d = new Date(t); return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`; };
+const mdhm = t => { const d = new Date(t); return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+function leftParts(t) { const ms = Math.max(0, t - Date.now()); return { d: Math.floor(ms / DAY), h: Math.floor(ms % DAY / 3600000), m: Math.floor(ms % 3600000 / 60000) }; }
+const cdHTML = t => { const p = leftParts(t); return `${p.d}<small>일</small>${p.h}<small>시간</small>${p.m}<small>분</small>`; };
+// 다음 버전 예정 공명자(앱 데이터의 출시 예정)
+const upcomingChars = () => CHARS.filter(c => isUpcoming(c) && c.release).sort((a, b) => a.release - b.release);
+
+/* ---------- 공통 조각 ---------- */
+function ccHTML(c, { tags = '' } = {}) {
+  const art = artUrl('card', c.rid); const p = (typeof IMG_CHAR !== 'undefined' && IMG_CHAR[c.id]) || '';
+  const img = art ? `<img class="art" src="${art}" alt="" loading="lazy">` : p ? `<img class="art" src="${p}" alt="" loading="lazy">` : `<span class="ini">${esc(c.name.replace('방랑자·', '').slice(0, 1))}</span>`;
+  return `<a class="cc" href="#/character/${c.id}" style="--elc:${elColor(c)}" aria-label="${esc(c.name)} 가이드">${img}
+    <div class="cc-top"><span style="display:flex;gap:4px;flex-wrap:wrap">${tags}</span><span class="stars ${c.q === 4 ? 'r4' : ''}">${'★'.repeat(c.q)}</span></div>
+    <div class="cc-b"><div class="cc-n">${esc(c.name)}</div><div class="cc-s"><i class="el-i"></i>${EL[c.el] ? EL[c.el].n : ''} · ${WT[c.wt] || ''}${c.role ? ' · ' + ROLE_N[c.role].split('·')[0].replace(' 딜러', '') : ''}</div></div></a>`;
+}
+const pickTag = x => x ? (x.rr ? '<span class="tag re">복각</span>' : '<span class="tag new">NEW</span>') : '';
+function secHead(title, sub, more) {
+  return `<div class="sec-h"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div>${more ? `<a class="more" href="${more}">전체 보기</a>` : ''}</div>`;
+}
+function hscroll(id, inner) {
+  return `<div class="hscroll"><button class="hs-btn l" data-hs="${id}" data-d="-1" aria-label="이전">‹</button><div class="hs-track" id="${id}">${inner}</div><button class="hs-btn r" data-hs="${id}" data-d="1" aria-label="다음">›</button></div>`;
+}
+function bindHscroll(root) { $$('[data-hs]', root).forEach(b => b.addEventListener('click', () => { const t = $('#' + b.dataset.hs); t.scrollBy({ left: b.dataset.d * t.clientWidth * .8, behavior: 'smooth' }); })); }
+
+/* ---------- 홈 ---------- */
+let homeBanner = 0, cdTimer = null;
+function renderHome() {
+  const el = $('[data-view="home"]'); const now = Date.now();
+  const ver = currentVersion(); const cb = bannersNow('char'); const wb = bannersNow('weapon');
+  const lead = cb[0]; const leadC = lead ? charByRid(lead.f5[0]) : CHARS.find(c => c.q === 5 && !isUpcoming(c));
+  const heroRid = lead ? lead.f5[0] : leadC && leadC.rid;
+  const t = (ver && ver.title) || ''; const parts = t.split(/,\s*/);
+  const title = t ? (parts.length > 1 ? `${esc(parts[0])},<em>${esc(parts.slice(1).join(', '))}</em>` : `<em>${esc(t)}</em>`) : '내 캐릭터로 짜는<em>최적의 파티</em>';
+  const sn = curSeason();
+  const hero = `<section class="hero">
+    ${artUrl('bg', heroRid) ? `<div class="hero-bg" style="background-image:url('${artUrl('bg', heroRid)}')"></div>` : ''}
+    ${artUrl('full', heroRid) ? `<img class="hero-art" src="${artUrl('full', heroRid)}" alt="">` : ''}
+    <div class="hero-in">
+      <p class="eyebrow">명조: 워더링 웨이브${ver ? ` ${esc(ver.v)}버전` : ''}</p>
+      <h1>${title}</h1>
+      ${ver ? `<p class="period"><span>${ymdKo(ver.S)} 업데이트 후 ~ ${isNaN(ver.E) ? '' : ymdKo(ver.E)}</span>${lead && leadC ? `<span class="tag gold">PICK UP · ${esc(leadC.name)}</span>` : ''}</p>` : '<p class="period">명조 역경의 탑 · 필드 파티 자동 편성과 공명자 가이드</p>'}
+      <div class="cta"><a class="btn lg solid-gold" href="#/characters">공명자 가이드</a><a class="btn lg glass" href="#/tools/tower-build">파티 자동 편성</a></div>
+      <div class="hero-meta"><div><b>${CHARS.filter(c => !isUpcoming(c)).length}명</b>수록 공명자</div><div><b>시즌 ${sn.n}</b>역경의 탑 · 초기화까지 ${leftParts(sn.end).d}일</div>${lead ? `<div><b>${leftParts(lead.E).d}일 ${leftParts(lead.E).h}시간</b>픽업 종료까지</div>` : ''}</div>
+    </div></section>`;
+
+  // 공명자 가이드: 픽업 → 최근 공명자 순
+  const pickRid = new Map(cb.map(x => [x.f5[0], x]));
+  const seen = new Set(); const cards = [];
+  cb.forEach(x => { const c = charByRid(x.f5[0]); if (c && !seen.has(c.id)) { seen.add(c.id); cards.push(ccHTML(c, { tags: pickTag(x) + '<span class="tag gold">픽업</span>' })); } });
+  CHARS.filter(c => c.q === 5 && !isUpcoming(c) && !c.id.startsWith('rover_')).forEach(c => { if (cards.length < 6 && !seen.has(c.id)) { seen.add(c.id); cards.push(ccHTML(c)); } });
+
+  // 캐릭터 이벤트 튜닝
+  const nexts = upcomingChars().slice(0, 2);
+  const slides = cb.map(x => ({ x, c: charByRid(x.f5[0]) })).filter(s => s.c).concat(nexts.map(c => ({ c, next: true })));
+  if (homeBanner >= slides.length) homeBanner = 0;
+  const bnr = slides.length ? bannerMainHTML(slides[homeBanner]) + `<div class="bnr-thumbs">${slides.map((s, i) => `<button class="bnr-th ${s.next ? 'next' : ''}" data-bn="${i}" aria-pressed="${i === homeBanner}">
+      ${artUrl('bg', s.c.rid) ? `<span class="bg" style="background-image:url('${artUrl('bg', s.c.rid)}')"></span>` : ''}
+      <span class="tags">${s.next ? '<span class="tag next">NEXT</span>' : pickTag(s.x)}</span>
+      <b>${esc(s.c.name)}</b><small>${s.next ? `${esc(releaseLabel(s.c))}` : `${mdhm(s.x.S)} ~ ${mdhm(s.x.E)}`}</small></button>`).join('')}</div>`
+    : `<div class="empty-note">픽업 일정을 불러오는 중이거나 아직 공지가 없습니다. GitHub Pages 주소로 열면 공식 공지에서 자동으로 받아 옵니다.</div>`;
+  const wline = wb.length ? `<p class="note" style="margin-top:12px">무기 이벤트 튜닝: ${wb.map(x => { const w = RAW_WEAPONS[x.f5[0]]; return `<b>${esc(w ? w.n : ((EVENTS.names || {})['weapon:' + x.f5[0]] || ''))}</b>`; }).join(' · ')} <span class="muted">(~ ${mdhm(wb[0].E)})</span></p>` : '';
+
+  // 에코 계산기 맛보기
+  const ex = { atk: 2152, cr: 71.4, cd: 241.2, er: 118 };
+  const bar = (n, v, goal, unit = '') => `<div class="stat-bar"><div class="top"><span>${n}</span><b>${typeof v === 'number' && v > 999 ? fmt(v) : v}${unit} <span>/ 목표 ${goal > 999 ? fmt(goal) : goal}${unit}</span></b></div><div class="track"><div class="fill" style="width:${Math.min(100, v / goal * 100)}%"></div></div></div>`;
+  const tower = TOWER_DB && TOWER_DB[sn.n];
+
+  el.innerHTML = hero + `<div class="container">
+    <section class="sec">${secHead('공명자 가이드', '이번 픽업과 최근 공명자의 무기 · 에코 · 추천 조합을 확인하세요.', '#/characters')}<div class="cc-grid">${cards.join('')}</div></section>
+    <section class="sec">${secHead('캐릭터 이벤트 튜닝', '진행 중인 픽업과 남은 시간 · 다음 버전 예정 공명자', '')}${bnr}${wline}</section>
+    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">에코 계산기</p><h3>나의 에코,<br><em>어디까지 왔을까요?</em></h3><p>에코 5개의 주옵션 · 부옵션을 넣으면 속성 화면 스탯과 크리티컬 점수를 바로 계산하고, 목표치와 비교해 다음에 올릴 옵션을 알려 줍니다.</p><a class="btn solid-gold" href="#/echo">에코 계산기 열기</a></div>
+      <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
+    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">자동 편성하기</a></div>
+      <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${['tower-build:역경의 탑 편성:시즌 버프 반영 자동 편성', 'timeline:딜 사이클:누가 언제 무엇을 하는지 순서대로', 'grow:육성 계산:돌파 · 스킬 재료와 필요한 파밍 횟수'].map(s => { const [k, n, d] = s.split(':'); return `<a class="mini-feat" href="#/tools/${k}"><b>${n}</b><span>${d}</span></a>`; }).join('')}</div></div></div></section>
+    <section class="sec">${secHead('튜닝 시뮬레이터', '실제 확률 규칙으로 별의 소리를 써 보기 전에 미리 돌려 보세요.', '#/sim')}<div class="feat-row">
+      <a class="mini-feat" href="#/sim"><span class="k">캐릭터 이벤트 튜닝</span><b>50% 픽업 · 놓치면 다음 확정</b><span>80회 안에 5성 확정, 10회마다 4성 이상</span></a>
+      <a class="mini-feat" href="#/sim"><span class="k">무기 이벤트 튜닝</span><b>5성은 픽업 무기 확정</b><span>${wb.length ? esc(RAW_WEAPONS[wb[0].f5[0]] ? RAW_WEAPONS[wb[0].f5[0]].n : '') + ' 등 진행 중' : '진행 중인 무기 픽업으로 시뮬레이션'}</span></a>
+      <a class="mini-feat" href="#/sim"><span class="k">기록</span><b>천장 · 평균 · 별의 소리 환산</b><span>몇 번 만에 나왔는지 기록이 남아요</span></a></div></section>
+    <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
+  </div>`;
+  $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
+  bindHscroll(el);
+  clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
+}
+function bannerMainHTML(s) {
+  const c = s.c; const x = s.x;
+  const bg = artUrl('bg', c.rid); const full = artUrl('full', c.rid);
+  const f4 = x ? (x.f4 || []).map(r => charByRid(r)).filter(Boolean) : [];
+  return `<article class="bnr-main">
+    ${bg ? `<div class="bg" style="background-image:url('${bg}')"></div>` : `<div class="bg" style="background:radial-gradient(70% 90% at 75% 40%, color-mix(in srgb, ${elColor(c)} 50%, #0d0d0c), #0d0d0c 72%)"></div>`}
+    ${full ? `<img class="art" src="${full}" alt="">` : ''}
+    <div class="bnr-info">
+      <div style="display:flex;gap:6px">${s.next ? '<span class="tag next">NEXT</span>' : pickTag(x) + '<span class="tag gold">PICK UP</span>'}</div>
+      <h3>${esc(c.name)} ${s.next ? '' : '<span class="up">UP!</span>'}</h3>
+      <div class="bnr-time">${s.next ? `${esc(releaseLabel(c))}` : `${mdhm(x.S)} — ${mdhm(x.E)}<small>KST</small>`}</div>
+      <div class="bnr-chips"><span>${EL[c.el] ? EL[c.el].n : ''}</span><span>${WT[c.wt] || ''}</span><span>${ROLE_N[c.role] || ''}</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm solid-gold" href="#/character/${c.id}">육성 가이드</a>${x && x.url ? `<a class="btn sm glass" href="${esc(x.url)}" target="_blank" rel="noopener">공식 공지</a>` : ''}</div>
+      ${s.next ? '' : `<div class="cd"><span class="lbl">종료까지</span><div class="t" data-cd="${x.E}">${cdHTML(x.E)}</div></div>`}
+    </div>
+    ${f4.length ? `<div class="bnr-4"><span class="lbl">4성 UP</span><div class="row">${f4.map(c4 => `<a href="#/character/${c4.id}" title="${esc(c4.name)}">${portraitHTML(c4)}</a>`).join('')}</div></div>` : ''}
+  </article>`;
+}
+
+/* ---------- 자료실 ---------- */
+const LINKS = [
+  { cat: '공식', n: '명조 공식 공지', d: '업데이트 · 픽업 · 이벤트 공지 원문', url: 'https://wutheringwaves.kurogames.com/kr/main/news/' },
+  { cat: '지도', n: '명조 맵스', d: '수집품 · 몬스터 위치 인터랙티브 지도', url: 'https://maps.wuwa.moe/' },
+  { cat: '도구', n: '명조 맵스 트래커', d: '게임 화면과 지도를 연동해 내 위치 표시', url: 'https://github.com/wuwamoe/wuma-tracker/releases' },
+  { cat: '도구', n: 'WuWa Tracker', d: '튜닝 기록 · 천장 확인 (영어)', url: 'https://wuwatracker.com/' },
+  { cat: '공략', n: 'Prydwen 명조 가이드', d: '캐릭터 공략 · 티어 · 조합 (영어)', url: 'https://www.prydwen.gg/wuthering-waves/' },
+  { cat: '데이터', n: 'Encore.moe', d: '캐릭터 · 무기 · 에코 데이터베이스', url: 'https://encore.moe/' },
+  { cat: '데이터', n: 'WutheringWaves_Data', d: '이 사이트가 쓰는 게임 데이터 원본', url: 'https://github.com/Arikatsu/WutheringWaves_Data' },
+  { cat: '리소스', n: 'Wuthering Waves GameAssets', d: '게임 UI 이미지 리소스 (일러스트 출처)', url: 'https://github.com/555me/Wuthering-Waves-GameAssets' }
+];
+const hostOf = u => { try { return new URL(u).host.replace(/^www\./, ''); } catch (e) { return ''; } };
+const linkHTML = l => `<a class="lk" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="cat">${esc(l.cat)}</span><b>${esc(l.n)}</b><span>${esc(l.d)}</span><span class="host">${esc(hostOf(l.url))} ↗</span></a>`;
+function renderLinks() {
+  const el = $('[data-view="links"]'); const cats = ['전체', ...new Set(LINKS.map(l => l.cat))]; const f = state.linkCat || '전체';
+  el.innerHTML = `<div class="container page"><p class="eyebrow">자료실</p><h1 class="ph-t">함께 보면 좋은 <em>공략과 자료</em></h1><p class="ph-d">공식 공지, 지도, 데이터베이스, 공략 사이트를 모았습니다. 모두 외부 사이트로 새 창에서 열립니다.</p>
+    <div class="fbar"><div class="grp">${cats.map(c => `<button class="fchip" data-lc="${esc(c)}" aria-pressed="${c === f}">${esc(c)}</button>`).join('')}</div></div>
+    <div class="intro-grid">${LINKS.filter(l => f === '전체' || l.cat === f).map(linkHTML).join('')}</div></div>`;
+  $$('[data-lc]', el).forEach(b => b.addEventListener('click', () => { state.linkCat = b.dataset.lc; renderLinks(); }));
+}
+
+/* ---------- 공지사항 ---------- */
+const NOTICES = [
+  { d: '2026-10-26', t: '사이트가 새 모습으로 바뀌었습니다', b: ['홈 · 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항 메뉴가 생겼습니다.', '기존 역경의 탑 편성 · 필드 파티 · 딜 사이클 · 육성 계산은 위쪽 "파티 편성" 메뉴에 그대로 있습니다. 저장해 둔 보유 캐릭터와 파티도 그대로입니다.', '픽업 일정은 명조 공식 공지를 3시간마다 자동으로 읽어 갱신합니다.'] }
+];
+function renderNotice() {
+  const el = $('[data-view="notice"]'); const pn = patchNotes();
+  el.innerHTML = `<div class="container page"><p class="eyebrow">공지사항</p><h1 class="ph-t">사이트 <em>소식</em></h1><p class="ph-d">사이트 안내와 업데이트 내역입니다. 게임 공지는 <a href="https://wutheringwaves.kurogames.com/kr/main/news/" target="_blank" rel="noopener">명조 공식 홈페이지</a>에서 확인해 주세요.</p>
+    <section class="sec" style="margin-top:28px">${secHead('안내', '', '')}${NOTICES.map((n, i) => `<details class="nt" ${i === 0 ? 'open' : ''}><summary><span class="tag gold">공지</span><b>${esc(n.t)}</b><time>${esc(n.d)}</time></summary><div class="body"><ul>${n.b.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></details>`).join('')}</section>
+    <section class="sec">${secHead('업데이트 내역', '버전별 변경 사항', '#/tools/patch')}${pn.slice(0, 12).map((p, i) => `<details class="nt" ${i === 0 ? 'open' : ''}><summary><span class="tag">Ver. ${esc(p.v)}</span><b>${esc(p.s)}</b><time>${esc(p.d)}</time></summary><div class="body">${(p.g || []).map(g => `<p style="margin:10px 0 4px"><b>${esc(g.h)}</b></p><ul>${g.i.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</div></details>`).join('')}</section></div>`;
+}
+
+/* ---------- 소개 ---------- */
+function renderIntro() {
+  const el = $('[data-view="intro"]');
+  const F = [['#/characters', '공명자 가이드', '공명자마다 Lv.90 기본 스탯, 스킬, 공명 체인, 추천 무기 · 에코 세트, 추천 조합, 육성 재료를 한 페이지에.'],
+    ['#/tools/tower-build', '역경의 탑 자동 편성', '보유 캐릭터와 이번 시즌 층별 버프로 파티 합산 1사이클 피해가 가장 높은 편성을 찾습니다.'],
+    ['#/tools/timeline', '딜 사이클', '추천 조합이나 내 파티가 한 바퀴 도는 동안 누가 언제 무엇을 하는지 순서대로 보여 줍니다.'],
+    ['#/echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
+    ['#/sim', '튜닝 시뮬레이터', '공개된 확률 규칙으로 캐릭터 · 무기 이벤트 튜닝을 미리 돌려 봅니다.'],
+    ['#/tools/grow', '육성 계산', '돌파 · 스킬 · 공명 노드에 필요한 재료와 파밍 횟수, 결정 웨이브 플레이트를 계산합니다.']];
+  el.innerHTML = `<div class="container page"><p class="eyebrow">소개</p><h1 class="ph-t">명조를 더 똑똑하게,<br><em>띵조 AUTO TEAM MAKER</em></h1>
+    <p class="ph-d">명조: 워더링 웨이브를 즐기는 사람들을 위한 팬 사이트입니다. 게임 데이터로 공명자 정보를 정리하고, 보유 캐릭터로 짤 수 있는 최적의 파티를 계산합니다. 로그인 없이 쓰며, 설정은 이 브라우저에만 저장됩니다.</p>
+    <section class="sec">${secHead('이런 걸 할 수 있어요', '', '')}<div class="intro-grid">${F.map(([h, n, d]) => `<a class="mini-feat" href="${h}"><b>${n}</b><span>${d}</span></a>`).join('')}</div></section>
+    <section class="sec">${secHead('데이터는 이렇게 갱신돼요', '', '')}<div class="intro-grid">
+      <div class="box"><h3>게임 데이터</h3><p class="note">공명자 · 무기 · 재료 · 역경의 탑 구성은 공개 게임 데이터 저장소(Arikatsu/WutheringWaves_Data)를 씁니다. 새 공명자는 매일 자동으로 확인해 추가합니다.</p></div>
+      <div class="box"><h3>픽업 · 버전 일정</h3><p class="note">명조 공식 홈페이지 공지를 3시간마다 읽어 픽업 기간과 버전 정보를 갱신합니다. 공지에 빠진 배너는 게임 데이터의 튜닝 화면 정보로 채웁니다.</p></div>
+      <div class="box"><h3>일러스트</h3><p class="note">캐릭터 카드 · 전신 · 픽업 배너 그림은 게임 UI 리소스 저장소에서 받아 작게 줄여 씁니다. 새 공명자가 생기면 함께 만들어집니다.</p></div></div></section>
+    <section class="sec">${secHead('알아 두세요', '', '')}<div class="box"><ul class="prose" style="margin:0">
+      <li>예상 피해 · 튜닝 확률은 비교를 위한 추정치이며, 실제 게임 결과와 다를 수 있습니다.</li>
+      <li>팬이 만든 비공식 사이트로, KURO GAMES와 관련이 없습니다. 게임 이미지와 이름의 권리는 KURO GAMES에 있습니다.</li>
+      <li>에코 옵션을 파티 편성 계산에 반영하는 기능, 스킬 레벨 · 상세 스탯 입력은 라이선스 인증 후 쓸 수 있습니다.</li></ul></div></section></div>`;
+}
+
+/* ---------- 공명자 가이드 (목록) ---------- */
+function renderCharacters() {
+  const el = $('[data-view="characters"]');
+  const f = state.cgF || (state.cgF = { el: 'all', wt: 'all', q: 'all', role: 'all', own: false, s: '' });
+  const pick = new Map(bannersNow('char').map(x => [x.f5[0], x]));
+  const chip = (g, v, n, extra = '') => `<button class="fchip" data-cf="${g}" data-v="${v}" aria-pressed="${f[g] === v}">${extra}${n}</button>`;
+  const s = f.s.trim().replace(/[\s·]/g, '');
+  const list = CHARS.filter(c => (f.el === 'all' || c.el === f.el) && (f.wt === 'all' || String(c.wt) === f.wt) && (f.q === 'all' || String(c.q) === f.q) && (f.role === 'all' || c.role === f.role) && (!f.own || state.owned.has(c.id)) && (!s || c.name.replace(/[\s·]/g, '').includes(s)));
+  el.innerHTML = `<div class="container page"><p class="eyebrow">공명자 가이드</p><h1 class="ph-t">공명자 <em>육성 가이드</em></h1><p class="ph-d">공명자를 눌러 기본 스탯, 스킬 · 공명 체인, 추천 무기와 에코 세트, 추천 조합, 육성 재료를 확인하세요.</p>
+    <div class="fbar">
+      <div class="grp"><span class="lbl">속성</span>${chip('el', 'all', '전체')}${Object.entries(EL).map(([k, v]) => chip('el', k, v.n, `<i class="el-i" style="--elc:${v.c}"></i>`)).join('')}</div>
+      <div class="grp"><span class="lbl">무기</span>${chip('wt', 'all', '전체')}${Object.entries(WT).map(([k, v]) => chip('wt', k, v)).join('')}</div>
+      <div class="grp"><span class="lbl">등급</span>${chip('q', 'all', '전체')}${chip('q', '5', '5성')}${chip('q', '4', '4성')}</div>
+      <div class="grp"><span class="lbl">역할</span>${chip('role', 'all', '전체')}${Object.entries(ROLE_N).map(([k, v]) => chip('role', k, v.split('·')[0])).join('')}</div>
+      <label class="chk"><input type="checkbox" id="cg-own" ${f.own ? 'checked' : ''}> 보유만</label>
+      <input type="search" id="cg-s" placeholder="공명자 이름 검색" value="${esc(f.s)}" aria-label="공명자 이름 검색">
+    </div>
+    <p class="note" style="margin:0 0 12px">${list.length}명</p>
+    ${list.length ? `<div class="cc-grid wide">${list.map(c => ccHTML(c, { tags: (pick.has(c.rid) ? pickTag(pick.get(c.rid)) : '') + (isUpcoming(c) ? `<span class="tag next">${esc(releaseLabel(c))}</span>` : '') + (c.auto ? '<span class="tag">자동 추가</span>' : '') })).join('')}</div>` : '<div class="empty-note">조건에 맞는 공명자가 없습니다.</div>'}</div>`;
+  $$('[data-cf]', el).forEach(b => b.addEventListener('click', () => { f[b.dataset.cf] = b.dataset.v; renderCharacters(); }));
+  $('#cg-own').addEventListener('change', e => { f.own = e.target.checked; renderCharacters(); });
+  let tm; $('#cg-s').addEventListener('input', e => { clearTimeout(tm); tm = setTimeout(() => { f.s = e.target.value; renderCharacters(); const i = $('#cg-s'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 250); });
+}
+
+/* ---------- 공명자 가이드 (상세) ---------- */
+const SK_N = { n: '일반 공격', s: '공명 스킬', f: '공명 회로', l: '공명 해방', i: '변주 스킬', o: '반주 스킬' };
+function renderCharacter(id) {
+  const el = $('[data-view="character"]'); const c = CH[id]; if (!c) return;
+  const rid = c.rid; const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[rid]) || c.base || null;
+  const nd = (typeof RAW_NODE !== 'undefined' && RAW_NODE[rid]) || c.node || {};
+  const skn = (typeof RAW_SKILLN !== 'undefined' && RAW_SKILLN[rid]) || {};
+  const chain = (typeof RAW_CHAIN !== 'undefined' && RAW_CHAIN[rid]) || {};
+  const pk = bannersNow('char').find(x => x.f5[0] === rid);
+  const bg = artUrl('bg', rid), full = artUrl('full', rid);
+  const presets = PRESETS.filter(p => p.m.includes(c.id) && p.m.every(i => CH[i]));
+  const alts = PRESETS.flatMap(p => (p.v || []).filter(v => v.m.includes(c.id) && !p.m.includes(c.id) && v.m.every(i => CH[i])).map(v => ({ ...v, t: p.t })));
+  const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b></div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
+  const setHTML = (sid, label) => { const st = RAW_SETS[sid]; if (!st) return ''; return `<div class="wp">${IMG_SET[sid] ? `<img src="${IMG_SET[sid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b>${esc(st.n)}</b></div>${st.e.map(([n, d]) => `<div class="d"><b>${n}세트</b> ${esc(d)}</div>`).join('')}</div></div>`; };
+  const G = typeof RAW_GROW !== 'undefined' && RAW_GROW.chars[rid];
+  const mats = G && G.cat ? [['boss', '보스 재료'], ['spec', '특산물'], ['weekly', '주간 보스']].filter(([k]) => G.cat[k]).map(([k, n]) => [G.cat[k], n])
+    .concat([[G.cat.forte && G.cat.forte[3], '스킬 재료(최고 등급)'], [G.cat.common && G.cat.common[3], '공용 재료(최고 등급)']].filter(x => x[0])) : [];
+  const teamRow = (m, t, d, tag) => `<div class="team-row"><div class="mems">${m.map(i => `<a href="#/character/${i}">${portraitHTML(CH[i])}<div>${esc(CH[i].name)}</div></a>`).join('')}</div><div class="tt">${tag || ''}<b>${esc(t)}</b><span>${esc(d || '')}</span></div></div>`;
+  el.innerHTML = `<section class="ch-hero" style="--elc:${elColor(c)}">
+      ${bg ? `<div class="bg" style="background-image:url('${bg}')"></div>` : '<div class="elbg"></div>'}
+      ${full ? `<img class="art" src="${full}" alt="">` : ''}
+      <div class="ch-hero-in">
+        <div class="crumb"><a href="#/characters">공명자 가이드</a> › ${esc(c.name)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">${pk ? pickTag(pk) + '<span class="tag gold">지금 픽업</span>' : ''}${isUpcoming(c) ? `<span class="tag next">${esc(releaseLabel(c))}</span>` : ''}${c.auto ? '<span class="tag">자동 추가 · 추정</span>' : ''}<span class="stars ${c.q === 4 ? 'r4' : ''}" style="font-size:15px">${'★'.repeat(c.q)}</span></div>
+        <h1 style="margin:0">${esc(c.name)}</h1>
+        <div class="ch-attr"><span><i class="el-i"></i>${EL[c.el] ? EL[c.el].n : ''}</span><span>${WT[c.wt] || ''}</span><span>${ROLE_N[c.role] || ''}</span>${(c.tags || []).slice(0, 3).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+        ${c.outro ? `<p class="ch-outro"><b style="color:var(--gold)">반주 · ${esc(c.outro.n)}</b> ${esc(c.outro.d)}</p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm ${state.owned.has(c.id) ? 'glass' : 'solid-gold'}" id="ch-own">${state.owned.has(c.id) ? '보유 중 · 빼기' : '보유 캐릭터에 추가'}</button>${G ? '<button class="btn sm glass" id="ch-grow">육성 재료 계산</button>' : ''}<button class="btn sm glass" id="ch-cfg">무기 · 체인 설정</button></div>
+      </div></section>
+    <div class="container ch-body">
+      <div>
+        ${bs ? `<div class="box"><h3>Lv.90 기본 스탯 <small>게임 데이터 · 무기 · 에코 제외</small></h3><div class="kv"><div><span>공격력</span><b>${fmt(bs[0])}</b></div><div><span>HP</span><b>${fmt(bs[1])}</b></div><div><span>방어력</span><b>${fmt(bs[2])}</b></div><div><span>크리티컬</span><b>${bs[3]}%</b></div><div><span>크리티컬 피해</span><b>${bs[4]}%</b></div>${Object.entries(nd).map(([k, v]) => `<div><span>공명 노드 · ${esc({ cr: '크리티컬', cd: '크리티컬 피해', el: '속성 피해', atk: '공격력', hp: 'HP', def: '방어력', heal: '치료 효과' }[k] || k)}</span><b>+${v}%</b></div>`).join('')}</div></div>` : ''}
+        ${Object.keys(skn).length ? `<div class="box"><h3>스킬</h3><div class="sk">${Object.entries(SK_N).filter(([k]) => skn[k]).map(([k, n]) => `<div><span>${n}</span>${esc(skn[k])}</div>`).join('')}</div></div>` : ''}
+        ${Object.keys(chain).length ? `<div class="box"><h3>공명 체인</h3><div class="chain">${[1, 2, 3, 4, 5, 6].filter(i => chain[i]).map(i => `<details><summary><span class="s">S${i}</span>${esc(chain[i].n)}</summary><p>${esc(chain[i].d)}</p></details>`).join('')}</div></div>` : ''}
+        ${presets.length || alts.length ? `<div class="box"><h3>추천 조합 <small><a href="#/tools/presets">추천 조합 전체</a></small></h3>${presets.map(p => teamRow(p.m, p.t, p.d, `<span class="tag gold">${esc(p.tag)}</span> `)).join('')}${alts.slice(0, 4).map(v => teamRow(v.m, v.t, v.n, `<span class="tag">${v.k === 'f2p' ? '입문' : '대체'}</span> `)).join('')}</div>` : ''}
+      </div>
+      <aside>
+        <div class="box"><h3>추천 무기</h3>${wpHTML(c.w, c.q === 5 ? '전용 · 5성' : '5성')}${c.w4 && c.w4 !== c.w ? wpHTML(c.w4, '4성') : ''}</div>
+        ${c.set ? `<div class="box"><h3>추천 에코 세트</h3>${setHTML(c.set, '5세트')}${(c.set2 || []).map(s => setHTML(s, '2세트')).join('')}</div>` : ''}
+        ${mats.length ? `<div class="box"><h3>육성 재료</h3><div class="mats">${mats.map(([k, n]) => `<div class="mat">${itemIcon(k, 36)}<div><div style="font-size:11px;color:var(--muted)">${n}</div>${esc(itemName(k))}</div></div>`).join('')}</div></div>` : ''}
+      </aside>
+    </div>`;
+  $('#ch-own').addEventListener('click', () => { if (state.owned.has(c.id)) state.owned.delete(c.id); else state.owned.add(c.id); save(); paintOwnedChip(); toast(state.owned.has(c.id) ? `${c.name}을(를) 보유 캐릭터에 넣었습니다.` : `${c.name}을(를) 보유 캐릭터에서 뺐습니다.`); renderCharacter(id); });
+  if ($('#ch-grow')) $('#ch-grow').addEventListener('click', () => { state.grow = growDefault(c.id); save(); location.hash = '#/tools/grow'; });
+  $('#ch-cfg').addEventListener('click', () => openCharCfg(c.id));
+}
+function paintOwnedChip() { const c = $('#owned-chip'); if (c) c.textContent = `보유 ${state.owned.size}명`; }
+
+/* ---------- 에코 계산기 ---------- */
+const LS_ECHO_CALC = 'ddingjo-atm-echo-calc';
+const ECHO_GOAL = { cr: 75, cd: 260, er: 125, atk: Math.round(ATK_REF / 100) * 100 };
+function echoCalcState() {
+  if (!state.ec) { try { state.ec = JSON.parse(lsGet(LS_ECHO_CALC) || 'null'); } catch (e) { state.ec = null; } }
+  if (!state.ec || !CH[state.ec.id]) { const c0 = CHARS.find(c => c.q === 5 && c.role === 'main' && !isUpcoming(c)); state.ec = { id: c0.id, echo: null, w: 0 }; }
+  const c = CH[state.ec.id];
+  if (!state.ec.echo) { const o = state.ov[c.id] || {}; state.ec.echo = (o.echo && Array.isArray(o.echo.e)) ? JSON.parse(JSON.stringify(o.echo)) : ECHO_DEFAULT(scaleOf(c)); }
+  return state.ec;
+}
+function echoGrade(cv) { return cv >= 200 ? ['SS', '종결급'] : cv >= 170 ? ['S', '준종결'] : cv >= 140 ? ['A', '훌륭함'] : cv >= 110 ? ['B', '쓸 만함'] : cv >= 70 ? ['C', '육성 중'] : ['D', '시작 단계']; }
+function renderEcho() {
+  const el = $('[data-view="echo"]'); const E = echoCalcState(); const c = CH[E.id];
+  const ws = weaponsForType(c.wt); const wid = E.w && RAW_WEAPONS[E.w] ? E.w : ((state.ov[c.id] || {}).w || c.w);
+  const opts = Object.entries(EL).map(([k, v]) => `<optgroup label="${v.n}">${CHARS.filter(x => x.el === k).map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`).join('');
+  el.innerHTML = `<div class="container page"><p class="eyebrow">에코 계산기</p><h1 class="ph-t">나의 에코,<em> 어디까지 강해질까요?</em></h1><p class="ph-d">에코 5개의 코스트 · 주옵션 · 부옵션을 넣으면 속성 화면 스탯(무기 · 에코 세트 상시 효과 포함)과 크리티컬 점수를 계산합니다. 입력은 이 브라우저에 저장됩니다.</p>
+    <div class="two" style="margin-top:24px">
+      <div class="box"><div class="ec-pick"><label class="lbl" for="ec-char">공명자</label><select id="ec-char">${opts}</select><label class="lbl" for="ec-w">무기</label><select id="ec-w">${ws.map(w => `<option value="${w.id}" ${+w.id === +wid ? 'selected' : ''}>★${w.q} ${esc(w.n)}</option>`).join('')}</select></div>
+        <div class="ec-grid" id="ec-slots">${E.echo.e.map((x, i) => echoSlotHTML(c, x, i)).join('')}</div>
+        ${Object.entries(ECHO_SUB).map(([k, d]) => `<datalist id="ec-dl-${k}">${d[1].map(v => `<option value="${v}">`).join('')}</datalist>`).join('')}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn sm" id="ec-std">기본 주옵션으로</button><button class="btn sm" id="ec-clear">부옵션 모두 지우기</button></div></div>
+      <div><div class="box" id="ec-out"></div></div>
+    </div></div>`;
+  const read = () => ({ on: true, e: $$('#ec-slots .ec-slot').map(sl => ({ c: +$('.ec-c', sl).value, m: $('.ec-m', sl).value,
+    sub: $$('.ec-sub', sl).map(r => [$('.ec-sk', r).value, $('.ec-sv', r).value === '' ? 0 : +$('.ec-sv', r).value]).filter(([k, v]) => k && v > 0) })) });
+  const paint = () => {
+    $$('#ec-slots .ec-slot').forEach(sl => { const cst = +$('.ec-c', sl).value; const cur = $('.ec-m', sl).value; $('.ec-m', sl).innerHTML = echoMainOpts(c, cst, cur); const M = ECHO_MAIN[cst]; $('.ec-sec', sl).textContent = M && M._sec ? `+ ${M._sec[0] === 'hp' ? 'HP' : '공격력'} ${M._sec[1]}` : ''; });
+    const e = read(); E.echo = e; E.w = +$('#ec-w').value; lsSet(LS_ECHO_CALC, JSON.stringify(E));
+    const t = echoSum(e); const subCr = e.e.reduce((a, x) => a + x.sub.filter(s => s[0] === 'cr').reduce((b, s) => b + s[1], 0), 0); const subCd = e.e.reduce((a, x) => a + x.sub.filter(s => s[0] === 'cd').reduce((b, s) => b + s[1], 0), 0);
+    const cv = subCr * 2 + subCd; const [g, gn] = echoGrade(cv);
+    const ov = { ...state.ov, [c.id]: { ...(state.ov[c.id] || {}), st: null, w: E.w, r: (RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5, echo: { ...e, on: true } } };
+    const was = LICENSED; let pe; try { LICENSED = true; pe = panelEstimate(c.id, state.settings, ov); } finally { LICENSED = was; }
+    const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], null] : ['공격력', pe.atk, ECHO_GOAL.atk];
+    const bar = (n, v, goal, unit = '') => `<div class="stat-bar"><div class="top"><span>${n}</span><b>${v > 999 ? fmt(v) : v}${unit}${goal ? ` <span>/ 목표 ${goal > 999 ? fmt(goal) : goal}${unit}</span>` : ''}</b></div>${goal ? `<div class="track"><div class="fill" style="width:${Math.min(100, v / goal * 100)}%"></div></div>` : ''}</div>`;
+    const tips = []; if (pe.cr < 60) tips.push('크리티컬이 낮아요. 4코스트 주옵션 크리티컬이나 부옵션 크리티컬을 먼저 올려 보세요.');
+    if (pe.cr > 0 && pe.cd / Math.max(pe.cr, 1) < 2.8 && pe.cr >= 60) tips.push('크리티컬 대비 크리티컬 피해가 낮아요. 크리티컬 피해 부옵션을 노려 보세요.');
+    if (pe.cr >= 95) tips.push('크리티컬이 100%에 가까워요. 이제 크리티컬 피해 · 공격력이 더 효율적입니다.');
+    if (t.cost > 12) tips.push('코스트 합이 12를 넘었습니다. 게임에서는 장착할 수 없어요.');
+    $('#ec-out').innerHTML = `<div class="score"><div class="g">${g}</div><div class="v">크리티컬 점수 <b class="num">${cv.toFixed(1)}</b> · ${gn}<br><span class="note">부옵션의 크리티컬×2 + 크리티컬 피해</span></div></div>
+      <div style="display:grid;gap:12px">${bar(main[0], main[1], main[2])}${bar('크리티컬', pe.cr, ECHO_GOAL.cr, '%')}${bar('크리티컬 피해', pe.cd, ECHO_GOAL.cd, '%')}${bar(`${EL[c.el].n} 피해 보너스`, pe.el, null, '%')}${bar('공명 효율', +(pe.er || 100).toFixed(1), ECHO_GOAL.er, '%')}</div>
+      <p class="note" style="margin:12px 0 0">코스트 <b class="num ${t.cost > 12 ? 'bad' : ''}">${t.cost}</b> / 12 · 목표치는 일반적인 메인 딜러 기준 참고값입니다. 크리티컬 기대 배율 ${(1 + Math.min(pe.cr, 100) / 100 * (pe.cd / 100 - 1)).toFixed(3)}배</p>
+      ${tips.length ? `<ul class="prose" style="margin:10px 0 0">${tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm solid-gold" id="ec-apply">파티 편성 계산에 이 에코 쓰기</button><a class="btn sm" href="#/character/${c.id}">${esc(c.name)} 가이드</a></div>
+      <p class="note" style="margin:8px 0 0">${LICENSED ? '저장하면 파티 편성 · 딜 계산에 이 에코가 반영됩니다.' : '파티 편성 · 딜 계산에 반영하는 기능은 라이선스 인증 후 쓸 수 있습니다.'}</p>`;
+    $('#ec-apply').addEventListener('click', () => {
+      if (!LICENSED) { openLicense(); return; }
+      state.ov[c.id] = { ...(state.ov[c.id] || {}), w: E.w, r: (state.ov[c.id] || {}).r || ((RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5), st: { on: false }, echo: { ...read(), on: true } };
+      save(); toast(`${c.name}의 에코를 파티 편성 계산에 반영했습니다.`);
+    });
+  };
+  $('#ec-char').addEventListener('change', e => { state.ec = { id: e.target.value, echo: null, w: 0 }; renderEcho(); });
+  $('#ec-w').addEventListener('change', paint);
+  $('#ec-slots').addEventListener('change', e => {
+    if (e.target.classList.contains('ec-sk')) { const inp = e.target.parentElement.querySelector('.ec-sv'); inp.setAttribute('list', 'ec-dl-' + e.target.value); const d = ECHO_SUB[e.target.value]; inp.max = d ? d[1][d[1].length - 1] : ''; inp.placeholder = d ? `${d[1][0]}~${d[1][d[1].length - 1]}` : ''; if (!e.target.value) inp.value = ''; }
+    paint();
+  });
+  $('#ec-slots').addEventListener('input', e => { if (e.target.classList.contains('ec-sv')) paint(); });
+  $('#ec-std').addEventListener('click', () => { const keep = read(); const d = ECHO_DEFAULT(scaleOf(c)); $('#ec-slots').innerHTML = d.e.map((x, i) => echoSlotHTML(c, { ...x, sub: (keep.e[i] || {}).sub || [] }, i)).join(''); paint(); });
+  $('#ec-clear').addEventListener('click', () => { $$('#ec-slots .ec-sk').forEach(x => { x.value = ''; }); $$('#ec-slots .ec-sv').forEach(x => { x.value = ''; }); paint(); });
+  paint();
+}
+
+/* ---------- 튜닝 시뮬레이터 ----------
+   공개 규칙: 5성 기본 0.8% · 4성 6% · 80회 안에 5성 확정 · 10회마다 4성 이상 확정
+   캐릭터 이벤트: 5성 픽업 50%, 놓치면 다음 5성은 픽업 확정 / 4성은 픽업 50%
+   무기 이벤트: 5성은 픽업 무기 확정
+   66회째부터 확률이 오르는 정도(1회당 +3%p)는 공식 발표가 없어, 종합 확률 1.8%에 맞춘 추정치입니다. */
+const SIM_STD5 = ['verina', 'encore', 'calcharo', 'lingyang', 'jianxin'];
+const SIM_SOFT = 66, SIM_STEP = 0.03;
+function simBanners() {
+  const out = []; const now = Date.now();
+  evItems().filter(x => (x.k === 'char' || x.k === 'weapon') && x.E > now).forEach(x => out.push({ key: `${x.k}:${x.f5[0]}:${x.E}`, type: x.k, f5: x.f5[0], f4: x.f4 || [], label: `${x.k === 'char' ? '캐릭터' : '무기'} · ${x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || '')}${x.S > now ? ' (예정)' : ''}` }));
+  if (!out.some(b => b.type === 'char')) { const c = CHARS.find(c => c.q === 5 && !isUpcoming(c) && !SIM_STD5.includes(c.id)); if (c) out.push({ key: `char:${c.rid}`, type: 'char', f5: c.rid, f4: [], label: `캐릭터 · ${c.name}` }); }
+  if (!out.some(b => b.type === 'weapon')) { const c = CHARS.find(c => c.q === 5 && !isUpcoming(c) && RAW_WEAPONS[c.w]); if (c) out.push({ key: `weapon:${c.w}`, type: 'weapon', f5: c.w, f4: [], label: `무기 · ${RAW_WEAPONS[c.w].n}` }); }
+  return out;
+}
+function simState() {
+  const bs = simBanners();
+  if (!state.sim || !bs.some(b => b.key === state.sim.key)) state.sim = { key: bs[0] && bs[0].key, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] };
+  return { S: state.sim, B: bs.find(b => b.key === state.sim.key) || bs[0], bs };
+}
+function simPull(B, S) {
+  S.n++; S.p5++; S.p4++;
+  const p5 = S.p5 >= 80 ? 1 : S.p5 >= SIM_SOFT ? Math.min(1, 0.008 + (S.p5 - SIM_SOFT + 1) * SIM_STEP) : 0.008;
+  const r = Math.random(); let res;
+  if (r < p5) {
+    let feat = B.type === 'weapon' || S.g5 || Math.random() < 0.5;
+    if (B.type === 'char') S.g5 = !feat;
+    if (feat) res = B.type === 'char' ? { q: 5, k: 'char', id: (charByRid(B.f5) || {}).id, rid: B.f5, feat: true } : { q: 5, k: 'weapon', wid: B.f5, feat: true };
+    else { const id = SIM_STD5[Math.floor(Math.random() * SIM_STD5.length)]; res = { q: 5, k: 'char', id, rid: (CH[id] || {}).rid, feat: false }; }
+    S.n5++; S.pity5s.push(S.p5); S.p5 = 0; S.p4 = 0;
+  } else if (S.p4 >= 10 || r < p5 + 0.06) {
+    const f4 = (B.f4 || []).filter(x => B.type === 'char' ? charByRid(x) : RAW_WEAPONS[x]);
+    const feat = f4.length && (S.g4 || Math.random() < 0.5); S.g4 = !feat && f4.length > 0;
+    if (feat) { const x = f4[Math.floor(Math.random() * f4.length)]; res = B.type === 'char' ? { q: 4, k: 'char', id: charByRid(x).id, feat: true } : { q: 4, k: 'weapon', wid: x, feat: true }; }
+    else {
+      const pool = CHARS.filter(c => c.q === 4 && !isUpcoming(c) && !c.id.startsWith('rover_')).map(c => ({ k: 'char', id: c.id })).concat(Object.entries(RAW_WEAPONS).filter(([, w]) => w.q === 4).map(([id]) => ({ k: 'weapon', wid: +id })));
+      res = { q: 4, ...pool[Math.floor(Math.random() * pool.length)], feat: false };
+    }
+    S.n4++; S.p4 = 0;
+  } else {
+    const p3 = Object.entries(RAW_WEAPONS).filter(([, w]) => w.q === 3); const [wid] = p3[Math.floor(Math.random() * p3.length)] || [0];
+    res = { q: 3, k: 'weapon', wid: +wid };
+  }
+  res.at = S.n; if (res.q >= 4) S.hist.unshift({ ...res, pity: res.q === 5 ? S.pity5s[S.pity5s.length - 1] : null }); if (S.hist.length > 200) S.hist.length = 200;
+  return res;
+}
+const simName = x => x.k === 'char' ? ((CH[x.id] || {}).name || '?') : ((RAW_WEAPONS[x.wid] || {}).n || '3성 무기');
+function simCard(x) {
+  const img = x.k === 'char' ? (artUrl('card', (CH[x.id] || {}).rid) || IMG_CHAR[x.id] || '') : (IMG_WEAPON[x.wid] || '');
+  return `<div class="pull r${x.q}">${img ? `<img class="${x.k === 'weapon' ? 'w' : ''}" src="${img}" alt="">` : ''}<span class="n">${x.q === 5 && !x.feat ? '⚑ ' : ''}${esc(simName(x))}</span></div>`;
+}
+function renderSim() {
+  const el = $('[data-view="sim"]'); const { S, B, bs } = simState();
+  if (!B) { el.innerHTML = '<div class="container page"><div class="empty-note">시뮬레이션할 배너가 없습니다.</div></div>'; return; }
+  const avg = S.pity5s.length ? (S.pity5s.reduce((a, b) => a + b, 0) / S.pity5s.length).toFixed(1) : '-';
+  el.innerHTML = `<div class="container page"><p class="eyebrow">튜닝 시뮬레이터</p><h1 class="ph-t">별의 소리를 쓰기 전에,<em> 미리 돌려 보기</em></h1><p class="ph-d">공개된 확률 규칙(5성 0.8% · 4성 6% · 80회 확정 · 10회마다 4성 이상)으로 계산합니다. 66회부터 확률이 오르는 정도는 공식 발표가 없어 종합 확률 1.8%에 맞춘 추정치입니다. 실제 게임과는 아무 관련이 없습니다.</p>
+    <div class="two" style="margin-top:24px">
+      <div class="box"><div class="sim-ctrl"><select id="sim-b" aria-label="배너">${bs.map(b => `<option value="${esc(b.key)}" ${b.key === S.key ? 'selected' : ''}>${esc(b.label)}</option>`).join('')}</select>
+        <button class="btn solid-gold" data-pull="1">1회 튜닝</button><button class="btn solid-gold" data-pull="10">10회 튜닝</button><button class="btn sm" data-pull="80">80회</button><button class="btn sm ghost" id="sim-reset">처음부터</button></div>
+        <div class="sim-pity"><div><span>5성 천장까지</span><b>${80 - S.p5}</b></div><div><span>4성 확정까지</span><b>${10 - S.p4}</b></div><div><span>${B.type === 'char' ? '다음 5성' : '5성'}</span><b style="font-size:16px">${B.type === 'weapon' ? '픽업 무기 확정' : S.g5 ? '픽업 확정' : '픽업 50%'}</b></div></div>
+        ${S.last.length ? `<div class="pulls">${S.last.map(simCard).join('')}</div>` : '<div class="empty-note">튜닝 버튼을 눌러 보세요.</div>'}
+      </div>
+      <div class="box"><h3>기록</h3><div class="kv" style="margin-bottom:12px"><div><span>전체 튜닝</span><b>${fmt(S.n)}회</b></div><div><span>5성</span><b>${S.n5}개</b></div><div><span>4성</span><b>${S.n4}개</b></div><div><span>5성 평균</span><b>${avg}회</b></div><div><span>쓴 별의 소리</span><b>${fmt(S.n * 160)}</b></div></div>
+        <div class="hist">${S.hist.length ? S.hist.map(h => `<div class="r${h.q}"><span>${h.q === 5 ? '★5' : '★4'} ${esc(simName(h))}${h.q === 5 && !h.feat ? ' <span class="muted">(픽업 놓침)</span>' : ''}</span><span class="num muted">${h.at}회째${h.pity ? ` · ${h.pity}뽑` : ''}</span></div>`).join('') : '<p class="note">4성 이상이 나오면 여기에 기록됩니다.</p>'}</div>
+        <p class="note" style="margin:10px 0 0">⚑ 표시는 픽업이 아닌 상설 5성입니다. 튜닝 1회 = 별의 소리 160.</p></div>
+    </div></div>`;
+  $('#sim-b').addEventListener('change', e => { state.sim = { key: e.target.value, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] }; renderSim(); });
+  $$('[data-pull]', el).forEach(b => b.addEventListener('click', () => { const n = +b.dataset.pull; const res = []; for (let i = 0; i < n; i++) res.push(simPull(B, S)); S.last = n > 10 ? res.filter(x => x.q >= 4).slice(-10) : res; renderSim(); }));
+  $('#sim-reset').addEventListener('click', () => { state.sim = null; renderSim(); });
+}
+
+/* ---------- 화면 전환 ---------- */
+const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'echo', 'sim', 'links', 'notice'];
+const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항' };
+let curView = null;
+function parseRoute() {
+  const h = location.hash || '';
+  if (/^#share=/.test(h)) return { v: 'tools', a: '' };
+  if (h === '' || h === '#' || h === '#/') return { v: 'home', a: '' };
+  if (!h.startsWith('#/')) return null; // 페이지 안 이동용 #앵커는 무시
+  const [v, a] = h.slice(2).split('/');
+  return { v, a: a ? decodeURIComponent(a) : '' };
+}
+function route(keepScroll) {
+  const r = parseRoute(); if (!r) { if (!curView) showView({ v: 'home', a: '' }, keepScroll); return; }
+  showView(r, keepScroll);
+}
+function showView(r, keepScroll) {
+  let v = VIEWS.includes(r.v) ? r.v : 'home';
+  if (v === 'character' && !CH[r.a]) v = 'characters';
+  const prev = curView; curView = v;
+  $$('#main > .view').forEach(x => { x.hidden = x.dataset.view !== v; });
+  const navKey = v === 'character' ? 'characters' : v;
+  $$('#gnb a, #drawer a').forEach(a => { if (a.dataset.nav === navKey) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  closeDrawer();
+  if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
+  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice }[v])(r.a);
+  const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
+  document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
+  if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
+}
+function closeDrawer() { const d = $('#drawer'); if (d) { d.hidden = true; $('#btn-menu').setAttribute('aria-expanded', 'false'); } }
+function initSite() {
+  $('#btn-menu').addEventListener('click', () => { const d = $('#drawer'); d.hidden = !d.hidden; $('#btn-menu').setAttribute('aria-expanded', String(!d.hidden)); });
+  window.addEventListener('hashchange', () => route());
+  loadArt(); refreshEvents();
+}
+
 /* ---------- 시작 ---------- */
 function init() {
+  const fromShare = /share=/.test(location.hash || '');
   loadLicense();
   const had = load();
   paintVersion();
@@ -3595,6 +4384,8 @@ function init() {
   if (!had || !state.parties.some(p => p.ids.some(Boolean))) optimize(true);
   switchTab(state.tab || 'tower-build');
   refreshTower(false);
+  initSite();
+  if (fromShare) location.hash = '#/tools/' + (state.tab || 'tower-build'); else route();
 }
 
 

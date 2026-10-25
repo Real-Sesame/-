@@ -1,0 +1,77 @@
+# 띵조 AUTO TEAM MAKER — 이벤트 · 픽업 일정 자동 갱신
+# 3시간마다 명조 공식 홈페이지 공지(픽업 공지 · 패치 노트 · 이벤트 예고)를 읽어 events.json을 갱신하고 커밋합니다.
+# (Actions 탭 → "이벤트 · 픽업 일정 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
+name: 이벤트 · 픽업 일정 자동 갱신
+
+on:
+  schedule:
+    - cron: '41 */3 * * *'   # 3시간마다
+  push:
+    branches: [main]
+    paths:
+      - tools/update_events.py
+      - .github/workflows/update-events.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write   # events.json 커밋
+  actions: write    # 60일 비활성으로 예약 실행이 꺼지지 않게 유지
+  pages: write      # 커밋 뒤 사이트(GitHub Pages) 다시 배포 요청
+
+concurrency:
+  group: update-events
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 이름 맞추기용 게임 데이터 받기 (필요한 파일만)
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/Arikatsu/WutheringWaves_Data.git gamedata
+          cd gamedata
+          git sparse-checkout set --no-cone \
+            /BinData/role/roleinfo.json /BinData/weapon/weaponconf.json /BinData/gacha/gachaviewinfo.json \
+            /Textmaps/ko/multi_text/MultiText.json /Textmaps/en/multi_text/MultiText.json
+
+      - name: 공식 공지에서 일정 읽기
+        run: python tools/update_events.py gamedata events.json --lang ko,en
+
+      - name: 바뀐 내용이 있으면 커밋
+        id: commit
+        run: |
+          if git diff --quiet -- events.json && git ls-files --error-unmatch events.json >/dev/null 2>&1; then
+            echo "변경 없음"; exit 0
+          fi
+          [ -f events.json ] || { echo "events.json이 없습니다"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add events.json
+          git commit -m "이벤트 · 픽업 일정 자동 갱신"
+          ok=0
+          for i in 1 2 3; do
+            if git push; then ok=1; break; fi
+            sleep 5
+            git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
+          done
+          [ "$ok" = 1 ] || { echo "::error::events.json 커밋을 올리지 못했습니다"; exit 1; }
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+
+      - name: 사이트 다시 배포 요청
+        if: steps.commit.outputs.pushed == '1'
+        continue-on-error: true
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" --silent && echo "배포 요청 완료"
+
+      - name: 예약 실행 유지 (60일 비활성 자동 중지 방지)
+        if: always()
+        continue-on-error: true
+        run: gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/update-events.yml/enable" --silent && echo "예약 실행 유지됨"

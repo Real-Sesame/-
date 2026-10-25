@@ -14,6 +14,7 @@ on:
     paths:
       - Index.html
       - tools/update_chars.py
+      - tools/build_assets.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -53,6 +54,7 @@ jobs:
             /BinData/skillTree/skilltree.json /BinData/item/iteminfo.json \
             /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
             /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
+            /BinData/gacha/gachaviewinfo.json \
             /Textmaps/ko/multi_text/MultiText.json
           echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
           echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
@@ -64,10 +66,15 @@ jobs:
           SCRIPT=tools/update_chars.py; [ -f "$SCRIPT" ] || SCRIPT=update_chars.py
           python "$SCRIPT" gamedata Index.html chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
 
+      - name: 캐릭터 일러스트 만들기 (없는 것만)
+        continue-on-error: true
+        run: python tools/build_assets.py gamedata . --cache "$RUNNER_TEMP/asset-cache"
+
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          if git diff --quiet -- chars-extra.json && git ls-files --error-unmatch chars-extra.json >/dev/null 2>&1; then
+          git add -A assets 2>/dev/null || true
+          if git diff --quiet -- chars-extra.json && git diff --cached --quiet -- assets && git ls-files --error-unmatch chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"
