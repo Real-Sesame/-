@@ -879,9 +879,9 @@ function resolveMember(id, modeKey, ov, settings) {
     c, id, modeKey, mode, el: c.el, role: (mode && mode.role) || c.role,
     pw: c.pw * ((mode && mode.pwMul) || 1), p: (mode && mode.p) || c.p || { n: 100 },
     ap, b: ((mode ? mode.b : c.b) || []).concat(chainB), weaponId, setId, sets2, chain, refine, mv, rotMul,
-    sl: skillLevels((typeof LICENSED === 'undefined' || LICENSED) ? o : null), // 스킬 레벨도 인증 사용자 전용(미인증이면 모두 10)
-    st: (o.st && o.st.on && (typeof LICENSED === 'undefined' || LICENSED)) ? o.st : null, // 상세 스탯은 인증 사용자 전용
-    ech: (!(o.st && o.st.on) && o.echo && o.echo.on && (typeof LICENSED === 'undefined' || LICENSED)) ? echoStats(c, o.echo) : null, // 에코 옵션도 인증 사용자 전용
+    sl: skillLevels(o), // 스킬 레벨(입력 없으면 모두 10)
+    st: (o.st && o.st.on) ? o.st : null, // 속성 화면 스탯 입력
+    ech: (!(o.st && o.st.on) && o.echo && o.echo.on) ? echoStats(c, o.echo) : null, // 에코 옵션 입력
     ft: Math.max(3, fieldTime(c, modeKey, (mode && mode.role) || c.role) + ftDelta)
   };
 }
@@ -1385,80 +1385,6 @@ function chainEffects(c) {
   return (_chainCache[c.id] = res);
 }
 
-/* =====================================================================
-   라이선스 인증 — 상세 스탯 입력 기능 잠금
-   키 원문은 저장하지 않고 SHA-256 해시만 비교합니다.
-   (브라우저에서만 동작하는 잠금이라 보안 장치가 아니라 이용 구분용입니다)
-   ===================================================================== */
-const LICENSE_SALT = 'ddingjo-atm:';
-// 키 원문 대신 해시만 보관. role: user = 스킬 레벨·상세 스탯, admin = 여기에 더해 패치 노트 편집
-const LICENSE_HASHES = {
-  '2ff883b7652cf38239fa9d1be74f8524855c268ab75d2d57d0481952998e1b17': { id: 'L-01', role: 'user' },
-  'dc958bcda2a072769a00684581bd4d38deb001329fe03d5262a4ff8f611815df': { id: 'L-02', role: 'user' },
-  '63875313849cfbcd1b37abae364c2ef7233c9ef63eb5e0acb1885b69f2b14018': { id: 'L-03', role: 'user' },
-  '93630616211fe893d5fe4032543417647ac88035326fbd82c4686e3fbaf5577f': { id: 'A-01', role: 'admin' }
-};
-const LS_LICENSE = 'ddingjo-atm-license';
-let LICENSED = false;
-let LICENSE_ID = '';
-let LICENSE_ROLE = '';
-function isAdmin() { return LICENSED && LICENSE_ROLE === 'admin'; }
-
-function sha256Hex(str) {
-  const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
-  const bytes = new TextEncoder().encode(str);
-  const len = bytes.length; const bitLen = len * 8;
-  const total = ((len + 9 + 63) >> 6) << 6;
-  const buf = new Uint8Array(total); buf.set(bytes); buf[len] = 0x80;
-  const dv = new DataView(buf.buffer);
-  dv.setUint32(total - 4, bitLen >>> 0); dv.setUint32(total - 8, Math.floor(bitLen / 0x100000000));
-  let h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
-  const w = new Uint32Array(64);
-  const rotr = (x, n) => (x >>> n) | (x << (32 - n));
-  for (let off = 0; off < total; off += 64) {
-    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
-    for (let i = 16; i < 64; i++) {
-      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
-    }
-    let [a, b, c, d, e, f, g, hh] = h;
-    for (let i = 0; i < 64; i++) {
-      const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-      const ch = (e & f) ^ (~e & g);
-      const t1 = (hh + S1 + ch + K[i] + w[i]) >>> 0;
-      const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-      const mj = (a & b) ^ (a & c) ^ (b & c);
-      const t2 = (S0 + mj) >>> 0;
-      hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
-    }
-    h = [h[0] + a, h[1] + b, h[2] + c, h[3] + d, h[4] + e, h[5] + f, h[6] + g, h[7] + hh].map(x => x >>> 0);
-  }
-  return h.map(x => x.toString(16).padStart(8, '0')).join('');
-}
-
-function checkLicenseKey(key) {
-  const hash = sha256Hex(LICENSE_SALT + String(key || '').trim());
-  const L = LICENSE_HASHES[hash];
-  return L ? { ok: true, hash, id: L.id, role: L.role } : { ok: false };
-}
-function loadLicense() {
-  try {
-    const d = JSON.parse(localStorage.getItem(LS_LICENSE) || 'null');
-    if (d && LICENSE_HASHES[d.hash]) { LICENSED = true; LICENSE_ID = LICENSE_HASHES[d.hash].id; LICENSE_ROLE = LICENSE_HASHES[d.hash].role; }
-  } catch (e) { /* 저장 불가 */ }
-}
-function activateLicense(key) {
-  const r = checkLicenseKey(key);
-  if (!r.ok) return false;
-  LICENSED = true; LICENSE_ID = r.id; LICENSE_ROLE = r.role;
-  try { localStorage.setItem(LS_LICENSE, JSON.stringify({ hash: r.hash, at: Date.now() })); } catch (e) { }
-  return true;
-}
-function deactivateLicense() {
-  LICENSED = false; LICENSE_ID = ''; LICENSE_ROLE = '';
-  try { localStorage.removeItem(LS_LICENSE); } catch (e) { }
-}
 
 /* =====================================================================
    버전 · 패치 노트 (수정할 때마다 맨 위에 추가하고 APP_VERSION을 올립니다)
@@ -1777,7 +1703,7 @@ function renderBuild() {
 function gearHTML(id, mem, c) {
   const w = weaponOf(mem.weaponId); const st = (state.ov[id] || {}).st;
   return `<button class="gear-sum" data-cfg="${id}" title="${esc(w ? w.n : '')} · ${esc(setLabel(mem))}" aria-label="${esc(c.name)} 체인·무기·스탯 설정">
-    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on && LICENSED ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on && LICENSED ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
+    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
 }
 function modeSelHTML(id, c, r) {
   if (!c.modes) return '';
@@ -1992,26 +1918,25 @@ function openCharCfg(id) {
       <label>에코 세트 (메인)<select id="cf-s">${sOpts}</select></label>
     </div>
     <div class="cfg-grid" id="cf-s2wrap" style="margin-top:10px"></div>
-    ${LICENSED ? '' : `<div class="cfg-sec"><div class="lock-box"><div style="flex:1 1 220px"><b>스킬 레벨 · 에코 옵션 · 상세 스탯 입력은 인증 사용자 전용입니다</b><div class="note">라이선스 키를 인증하면 내 스킬 레벨, 에코 5개의 주옵션·부옵션, 게임 속성 화면의 스탯으로 딜을 계산할 수 있습니다. 인증 전에는 스킬 레벨 10, 에코 완성도 추정치로 계산합니다.</div></div><button class="btn sm primary" id="cf-lic">라이선스 인증</button></div></div>`}
-    <div class="cfg-sec" ${LICENSED ? '' : 'hidden'}>
+    <div class="cfg-sec">
       <h4 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">스킬 레벨 <button type="button" class="btn sm ghost" id="cf-sl-max">모두 10</button></h4>
       <p class="note" style="margin:0 0 10px">게임 → 공명자 → <b>공명 회로(스킬)</b> 화면의 레벨을 넣으세요. 기본값은 모두 10입니다. 레벨 1은 10의 약 50% 배율입니다.</p>
       <div class="cfg-grid sl-grid">${SK_TREES.map(([k, n]) => `<label>${n}<select class="cf-sl" data-k="${k}">${[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(v => `<option value="${v}" ${v === mem.sl[k] ? 'selected' : ''}>Lv.${v}</option>`).join('')}</select></label>`).join('')}</div>
       <p class="note" id="cf-sl-eff" style="margin:8px 0 0"></p>
     </div>
-    <div class="cfg-sec" ${LICENSED ? '' : 'hidden'}>
+    <div class="cfg-sec">
       <h4>스탯 계산 기준</h4>
       <div class="seg" id="cf-mode" role="radiogroup" style="margin-bottom:6px">${[['est', '추정치'], ['echo', '에코 옵션 입력'], ['panel', '속성 화면 스탯']].map(([v, n]) => `<button type="button" data-v="${v}" aria-pressed="${v === mode0}">${n}</button>`).join('')}</div>
       <p class="note" id="cf-mode-note" style="margin:0"></p>
     </div>
-    <div class="cfg-sec" id="cf-echo-sec" ${LICENSED ? '' : 'hidden'}>
+    <div class="cfg-sec" id="cf-echo-sec">
       <h4 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">에코 옵션 <span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm ghost" id="cf-ec-std">기본 구성 4-3-3-1-1</button><button type="button" class="btn sm ghost" id="cf-ec-clear">부옵션 지우기</button></span></h4>
       <p class="note" style="margin:0 0 10px">게임 → 공명자 → <b>에코</b> 화면에서 에코 5개의 코스트·주옵션·부옵션을 옮겨 적으세요. 주옵션은 5성 +25 기준 값이 자동으로 들어가고, 부옵션은 단계 값 중에서 고르거나 직접 입력합니다(최대치를 넘으면 최대치로 계산). 소나타 세트는 위의 에코 세트에서 고릅니다. 캐릭터 기본 공격력·크리티컬(5% / 150%)과 공명 노드 보너스는 게임 데이터로 자동 반영됩니다.</p>
       <div class="ec-grid" id="cf-ec">${ech.e.slice(0, 5).map((x, i) => echoSlotHTML(c, x, i)).join('')}</div>
       ${Object.entries(ECHO_SUB).map(([k, d]) => `<datalist id="ec-dl-${k}">${d[1].map(v => `<option value="${v}">`).join('')}</datalist>`).join('')}
       <div class="ec-sum" id="cf-ec-sum" aria-live="polite"></div>
     </div>
-    <div class="cfg-sec" id="cf-panel-sec" ${LICENSED ? '' : 'hidden'}>
+    <div class="cfg-sec" id="cf-panel-sec">
       <h4>속성 화면 스탯</h4>
       <p class="note" style="margin:0 0 10px">게임 → 공명자 → <b>속성</b> 화면의 숫자를 그대로 넣으세요. 무기·에코·상시 효과가 이미 포함된 값이라 다시 더하지 않고, 반주·조건부 버프만 추가로 계산합니다. 비워 두면 회색 추정치를 씁니다.</p>
       <div class="cfg-grid">
@@ -2037,16 +1962,14 @@ function openCharCfg(id) {
     const tot = Object.entries(mem.p).reduce((a, [dt, sh]) => a + sh * skillLvFactor(m2, dt), 0) / Object.values(mem.p).reduce((a, b) => a + b, 0);
     $('#cf-sl-eff').textContent = `현재 레벨로 본인 피해는 모두 10일 때의 약 ${(tot * 100).toFixed(1)}%입니다.`;
   };
-  $$('.cf-sl').forEach(x => x.addEventListener('change', paintSL)); if (LICENSED) paintSL();
+  $$('.cf-sl').forEach(x => x.addEventListener('change', paintSL)); paintSL();
   $('#cf-sl-max').addEventListener('click', () => { $$('.cf-sl').forEach(x => { x.value = '10'; }); paintSL(); });
   $('#cf-s').addEventListener('change', () => paintS2(false));
-  if ($('#cf-lic')) $('#cf-lic').addEventListener('click', () => { closeDlg('#dlg-char'); openLicense(id); });
   let mode = mode0;
   const readEcho = () => ({ on: mode === 'echo', e: $$('#cf-ec .ec-slot').map(sl => ({ c: +$('.ec-c', sl).value, m: $('.ec-m', sl).value,
     sub: $$('.ec-sub', sl).map(r => [$('.ec-sk', r).value, $('.ec-sv', r).value === '' ? 0 : +$('.ec-sv', r).value]).filter(([k, v]) => k && v > 0) })) });
   const paintMode = () => {
     $$('#cf-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === mode));
-    if (!LICENSED) return;
     $('#cf-echo-sec').hidden = mode !== 'echo'; $('#cf-panel-sec').hidden = mode !== 'panel';
     $('#cf-mode-note').textContent = mode === 'est' ? `설정의 에코 완성도(${(ECHO_PRESETS[state.settings.preset] || ECHO_PRESETS.std).n}) 추정치로 계산합니다.`
       : mode === 'echo' ? '에코 5개의 주옵션·부옵션을 더해 스탯을 만들고, 무기·소나타·반주 버프는 그 위에 따로 계산합니다.'
@@ -2073,10 +1996,10 @@ function openCharCfg(id) {
   paintMode();
   $('#cf-save').addEventListener('click', () => {
     const g = k => { const v = $('#cf-st-' + k).value; return v === '' ? undefined : +v; };
-    const nst = LICENSED ? { on: mode === 'panel' } : { ...(o.st || {}) }; if (LICENSED) [...PK, 'n', 'h', 's', 'l'].forEach(k => { const v = g(k); if (v !== undefined) nst[k] = v; });
-    if (LICENSED && nst.on) PK.forEach(k => { if (nst[k] === undefined) nst[k] = est[k]; });
-    if (LICENSED && nst.on) ['n', 'h', 's', 'l'].forEach(k => { if (nst[k] === undefined && est.dtp[k]) nst[k] = est.dtp[k]; });
-    state.ov[id] = { ...o, c: +$('#cf-c').value, w: +$('#cf-w').value, r: +$('#cf-r').value, s: +$('#cf-s').value, s2: $$('.cf-s2').map(x => +x.value), st: nst, echo: LICENSED ? readEcho() : o.echo, sl: LICENSED ? Object.fromEntries($$('.cf-sl').map(x => [x.dataset.k, +x.value])) : o.sl };
+    const nst = { on: mode === 'panel' }; [...PK, 'n', 'h', 's', 'l'].forEach(k => { const v = g(k); if (v !== undefined) nst[k] = v; });
+    if (nst.on) PK.forEach(k => { if (nst[k] === undefined) nst[k] = est[k]; });
+    if (nst.on) ['n', 'h', 's', 'l'].forEach(k => { if (nst[k] === undefined && est.dtp[k]) nst[k] = est.dtp[k]; });
+    state.ov[id] = { ...o, c: +$('#cf-c').value, w: +$('#cf-w').value, r: +$('#cf-r').value, s: +$('#cf-s').value, s2: $$('.cf-s2').map(x => +x.value), st: nst, echo: readEcho(), sl: Object.fromEntries($$('.cf-sl').map(x => [x.dataset.k, +x.value])) };
     if (state.ov[id].echo === undefined) delete state.ov[id].echo;
     save(); closeDlg('#dlg-char'); rerenderTab(); toast(`${c.name} 설정을 저장했습니다.`);
   });
@@ -2086,33 +2009,6 @@ function openCharCfg(id) {
 function closeDlg(sel) { const d = $(sel); if (d.close) d.close(); else d.removeAttribute('open'); }
 function rerenderTab() { switchTab(state.tab); }
 
-/* ---------- 라이선스 ---------- */
-function paintLicenseUI() {
-  const b = $('#btn-license'); b.textContent = LICENSED ? '인증됨' : '라이선스 인증'; b.classList.toggle('on', LICENSED);
-  const t = $('#lic-status-text');
-  if (t) t.textContent = LICENSED ? `인증된 ${isAdmin() ? '관리자' : '사용자'}입니다 (${LICENSE_ID}). 캐릭터 설정에서 스킬 레벨, 에코 옵션, 상세 스탯을 입력할 수 있습니다.${isAdmin() ? ' 패치 노트 탭에서 패치 노트를 편집할 수 있습니다.' : ''}` : '인증되지 않았습니다. 라이선스 키를 인증하면 캐릭터 스킬 레벨·상세 스탯 입력 기능을 쓸 수 있습니다.';
-}
-function openLicense(returnTo) {
-  $('#lic-body').innerHTML = LICENSED
-    ? `<p class="prose" style="margin-top:0">이 브라우저는 <b>인증된 ${isAdmin() ? '관리자' : '사용자'}</b>입니다 (${esc(LICENSE_ID)}). 캐릭터 설정에서 스킬 레벨, 에코 옵션, 상세 스탯을 입력할 수 있습니다.${isAdmin() ? ' <b>패치 노트</b> 탭에서 패치 노트를 편집할 수 있습니다.' : ''}</p>
-       <div class="cfg-actions" style="justify-content:flex-start"><button class="btn sm" id="lic-off">인증 해제</button></div>
-       <p class="note">인증을 해제해도 입력한 스탯은 지워지지 않습니다. 다시 인증하면 그대로 쓰입니다.</p>`
-    : `<p class="prose" style="margin-top:0">받은 라이선스 키를 입력하세요. 대소문자를 구분합니다.</p>
-       <form class="lic-form" id="lic-form"><input id="lic-key" type="text" autocomplete="off" spellcheck="false" placeholder="라이선스 키" aria-label="라이선스 키"><button class="btn primary sm" type="submit">인증</button></form>
-       <div class="lic-msg" id="lic-msg" role="status"></div>`;
-  const f = $('#lic-form');
-  if (f) f.addEventListener('submit', e => {
-    e.preventDefault();
-    const ok = activateLicense($('#lic-key').value);
-    if (!ok) { $('#lic-msg').innerHTML = '<span style="color:var(--bad)">키가 맞지 않습니다. 대소문자와 띄어쓰기를 확인해 주세요.</span>'; return; }
-    paintLicenseUI(); closeDlg('#dlg-license'); rerenderTab(); toast(isAdmin() ? '관리자로 인증되었습니다. 패치 노트 편집도 쓸 수 있어요.' : '인증되었습니다. 이제 스킬 레벨, 에코 옵션, 상세 스탯을 입력할 수 있어요.');
-    if (returnTo) openCharCfg(returnTo);
-  });
-  const off = $('#lic-off');
-  if (off) off.addEventListener('click', () => { deactivateLicense(); paintLicenseUI(); closeDlg('#dlg-license'); rerenderTab(); toast('인증을 해제했습니다. 스킬 레벨·에코 옵션·상세 스탯 계산이 꺼집니다(입력값은 남아 있습니다).'); });
-  const d = $('#dlg-license'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
-  setTimeout(() => { const k = $('#lic-key'); if (k) k.focus(); }, 50);
-}
 
 /* ---------- 내 데이터 내보내기 / 불러오기 ---------- */
 const IN_ARTIFACT = !!(window.claude && window.claude.use);
@@ -2183,12 +2079,12 @@ function applyShare(d) {
   state.ov = ov; state.forced = d.f || {};
   state.settings = { ...DEFAULT_SETTINGS, ...(d.s || {}) };
   state.parties = (d.p || []).filter(p => SLOT[p.slot]).map(p => ({ slot: p.slot, ids: (p.ids || []).map(id => (id && CH[id]) ? id : null), locked: !!p.locked }));
-  save(); ensureParties(); paintLicenseUI(); switchTab('tower-build');
+  save(); ensureParties(); switchTab('tower-build');
 }
 function openShare(prefill) {
   $('#share-out').value = ''; $('#share-copy').disabled = true; $('#share-len').textContent = '';
   $('#share-in').value = prefill || ''; $('#share-preview').innerHTML = '';
-  $('#share-st').checked = false; $('#share-st').closest('label').hidden = !LICENSED;
+  $('#share-st').checked = false;
   const d = $('#dlg-share'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
   if (prefill) checkShare();
 }
@@ -2213,7 +2109,7 @@ function bindShare() {
   $('#dlg-share').addEventListener('click', e => { if (e.target.id === 'dlg-share') closeDlg('#dlg-share'); });
   $('#share-text').addEventListener('click', copyText);
   $('#share-make').addEventListener('click', async () => {
-    const code = await makeShareCode(LICENSED && $('#share-st').checked);
+    const code = await makeShareCode($('#share-st').checked);
     $('#share-out').value = code; $('#share-copy').disabled = false; $('#share-len').textContent = `${code.length}자`;
   });
   $('#share-copy').addEventListener('click', () => copyStr($('#share-out').value, '공유 코드를 복사했습니다.'));
@@ -2434,7 +2330,7 @@ function renderRoster() {
   $('#roster-grid').innerHTML = list.map(c => {
     const o = state.ov[c.id] || {}; const ch = o.c ?? (c.q === 4 ? 6 : 0);
     return `<div class="rc-wrap"><button class="rc" data-own="${c.id}" aria-pressed="${state.owned.has(c.id)}">${portraitHTML(c)}<span class="nm">${esc(c.name)}</span><span class="sub">${EL[c.el].n} · ${WT[c.wt] || ''}${isUpcoming(c) ? ' · ' + releaseLabel(c) : ''}</span></button>
-      <button class="gear-sum" data-cfg="${c.id}" ${state.owned.has(c.id) ? '' : 'hidden'}><span class="num">S${ch}</span>${o.st && o.st.on && LICENSED ? '<span class="tag-me">내 스탯</span>' : (o.echo && o.echo.on && LICENSED ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button></div>`;
+      <button class="gear-sum" data-cfg="${c.id}" ${state.owned.has(c.id) ? '' : 'hidden'}><span class="num">S${ch}</span>${o.st && o.st.on ? '<span class="tag-me">내 스탯</span>' : (o.echo && o.echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button></div>`;
   }).join('') || '<p class="muted">검색 결과가 없습니다.</p>';
   $$('#roster-grid [data-cfg]').forEach(b => b.addEventListener('click', () => openCharCfg(b.dataset.cfg)));
   $$('#roster-grid [data-own]').forEach(b => b.addEventListener('click', () => {
@@ -2734,7 +2630,7 @@ function renderIntro() {
     <section class="sec">${secHead('알아 두세요', '', '')}<div class="box"><ul class="prose" style="margin:0">
       <li>예상 피해 · 튜닝 확률은 비교를 위한 추정치이며, 실제 게임 결과와 다를 수 있습니다.</li>
       <li>팬이 만든 비공식 사이트로, KURO GAMES와 관련이 없습니다. 게임 이미지와 이름의 권리는 KURO GAMES에 있습니다.</li>
-      <li>에코 옵션을 파티 편성 계산에 반영하는 기능, 스킬 레벨 · 상세 스탯 입력은 라이선스 인증 후 쓸 수 있습니다.</li></ul></div></section></div>`;
+      <li>스킬 레벨, 에코 옵션, 속성 화면 스탯은 공명자의 무기 · 체인 설정 창에서 입력하면 파티 편성 계산에 바로 반영됩니다.</li></ul></div></section></div>`;
 }
 
 /* ---------- 공명자 가이드 (목록) ---------- */
@@ -2840,7 +2736,7 @@ function renderEcho() {
     const t = echoSum(e); const subCr = e.e.reduce((a, x) => a + x.sub.filter(s => s[0] === 'cr').reduce((b, s) => b + s[1], 0), 0); const subCd = e.e.reduce((a, x) => a + x.sub.filter(s => s[0] === 'cd').reduce((b, s) => b + s[1], 0), 0);
     const cv = subCr * 2 + subCd; const [g, gn] = echoGrade(cv);
     const ov = { ...state.ov, [c.id]: { ...(state.ov[c.id] || {}), st: null, w: E.w, r: (RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5, echo: { ...e, on: true } } };
-    const was = LICENSED; let pe; try { LICENSED = true; pe = panelEstimate(c.id, state.settings, ov); } finally { LICENSED = was; }
+    const pe = panelEstimate(c.id, state.settings, ov);
     const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], null] : ['공격력', pe.atk, ECHO_GOAL.atk];
     const bar = (n, v, goal, unit = '') => `<div class="stat-bar"><div class="top"><span>${n}</span><b>${v > 999 ? fmt(v) : v}${unit}${goal ? ` <span>/ 목표 ${goal > 999 ? fmt(goal) : goal}${unit}</span>` : ''}</b></div>${goal ? `<div class="track"><div class="fill" style="width:${Math.min(100, v / goal * 100)}%"></div></div>` : ''}</div>`;
     const tips = []; if (pe.cr < 60) tips.push('크리티컬이 낮아요. 4코스트 주옵션 크리티컬이나 부옵션 크리티컬을 먼저 올려 보세요.');
@@ -2852,9 +2748,8 @@ function renderEcho() {
       <p class="note" style="margin:12px 0 0">코스트 <b class="num ${t.cost > 12 ? 'bad' : ''}">${t.cost}</b> / 12 · 목표치는 일반적인 메인 딜러 기준 참고값입니다. 크리티컬 기대 배율 ${(1 + Math.min(pe.cr, 100) / 100 * (pe.cd / 100 - 1)).toFixed(3)}배</p>
       ${tips.length ? `<ul class="prose" style="margin:10px 0 0">${tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm solid-gold" id="ec-apply">파티 편성 계산에 이 에코 쓰기</button><a class="btn sm" href="#/character/${c.id}">${esc(c.name)} 가이드</a></div>
-      <p class="note" style="margin:8px 0 0">${LICENSED ? '저장하면 파티 편성 · 딜 계산에 이 에코가 반영됩니다.' : '파티 편성 · 딜 계산에 반영하는 기능은 라이선스 인증 후 쓸 수 있습니다.'}</p>`;
+      <p class="note" style="margin:8px 0 0">누르면 이 에코가 파티 편성 · 딜 계산에 반영됩니다(그 공명자의 무기 · 체인 설정 창에서도 바꿀 수 있어요).</p>`;
     $('#ec-apply').addEventListener('click', () => {
-      if (!LICENSED) { openLicense(); return; }
       state.ov[c.id] = { ...(state.ov[c.id] || {}), w: E.w, r: (state.ov[c.id] || {}).r || ((RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5), st: { on: false }, echo: { ...read(), on: true } };
       save(); toast(`${c.name}의 에코를 파티 편성 계산에 반영했습니다.`);
     });
@@ -3001,7 +2896,6 @@ function initSite() {
 /* ---------- 시작 ---------- */
 function init() {
   const fromShare = /share=/.test(location.hash || '');
-  loadLicense();
   const had = load();
   paintVersion();
   initTheme();
@@ -3016,17 +2910,13 @@ function init() {
   $('#tl-sel').addEventListener('change', e => { state.tlSel = e.target.value; renderTimeline(); });
   $('#swap-close').addEventListener('click', closeSwap);
   $('#char-close').addEventListener('click', () => closeDlg('#dlg-char'));
-  $('#btn-license').addEventListener('click', () => openLicense());
-  $('#lic-open2').addEventListener('click', () => openLicense());
-  $('#lic-close').addEventListener('click', () => closeDlg('#dlg-license'));
-  $('#dlg-license').addEventListener('click', e => { if (e.target.id === 'dlg-license') closeDlg('#dlg-license'); });
   $('#dlg-char').addEventListener('click', e => { if (e.target.id === 'dlg-char') closeDlg('#dlg-char'); });
   $('#data-export').addEventListener('click', exportData);
   $('#data-import').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
   $('#data-reset').addEventListener('click', () => {
     const btn = $('#data-reset');
     if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.textContent = '한 번 더 누르면 모두 지웁니다'; setTimeout(() => { btn.dataset.confirm = ''; btn.textContent = '처음 상태로 되돌리기'; }, 4000); return; }
-    [LS_KEY, LS_TOWER, LS_TOWER_TXT, LS_LICENSE, LS_EXTRA].forEach(k => { try { localStorage.removeItem(k); } catch (e) { } });
+    [LS_KEY, LS_TOWER, LS_TOWER_TXT, 'ddingjo-atm-license', LS_EXTRA, 'ddingjo-atm-patch'].forEach(k => { try { localStorage.removeItem(k); } catch (e) { } });
     location.reload();
   });
   $('#dlg-swap').addEventListener('click', e => { if (e.target.id === 'dlg-swap') closeSwap(); });
@@ -3044,7 +2934,6 @@ function init() {
   bindSeg('#seg-fpref', () => state.fieldPref, v => { state.fieldPref = v; renderField(); });
   $$('#seg-db button').forEach(b => b.addEventListener('click', () => { state.dbView = b.dataset.v; renderDB(); }));
   bindSettings();
-  paintLicenseUI();
   ensureParties();
   if (!had || !state.parties.some(p => p.ids.some(Boolean))) optimize(true);
   switchTab(state.tab || 'tower-build');
@@ -3294,68 +3183,17 @@ function renderTimeline() {
       <p class="note">시간은 각 캐릭터의 필드 시간을 동작 종류(평타·강공·해방 등)에 맞게 나눈 추정치입니다. 점선 테두리는 퀵스왑으로 잠깐 꺼내는 구간, 굵은 줄은 공명 해방입니다.</p></div>`;
 }
 
-/* ---------- 패치 노트 (관리자 라이선스는 편집 가능) ----------
-   편집본은 이 브라우저에만 저장됩니다. 모두에게 반영하려면 "patch-notes.json 내려받기"로 받은 파일을 GitHub에 올립니다. */
-const LS_PATCH = 'ddingjo-atm-patch';
-function patchNotes() {
-  try { const d = JSON.parse(lsGet(LS_PATCH) || 'null'); if (Array.isArray(d) && d.length) return d; } catch (e) { }
-  return PATCH_NOTES;
-}
-function patchToText(list) {
-  return list.map(v => [`## ${v.v} | ${v.d || ''}`, v.s ? `> ${v.s}` : null, ...v.g.flatMap(g => [`### ${g.h}`, ...g.i.map(x => `- ${x}`)])].filter(x => x !== null).join('\n')).join('\n\n');
-}
-function textToPatch(txt) {
-  const out = []; let v = null, g = null;
-  String(txt).split(/\r?\n/).forEach((raw, n) => {
-    const line = raw.trim(); if (!line) return;
-    if (line.startsWith('## ')) { const [ver, d] = line.slice(3).split('|').map(x => x.trim()); if (!ver) throw new Error(`${n + 1}번째 줄: 버전이 비어 있습니다.`); v = { v: ver, d: d || '', s: '', g: [] }; g = null; out.push(v); return; }
-    if (!v) throw new Error(`${n + 1}번째 줄: 먼저 "## 버전 | 날짜" 줄이 있어야 합니다.`);
-    if (line.startsWith('> ')) { v.s = (v.s ? v.s + ' ' : '') + line.slice(2).trim(); return; }
-    if (line.startsWith('### ')) { g = { h: line.slice(4).trim(), i: [] }; v.g.push(g); return; }
-    if (line.startsWith('- ')) { if (!g) { g = { h: '변경 사항', i: [] }; v.g.push(g); } g.i.push(line.slice(2).trim()); return; }
-    if (g && g.i.length) g.i[g.i.length - 1] += ' ' + line; else throw new Error(`${n + 1}번째 줄: "## / > / ### / -" 로 시작해야 합니다.`);
-  });
-  if (!out.length) throw new Error('버전이 하나도 없습니다.');
-  return out;
-}
-let patchEditing = false;
+/* ---------- 패치 노트 ----------
+   내용은 src/data/patch-notes.json (맨 위 버전이 사이트 버전). GitHub에서 그 파일을 고치면 자동으로 다시 배포됩니다. */
+function patchNotes() { return PATCH_NOTES; }
 function renderPatch() {
-  const list = patchNotes(); const local = list !== PATCH_NOTES;
-  const admin = isAdmin();
-  const bar = admin ? `<div class="patch-admin card">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="chip acc">관리자 ${esc(LICENSE_ID)}</span>
-        <button class="btn sm ${patchEditing ? '' : 'primary'}" id="pt-edit">${patchEditing ? '편집 닫기' : '패치 노트 편집'}</button>
-        ${local ? '<button class="btn sm" id="pt-html">patch-notes.json 내려받기</button><button class="btn sm ghost" id="pt-reset">편집본 버리기</button>' : ''}</div>
-      ${local ? '<p class="note" style="margin:8px 0 0;color:var(--warn)">지금 보이는 패치 노트는 이 브라우저에서 편집한 미리보기입니다. 다른 사람에게도 보이게 하려면 "patch-notes.json 내려받기"로 받은 파일을 GitHub에 올리세요.</p>' : ''}
-      ${patchEditing ? `<div style="margin-top:10px"><p class="note" style="margin:0 0 6px">형식: <code>## 버전 | 날짜</code> · <code>&gt; 한 줄 요약</code> · <code>### 분류</code> · <code>- 항목</code>. 맨 위 버전이 현재 버전이 되고, 화면 상단 버전 표시에도 쓰입니다.</p>
-        <textarea id="pt-text" class="code-box" rows="18" spellcheck="false" aria-label="패치 노트 편집">${esc(patchToText(list))}</textarea>
-        <div class="toolbar" style="margin:8px 0 0"><button class="btn sm primary" id="pt-save">미리보기 저장</button><button class="btn sm" id="pt-copy">텍스트 복사</button><span class="note" id="pt-msg" role="status"></span></div></div>` : ''}
-    </div>` : '';
-  $('#patch-list').innerHTML = bar + list.map((v, i) => `<article class="${i ? '' : 'card'}" style="${i ? 'border-top:1px solid var(--line);padding-top:12px' : 'background:var(--surface-2)'}">
+  const list = patchNotes();
+  $('#patch-list').innerHTML = list.map((v, i) => `<article class="${i ? '' : 'card'}" style="${i ? 'border-top:1px solid var(--line);padding-top:12px' : 'background:var(--surface-2)'}">
     <h3>Ver. ${esc(v.v)} ${i === 0 ? '<span class="chip ok">현재 버전</span>' : ''}<span class="when">${esc(v.d)}</span></h3>
     ${v.s ? `<p class="note" style="margin:0 0 4px">${esc(v.s)}</p>` : ''}
     ${(v.g || []).map(g => `<h4>${esc(g.h)}</h4><ul>${(g.i || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}
   </article>`).join('');
-  if (!admin) return;
-  $('#pt-edit').addEventListener('click', () => { patchEditing = !patchEditing; renderPatch(); });
-  if ($('#pt-reset')) $('#pt-reset').addEventListener('click', () => { if (!confirm('이 브라우저의 패치 노트 편집본을 버리고 원래 내용으로 돌아갈까요?')) return; lsSet(LS_PATCH, ''); renderPatch(); paintVersion(); toast('편집본을 버렸습니다.'); });
-  if ($('#pt-html')) $('#pt-html').addEventListener('click', downloadPatchJSON);
-  if ($('#pt-save')) $('#pt-save').addEventListener('click', () => {
-    try { const d = textToPatch($('#pt-text').value); lsSet(LS_PATCH, JSON.stringify(d)); patchEditing = false; renderPatch(); paintVersion(); toast('패치 노트 미리보기를 저장했습니다.'); }
-    catch (e) { $('#pt-msg').innerHTML = `<span style="color:var(--bad)">${esc(e.message)}</span>`; }
-  });
-  if ($('#pt-copy')) $('#pt-copy').addEventListener('click', () => copyStr($('#pt-text').value, '패치 노트 텍스트를 복사했습니다.'));
 }
-// 편집한 패치 노트를 src/data/patch-notes.json 파일로 내려받음. GitHub의 같은 위치에 올리면 자동으로 다시 배포됩니다(맨 위 버전이 사이트 버전).
-function downloadPatchJSON() {
-  if (!isAdmin()) return;
-  const list = patchNotes(); const ver = list[0].v;
-  const blob = new Blob([JSON.stringify(list, null, 1) + '\n'], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'patch-notes.json';
-  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast(`Ver. ${ver} 패치 노트 파일(patch-notes.json)을 내려받았습니다. GitHub 저장소의 src/data/patch-notes.json을 이 파일로 바꾸면 모두에게 반영됩니다.`);
-}
-// 편집본이 있으면 상단 버전 표시도 맞춤(이 브라우저에서만)
 function paintVersion() { const v = patchNotes()[0].v; const c = $('#ver-chip'); if (c) c.textContent = `Ver. ${v}`; }
 
 init();

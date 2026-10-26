@@ -13,7 +13,7 @@ src/styles/app.css      디자인
 src/data/*.json         게임 데이터(무기 · 에코 세트 · 육성 재료 · 공명 체인 …)와 패치 노트(patch-notes.json)
 public/                 그대로 올라가는 파일
   img/                  캐릭터 · 무기 · 에코 세트 · 재료 아이콘
-  assets/               캐릭터 카드 · 전신 · 픽업 배너 그림 (자동 생성)
+  assets/               캐릭터 카드 · 전신 · 픽업 배너 · 링크 미리보기(og) 그림 (자동 생성)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
   chars-extra.json      새 공명자 (자동 갱신)
   Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
@@ -23,12 +23,13 @@ tools/                  자동 갱신 스크립트
 
 - 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 에코 계산기 `/-/echo`, 튜닝 시뮬 `/-/sim`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
 - **Settings → Pages → Source**는 **GitHub Actions**여야 합니다(브랜치 배포가 아님). Custom domain은 비워 둡니다.
+- 빌드할 때 화면 주소마다 페이지 파일(`characters.html`, `character/<id>.html`, `tools/<탭>.html` …)을 만들어 제목 · 설명 · 미리보기 그림(`public/assets/og/`)을 넣습니다. 하위 주소로 바로 들어와도 정상 페이지로 열리고, 카톡 등 링크 미리보기가 나옵니다.
 
 ## 고치고 올릴 때
 
 - GitHub 웹에서 파일을 열어 연필(✏️) 버튼으로 고치고 **Commit changes** 하면 자동으로 다시 배포됩니다.
 - 내 컴퓨터에서 미리 보려면 Node.js 설치 후 `npm install` → `npm run dev` (빌드 확인은 `npm run build` → `npm run preview`).
-- 패치 노트: 관리자 키로 인증 → **패치 노트** 탭에서 편집 → **patch-notes.json 내려받기** → 저장소의 `src/data/patch-notes.json`을 그 파일로 바꿉니다. 맨 위 버전이 사이트 버전이 됩니다.
+- 패치 노트: 저장소의 `src/data/patch-notes.json`을 고칩니다. 맨 위 버전이 사이트 버전이 됩니다.
 - 자료실 목록은 `src/app.js`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
 
 ## 신규 공명자 자동 추가 (Ver. 1.0.09~)
@@ -46,6 +47,5 @@ tools/                  자동 갱신 스크립트
 
 ## 참고
 
-- 사용자 설정(보유 캐릭터, 파티, 라이선스 인증)은 각자 브라우저에만 저장됩니다.
+- 사용자 설정(보유 캐릭터, 파티, 캐릭터 설정)은 각자 브라우저에만 저장됩니다.
 - 역경의 탑 정보는 게임 데이터 저장소(Arikatsu/WutheringWaves_Data)에서 자동으로 갱신됩니다.
-- 라이선스 확인은 브라우저 안에서만 하는 이용 구분용 잠금입니다(보안 장치 아님).

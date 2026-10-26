@@ -98,6 +98,51 @@ if todo:
             print('  실패', kind, rid, src, e, file=sys.stderr)
     print(f'새 그림 {made}개 저장')
 
+# 링크 미리보기(카톡 · 디스코드 등) 그림: 배너 배경 + 전신 그림을 800×420 JPG로
+def make_og(rid, dst):
+    from PIL import Image, ImageDraw
+    W, H = 800, 420
+    bgp = os.path.join(OUT, 'bg', f'{rid}.webp'); fp = os.path.join(OUT, 'full', f'{rid}.webp')
+    if not os.path.exists(fp):
+        return False
+    if os.path.exists(bgp):
+        base = Image.open(bgp).convert('RGB'); k = max(W / base.width, H / base.height)
+        base = base.resize((round(base.width * k), round(base.height * k)), Image.LANCZOS)
+        x0, y0 = (base.width - W) // 2, (base.height - H) // 2
+        canvas = base.crop((x0, y0, x0 + W, y0 + H))
+    else:
+        canvas = Image.new('RGB', (W, H), (20, 20, 19))
+    # 왼쪽을 어둡게(글자 자리)
+    shade = Image.new('L', (W, H)); d = ImageDraw.Draw(shade)
+    for x in range(W):
+        d.line([(x, 0), (x, H)], fill=int(170 * max(0, 1 - x / (W * 0.75))))
+    canvas.paste(Image.new('RGB', (W, H), (10, 10, 9)), (0, 0), shade)
+    full = Image.open(fp).convert('RGBA'); full.thumbnail((int(W * 0.62), int(H * 1.05)), Image.LANCZOS)
+    canvas.paste(full, (W - full.width - 24, H - full.height), full)
+    # 금색 테두리 선
+    ImageDraw.Draw(canvas).rectangle([0, H - 6, W, H], fill=(230, 193, 90))
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    canvas.save(dst, 'JPEG', quality=80, optimize=True, progressive=True)
+    return True
+
+
+try:
+    og_made = 0
+    for f in sorted(os.listdir(os.path.join(OUT, 'full'))) if os.path.isdir(os.path.join(OUT, 'full')) else []:
+        rid = int(f[:-5]); dst = os.path.join(OUT, 'og', f'{rid}.jpg')
+        if args.force or not os.path.exists(dst):
+            og_made += make_og(rid, dst)
+    # 사이트 대표 그림: 가장 최근 픽업 배너의 캐릭터
+    latest = max([v['Id'] for v in views if v.get('Type') == 2 and v.get('ShowIdList')] or [0])
+    lrid = next((v['ShowIdList'][0] for v in views if v['Id'] == latest), None)
+    site = os.path.join(OUT, 'og', 'site.jpg'); mark = os.path.join(OUT, 'og', 'site.txt')
+    if lrid and (args.force or not os.path.exists(site) or open(mark).read().strip() != str(lrid) if os.path.exists(mark) else True):
+        if make_og(lrid, site):
+            open(mark, 'w').write(str(lrid)); og_made += 1
+    print(f'미리보기 그림 {og_made}개 저장')
+except Exception as e:
+    print('미리보기 그림 생략:', e, file=sys.stderr)
+
 art = {}
 for kind in SPEC:
     d = os.path.join(OUT, kind)
