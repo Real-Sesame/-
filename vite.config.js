@@ -66,7 +66,13 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'static',
     assetsInlineLimit: 0,
-    chunkSizeWarningLimit: 1500
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        // 게임 데이터(src/data, 패치 노트 제외)는 따로 묶어 둠: 사이트 코드만 바뀐 업데이트에서는 브라우저에 저장된 데이터 파일을 그대로 씀
+        manualChunks(id) { if (/[\\/]src[\\/]data[\\/]/.test(id) && !id.endsWith('patch-notes.json')) return 'data'; }
+      }
+    }
   },
   plugins: [{
     // 주소마다 실제 페이지 파일을 만들어 둠: 바로 들어와도 정상(200) 응답 + 링크 미리보기(제목 · 설명 · 그림)
@@ -83,7 +89,7 @@ export default defineConfig({
         ['characters', '공명자 가이드', '공명자별 기본 스탯 · 스킬 · 공명 체인 · 추천 무기 · 에코 세트 · 추천 조합 · 육성 재료'],
         ['echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
         ['sim', '튜닝 시뮬레이터', '캐릭터 · 무기 이벤트 튜닝을 공개된 확률 규칙으로 미리 돌려 봅니다.'],
-        ['links', '자료실', '명조 공식 공지 · 지도 · 데이터베이스 · 공략 사이트 모음'],
+        ['links', '자료실', '명조 공식 공지 · 커뮤니티 · 지도 · 데이터베이스 · 공략 사이트 모음'],
         ['notice', '공지사항', '사이트 안내와 업데이트 내역'],
         ['tools', '파티 편성', '보유 캐릭터로 역경의 탑 · 필드 파티를 자동 편성하고 1사이클 예상 피해를 계산합니다.']
       ];

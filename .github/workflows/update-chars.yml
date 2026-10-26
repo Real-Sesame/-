@@ -1,6 +1,7 @@
 # 띵조 AUTO TEAM MAKER — 신규 공명자 자동 갱신
 # 매일 한 번 명조 게임 데이터(Arikatsu/WutheringWaves_Data)를 확인해
 # 앱에 없는 공명자가 생기면 public/chars-extra.json과 일러스트(public/assets)를 갱신하고 커밋합니다.
+# 공명자 스킬 설명(public/skills)도 게임 데이터가 바뀌면 함께 갱신합니다.
 # 앱 코드(src/)나 스크립트를 새로 올렸을 때도 바로 한 번 돌아 목록을 맞춥니다.
 # (Actions 탭 → "신규 공명자 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
 # ※ 이 파일은 반드시 저장소의 .github/workflows/ 폴더 안에 있어야 GitHub가 실행합니다.
@@ -16,6 +17,7 @@ on:
       - src/data/**
       - tools/update_chars.py
       - tools/build_assets.py
+      - tools/build_skills.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -66,6 +68,10 @@ jobs:
           SCRIPT=tools/update_chars.py; [ -f "$SCRIPT" ] || SCRIPT=update_chars.py
           python "$SCRIPT" gamedata src public/chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
 
+      - name: 공명자 스킬 설명 만들기 (public/skills)
+        continue-on-error: true
+        run: python tools/build_skills.py gamedata public/skills
+
       - name: 캐릭터 일러스트 만들기 (없는 것만)
         continue-on-error: true
         run: python tools/build_assets.py gamedata . --cache "$RUNNER_TEMP/asset-cache"
@@ -73,8 +79,8 @@ jobs:
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A public/assets 2>/dev/null || true
-          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets public/skills 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"

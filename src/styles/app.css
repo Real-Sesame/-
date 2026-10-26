@@ -12,8 +12,8 @@
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #05060b; --surface: #0e1119; --surface-2: #141824; --ink: #f2f0e8; --muted: #aab1bf; --faint: #7a8291;
-  --line: #262b39; --accent: #ffcd3c; --accent-soft: #3a2e0a; --accent-ink: #ffe8a3; --on-accent: #151106;
+  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
+  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
   --good: #4fd093; --warn: #f0a24f; --bad: #ff7b6b;
   --el-glacio: #6cc6f0; --el-fusion: #ff8a7d; --el-electro: #b39dff; --el-aero: #5fdcb0; --el-spectro: #f2cf5b; --el-havoc: #e48ac6;
   --r5: #ffcd3c; --r4: #bb9cf5; --solo: #6fd0ee; --solo-soft: #12313b;
@@ -22,8 +22,8 @@
   color-scheme: dark;
 } }
 :root[data-theme="dark"] {
-  --bg: #05060b; --surface: #0e1119; --surface-2: #141824; --ink: #f2f0e8; --muted: #aab1bf; --faint: #7a8291;
-  --line: #262b39; --accent: #ffcd3c; --accent-soft: #3a2e0a; --accent-ink: #ffe8a3; --on-accent: #151106;
+  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
+  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
   --good: #4fd093; --warn: #f0a24f; --bad: #ff7b6b;
   --el-glacio: #6cc6f0; --el-fusion: #ff8a7d; --el-electro: #b39dff; --el-aero: #5fdcb0; --el-spectro: #f2cf5b; --el-havoc: #e48ac6;
   --r5: #ffcd3c; --r4: #bb9cf5; --solo: #6fd0ee; --solo-soft: #12313b;
@@ -254,7 +254,6 @@ dialog::backdrop { background: rgba(8,10,14,.55); }
   .tl-row .tl-t { grid-row: 1 / span 2; align-self: start; padding-top: 2px; }
   .tl-swap { grid-template-columns: 50px 1fr; }
 }
-.patch { display: grid; gap: 12px; }
 /* 추천 조합 대체안 */
 .pv-list { border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 10px; display: grid; gap: 8px; }
 .pv-h { font-size: 13px; font-weight: 700; }
@@ -334,12 +333,6 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
 .bf-s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .bf-mode { font-weight: 700; font-size: 12px; margin: 8px 0 2px; color: var(--ink); border-left: 3px solid var(--accent); padding-left: 6px; }
 .bf-mode:first-child { margin-top: 0; }
-.patch-admin { border: 1px dashed var(--accent); background: var(--accent-soft); }
-.patch-admin code { font: 11.5px var(--f-mono); background: var(--surface); padding: 0 4px; border-radius: 4px; }
-.patch h3 { margin: 0 0 4px; font-size: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.patch .when { font-size: 12px; color: var(--muted); font-weight: 400; }
-.patch h4 { margin: 10px 0 4px; font-size: 13px; color: var(--accent); }
-.patch ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
 .cfg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .cfg-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; min-width: 0; }
 .cfg-grid input, .cfg-grid select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-weight: 400; min-width: 0; width: 100%; }
@@ -393,14 +386,6 @@ table.db td.nw { white-space: nowrap; min-width: 92px; }
    사이트 셸 (가이드 사이트 스타일): 어두운 바탕 + 금색 포인트
    ===================================================================== */
 :root { --f-body: "Pretendard Variable", Pretendard, "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; --f-display: var(--f-body); --gold: #e6c15a; --gold-2: #f3d98a; --site-w: 1200px; --head-h: 60px; }
-:root[data-theme="dark"] {
-  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
-  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #141413; --surface: #1c1c1a; --surface-2: #242421; --ink: #f1efe8; --muted: #a9a59a; --faint: #7a776e;
-  --line: #34332e; --accent: #e6c15a; --accent-soft: #3a321a; --accent-ink: #f3d98a; --on-accent: #1a1608;
-} }
 :root[data-theme="light"] { --gold: #9a6d00; --gold-2: #7a5500; }
 /* 일러스트 위(항상 어두운 영역)는 테마와 관계없이 밝은 금색 */
 .hero, .bnr-main, .bnr-th, .ch-hero, .cc { --gold: #e6c15a; --gold-2: #f3d98a; }
@@ -518,8 +503,7 @@ a.btn { text-decoration: none; }
 .bnr-4 { position: absolute; right: 18px; bottom: 16px; display: flex; gap: 6px; align-items: flex-end; flex-direction: column; }
 .bnr-4 .lbl { font-size: 11px; font-weight: 700; color: #f1efe8; text-shadow: 0 1px 4px #000; }
 .bnr-4 .row { display: flex; gap: 6px; }
-.bnr-4 .portrait, .bnr-4 img.wi { width: 46px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.4); }
-.bnr-4 img.wi { height: 46px; object-fit: contain; }
+.bnr-4 .portrait { width: 46px; border-radius: 10px; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.4); }
 .bnr-thumbs { margin-top: 12px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .bnr-th { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #151514; min-height: 86px; text-align: left; color: #f1efe8; cursor: pointer; padding: 10px 12px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; isolation: isolate; font: inherit; }
 .bnr-th .bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: -2; opacity: .7; }
@@ -622,6 +606,13 @@ a.btn { text-decoration: none; }
 .chain summary::-webkit-details-marker { display: none; }
 .chain summary .s { color: var(--gold); font-variant-numeric: tabular-nums; min-width: 22px; }
 .chain p { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
+.skd summary .s { min-width: 64px; font-size: 12px; }
+.skd h4 { margin: 12px 0 0; font-size: 13px; color: var(--ink); }
+.skd p { line-height: 1.65; }
+.skd .hl, .rot .hl { color: var(--gold); font-weight: 600; }
+.rot + .rot { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.rot-l { margin: 0; padding-left: 22px; display: grid; gap: 4px; font-size: 13.5px; }
+.rot-l li::marker { color: var(--gold); font-variant-numeric: tabular-nums; }
 .mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .mat { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 6px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
 .team-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
@@ -704,7 +695,6 @@ a.btn { text-decoration: none; }
 .seg { border-radius: 10px; }
 .seg button { font-weight: 700; }
 .seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
-.subtabs button { font-size: 14px; }
 .card, .party, .preset, .field-row, .summary { border-radius: 14px; box-shadow: none; }
 .card h2, .party-head h3, .preset h3 { font-weight: 800; letter-spacing: -.3px; }
 .card h2 { font-size: 18px; }
@@ -724,3 +714,13 @@ select, input[type=text], input[type=number], input[type=password], input[type=s
 
 /* 테마 버튼: 아이콘 */
 .theme-btn { width: 38px; height: 34px; padding: 0; justify-content: center; font-size: 16px; line-height: 1; }
+
+/* 홈 · 데이터 기준 */
+.data-info { margin: 8px 0 56px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.data-info h2 { margin: 0 0 12px; font-size: 14px; color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+.di-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 20px; }
+.di-grid div { display: grid; gap: 2px; }
+.di-grid span { font-size: 12px; color: var(--muted); }
+.di-grid b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.di-grid small { font-size: 12px; color: var(--muted); }
+.data-info a { color: var(--gold); }

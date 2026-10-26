@@ -17,6 +17,7 @@ import D_ECHO_MAIN from './data/echo-main.json';
 import IMG_KEYS from './data/img-index.json';
 import D_PATCH_NOTES from './data/patch-notes.json';
 const BASE = import.meta.env.BASE_URL;
+const DEBUG = /[?&]debug\b/.test(location.search); // 주소를 정리하기 전에 읽어 둠(점검용)
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
 const RAW_SETS = D_RAW_SETS;
@@ -778,7 +779,7 @@ function skillLevels(o) { const sl = (o && o.sl) || {}; const r = {}; SK_TREES.f
 // 반주(레벨 없음)·이상 효과·에코 장비 피해는 스킬 레벨과 무관. 협동 공격 등 유형이 애매하면 캐릭터 전체 배율 비중을 씀
 function skillLvFactor(m, dt) {
   if (dt === 'o' || dt === 'st') return 1;
-  const own = (typeof RAW_SKLV !== 'undefined' && RAW_SKLV[m.c.rid]) || null;
+  const own = (RAW_SKLV[m.c.rid]) || null;
   const fr = (own && own[dt]) || (dt === 'e' ? null : (SK_DEF_TREE[dt] ? { [SK_DEF_TREE[dt]]: 1 } : (own && own.all) || null));
   if (!fr) return 1;
   let num = 0, den = 0;
@@ -815,7 +816,7 @@ function echoSum(echo) {
   return t;
 }
 function echoStats(c, echo) {
-  const t = echoSum(echo); const nd = (typeof RAW_NODE !== 'undefined' && RAW_NODE[c.rid]) || {}; const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[c.rid]) || null;
+  const t = echoSum(echo); const nd = (RAW_NODE[c.rid]) || {}; const bs = (RAW_BASE[c.rid]) || null;
   return { cr: (bs ? bs[3] : 5) + (t.cr || 0) + (nd.cr || 0), cd: (bs ? bs[4] : 150) + (t.cd || 0) + (nd.cd || 0), elem: (t.el || 0) + (nd.el || 0),
     atk: (t.atkP || 0) + (nd.atk || 0), flat: t.atk || 0, hpP: (t.hpP || 0) + (nd.hp || 0), hpFlat: t.hp || 0, defP: (t.defP || 0) + (nd.def || 0), defFlat: t.def || 0,
     dt: { n: t.n || 0, h: t.h || 0, s: t.s || 0, l: t.l || 0 }, er: 100 + (t.er || 0),
@@ -831,21 +832,21 @@ const ATK_REF = (462 + 587) * (1 + (50 + 12) / 100) + 380; // 5성 메인 딜러
 const ST_BASE = Math.round(ATK_REF * 1.70 * 1.82);
 function scaleOf(c) {
   if (!c) return 'atk'; if (c.scale) return c.scale; if (SCALE_FIX[c.id]) return SCALE_FIX[c.id];
-  const nd = (typeof RAW_NODE !== 'undefined' && RAW_NODE[c.rid]) || c.node || {};
+  const nd = (RAW_NODE[c.rid]) || c.node || {};
   if (c.auto && c.role !== 'sup' && nd.hp) return 'hp';
   return 'atk';
 }
 const _scaleK = {};
 function scaleK(c, sc) {
   const key = c.id + sc; if (_scaleK[key]) return _scaleK[key];
-  const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[c.rid]) || null; const baseS = bs ? (sc === 'hp' ? bs[1] : bs[2]) : (sc === 'hp' ? 12000 : 1200);
+  const bs = (RAW_BASE[c.rid]) || null; const baseS = bs ? (sc === 'hp' ? bs[1] : bs[2]) : (sc === 'hp' ? 12000 : 1200);
   const E = presetStats(c, ECHO_PRESETS.std, sc); const w = weaponOf(c.w);
   const wP = w && w.sub[0] === sc ? w.sub[1] : 0;
   const ref = baseS * (1 + (E[sc + 'P'] + wP) / 100) + E[sc + 'Flat'];
   return (_scaleK[key] = ref > 0 ? ATK_REF / ref : 0.1);
 }
 function presetStats(c, P, sc) {
-  const nd = (typeof RAW_NODE !== 'undefined' && RAW_NODE[c.rid]) || c.node || {}; const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[c.rid]) || null;
+  const nd = (RAW_NODE[c.rid]) || c.node || {}; const bs = (RAW_BASE[c.rid]) || null;
   // HP·방어력 비례 캐릭터는 1코스트 주옵션이 HP%(22.8)·방어력%(18)이고 부옵션도 그 스탯으로 본다
   const subP = P.atk - 36, subF = P.flat - 350;
   return { cr: (bs ? bs[3] : 5) + P.cr + (nd.cr || 0), cd: (bs ? bs[4] : 150) + P.cd + (nd.cd || 0), elem: P.elem + (nd.el || 0), atk: P.atk + (nd.atk || 0), flat: P.flat,
@@ -862,7 +863,7 @@ function resolveMember(id, modeKey, ov, settings) {
   const refine = o.r ?? (wq === 5 ? 1 : 5);
   // 공명 체인 효과
   const chainB = [], mv = {}; let rotMul = 1, ftDelta = 0;
-  if (typeof chainEffects === 'function') {
+  {
     const eff = chainEffects(c);
     for (let i = 1; i <= chain; i++) (eff[i] || []).forEach(b => {
       if (b.mode && b.mode !== modeKey) return;
@@ -940,7 +941,7 @@ function collectBuffs(team) {
       sm.b.forEach((b, i) => list.push({ ...b, owner, kind: '소나타', src: b.src || (sn ? sn.n : ''), panel: b.el === '*',
         uniq: b.uniq || ((b.to || 'self') !== 'self' ? `s${owner.setId}#${i}` : undefined) })); // 같은 소나타의 파티 버프는 중첩 불가
       // 2세트 효과(속성 피해 10%, 공격력 10% 등)는 화면 스탯에 포함 → 내 스탯 사용 시 빼 줌
-      if (!sm.three && !sm.one && typeof set2Buffs === 'function') set2Buffs(owner.setId).forEach(b => list.push({ ...b, v: -b.v, owner, kind: '소나타', src: '2세트(속성 화면에 포함)', panelAdj: true }));
+      if (!sm.three && !sm.one) set2Buffs(owner.setId).forEach(b => list.push({ ...b, v: -b.v, owner, kind: '소나타', src: '2세트(속성 화면에 포함)', panelAdj: true }));
     }
     // 3+2, 1+2+2 구성의 보조 2세트 (상시 효과라 속성 화면에 포함됨)
     (owner.sets2 || []).forEach(sid => set2Buffs(sid).forEach(b => list.push({ ...b, owner, kind: '소나타', src: `${(RAW_SETS[sid] || {}).n || ''} 2세트`, panel: true, s2: true })));
@@ -956,11 +957,11 @@ function panelEstimate(id, settings, ov) {
   const E = m.ech || presetStats(c, P);
   const w = weaponOf(m.weaponId); const base = (E.baseAtk || baseAtkOf(c)) + (w ? w.atk : 300);
   const sm = SMOD[m.setId];
-  const s2 = (sm && !sm.three && !sm.one && typeof set2Buffs === 'function') ? set2Buffs(m.setId) : [];
+  const s2 = (sm && !sm.three && !sm.one) ? set2Buffs(m.setId) : [];
   const s2v = (st, el) => s2.filter(b => b.s === st && !b.dt && (!el || !b.el || b.el === el)).reduce((a, b) => a + b.v, 0);
   // 속성 화면의 공격 유형 피해 보너스(일반·강공·스킬·해방) = 에코 부옵션 + 2세트(예: 공명 스킬 피해 12%)
   const dtp = {}; ['n', 'h', 's', 'l'].forEach(k => { const v = ((E.dt && E.dt[k]) || 0) + s2.filter(b => b.s === 'bonus' && b.dt === k).reduce((a, b) => a + b.v, 0); if (v) dtp[k] = +v.toFixed(1); });
-  const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[c.rid]) || null; const sc = scaleOf(c);
+  const bs = (RAW_BASE[c.rid]) || null; const sc = scaleOf(c);
   const res = { atk: Math.round(base * (1 + (E.atk + sum('atk') + s2v('atk')) / 100) + E.flat), cr: +(E.cr + sum('cr')).toFixed(1), cd: +(E.cd + sum('cd')).toFixed(1),
     el: +(E.elem + sum('bonus') + s2v('bonus', c.el)).toFixed(1), er: E.er, dt: E.dt, dtp, scale: sc };
   if (sc !== 'atk' && bs) res[sc] = Math.round((sc === 'hp' ? bs[1] : bs[2]) * (1 + (E[sc + 'P'] + sum(sc)) / 100) + E[sc + 'Flat']);
@@ -1007,7 +1008,7 @@ function calcTeam(ids, ctx) {
     let atkP = custom ? 0 : E.atk, flat = custom ? 0 : E.flat;
     all.forEach(b => { const v = b.v * (b.up ?? 1); if (b.s === 'atk' && !b.el && !b.dt) atkP += v; if (b.s === 'flat') flat += v; });
     const w = weaponOf(r.weaponId);
-    const bsr = (typeof RAW_BASE !== 'undefined' && RAW_BASE[r.c.rid]) || null;
+    const bsr = (RAW_BASE[r.c.rid]) || null;
     const baseAtk = ((bsr && bsr[0]) || baseAtkOf(r.c)) + (w ? w.atk : 300);
     // 내 스탯: 속성 화면 공격력 + (기본 공격력 × 추가 버프%)
     let ATK = custom ? (+r.st.atk || 0) + baseAtk * atkP / 100 + flat : baseAtk * (1 + atkP / 100) + flat;
@@ -1414,25 +1415,26 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 저
 const LS_EXTRA = 'ddingjo-atm-extra';
 const EXTRA_URLS = [BASE + 'chars-extra.json', 'https://raw.githubusercontent.com/Real-Sesame/-/HEAD/public/chars-extra.json'];
 let EXTRA_INFO = null;
+const DATA_META = { gameVer: '', charsAt: '' }; // 홈 화면 '데이터 기준' 표시용
 function applyExtra(doc) {
   if (!doc || doc.schema !== 1 || !Array.isArray(doc.roles)) return null;
   const info = { gameVer: doc.gameVer || '', updated: doc.updated || '', added: [], merged: [] };
   try {
     Object.entries(doc.weapons || {}).forEach(([id, w]) => {
       if (RAW_WEAPONS[id] || !w || !w.n) return; const { img, ...rest } = w; RAW_WEAPONS[id] = rest;
-      if (img && typeof IMG_WEAPON !== 'undefined') IMG_WEAPON[id] = img;
+      if (img) IMG_WEAPON[id] = img;
     });
-    if (typeof RAW_GROW !== 'undefined') {
-      Object.entries(doc.items || {}).forEach(([id, it]) => { if (!RAW_GROW.items[id] && it && it.n) { RAW_GROW.items[id] = { n: it.n, q: it.q || 1 }; if (it.img && typeof IMG_ITEM !== 'undefined') IMG_ITEM[id] = it.img; } });
+    {
+      Object.entries(doc.items || {}).forEach(([id, it]) => { if (!RAW_GROW.items[id] && it && it.n) { RAW_GROW.items[id] = { n: it.n, q: it.q || 1 }; if (it.img) IMG_ITEM[id] = it.img; } });
       Object.entries(doc.exp || {}).forEach(([g, arr]) => { if (!RAW_GROW.exp[g] && Array.isArray(arr)) RAW_GROW.exp[g] = arr; });
     }
     const rids = new Set(CHARS.map(c => c.rid).filter(Boolean));
     doc.roles.forEach(r => {
       if (!r || !r.rid || !r.n || rids.has(r.rid)) return;
-      if (r.grow && typeof RAW_GROW !== 'undefined' && !RAW_GROW.chars[r.rid]) RAW_GROW.chars[r.rid] = r.grow;
-      if (r.chain && typeof RAW_CHAIN !== 'undefined' && !RAW_CHAIN[r.rid]) RAW_CHAIN[r.rid] = r.chain;
-      if (Array.isArray(r.base) && typeof RAW_BASE !== 'undefined' && !RAW_BASE[r.rid]) RAW_BASE[r.rid] = r.base;
-      if (r.node && typeof RAW_NODE !== 'undefined' && !RAW_NODE[r.rid]) RAW_NODE[r.rid] = r.node;
+      if (r.grow && !RAW_GROW.chars[r.rid]) RAW_GROW.chars[r.rid] = r.grow;
+      if (r.chain && !RAW_CHAIN[r.rid]) RAW_CHAIN[r.rid] = r.chain;
+      if (Array.isArray(r.base) && !RAW_BASE[r.rid]) RAW_BASE[r.rid] = r.base;
+      if (r.node && !RAW_NODE[r.rid]) RAW_NODE[r.rid] = r.node;
       const tgt = r.merge && CH[r.merge];
       if (tgt) { // 출시 전에 미리 넣어 둔 캐릭터(예: 릴리)를 실제 게임 데이터와 연결
         tgt.rid = r.rid; if (r.img && !IMG_CHAR[tgt.id]) IMG_CHAR[tgt.id] = r.img;
@@ -1465,6 +1467,7 @@ async function refreshExtra() {
       if (!res.ok) continue;
       const txt = await res.text(); const doc = JSON.parse(txt);
       if (!doc || doc.schema !== 1) continue;
+      DATA_META.gameVer = doc.gameVer || ''; DATA_META.charsAt = doc.updated || ''; paintDataInfo();
       if (lsGet(LS_EXTRA) === txt) return;
       lsSet(LS_EXTRA, txt);
       const info = applyExtra(doc); if (!info) return;
@@ -1517,7 +1520,7 @@ function toast(msg) {
 /* ---------- 이미지 ---------- */
 function portraitHTML(c, { tag = 'div', attrs = '', swap = false } = {}) {
   if (!c) return `<${tag} class="portrait" ${attrs}><span class="ph" style="color:var(--muted)">＋</span></${tag}>`;
-  const url = (typeof IMG_CHAR !== 'undefined' && IMG_CHAR[c.id]) || '';
+  const url = (IMG_CHAR[c.id]) || '';
   const bg = EL[c.el] ? EL[c.el].c : 'var(--line)';
   const initial = esc(c.name.replace('방랑자·', '').slice(0, 1));
   return `<${tag} class="portrait" ${attrs} style="background:${bg}">
@@ -1527,8 +1530,8 @@ function portraitHTML(c, { tag = 'div', attrs = '', swap = false } = {}) {
     ${swap ? '<span class="swap">교체</span>' : ''}
   </${tag}>`;
 }
-const wIcon = id => (typeof IMG_WEAPON !== 'undefined' && IMG_WEAPON[id]) ? `<img src="${IMG_WEAPON[id]}" alt="">` : '<img alt="">';
-const sIcon = id => (typeof IMG_SET !== 'undefined' && IMG_SET[id]) ? `<img src="${IMG_SET[id]}" alt="">` : '<img alt="">';
+const wIcon = id => (IMG_WEAPON[id]) ? `<img src="${IMG_WEAPON[id]}" alt="">` : '<img alt="">';
+const sIcon = id => (IMG_SET[id]) ? `<img src="${IMG_SET[id]}" alt="">` : '<img alt="">';
 function elTag(el) { return EL[el] ? `<span class="el-tag" style="color:${EL[el].c}">${EL[el].n}</span>` : ''; }
 
 /* ---------- 버프 표기 ---------- */
@@ -2484,7 +2487,7 @@ const upcomingChars = () => CHARS.filter(c => isUpcoming(c) && c.release).sort((
 
 /* ---------- 공통 조각 ---------- */
 function ccHTML(c, { tags = '' } = {}) {
-  const art = artUrl('card', c.rid); const p = (typeof IMG_CHAR !== 'undefined' && IMG_CHAR[c.id]) || '';
+  const art = artUrl('card', c.rid); const p = (IMG_CHAR[c.id]) || '';
   const img = art ? `<img class="art" src="${art}" alt="" loading="lazy">` : p ? `<img class="art" src="${p}" alt="" loading="lazy">` : `<span class="ini">${esc(c.name.replace('방랑자·', '').slice(0, 1))}</span>`;
   return `<a class="cc" href="#/character/${c.id}" style="--elc:${elColor(c)}" aria-label="${esc(c.name)} 가이드">${img}
     <div class="cc-top"><span style="display:flex;gap:4px;flex-wrap:wrap">${tags}</span><span class="stars ${c.q === 4 ? 'r4' : ''}">${'★'.repeat(c.q)}</span></div>
@@ -2521,7 +2524,6 @@ function renderHome() {
     </div></section>`;
 
   // 공명자 가이드: 픽업 → 최근 공명자 순
-  const pickRid = new Map(cb.map(x => [x.f5[0], x]));
   const seen = new Set(); const cards = [];
   cb.forEach(x => { const c = charByRid(x.f5[0]); if (c && !seen.has(c.id)) { seen.add(c.id); cards.push(ccHTML(c, { tags: pickTag(x) + '<span class="tag gold">픽업</span>' })); } });
   CHARS.filter(c => c.q === 5 && !isUpcoming(c) && !c.id.startsWith('rover_')).forEach(c => { if (cards.length < 6 && !seen.has(c.id)) { seen.add(c.id); cards.push(ccHTML(c)); } });
@@ -2552,11 +2554,26 @@ function renderHome() {
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">튜닝 시뮬레이터</p><h3>별의 소리를 쓰기 전에,<br><em>미리 돌려 보기</em></h3><p>공개된 확률 규칙(5성 0.8% · 80회 확정 · 캐릭터 픽업 50%)으로 진행 중인 픽업을 돌려 보고, 천장 · 평균 · 쓴 별의 소리를 기록합니다.</p><a class="btn solid-gold" href="#/sim">튜닝 시뮬 열기</a></div>
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${cb.concat(wb).slice(0, 4).map(x => { const nm = x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || ''); return `<button class="mini-feat" data-simstart="${esc(`${x.k}:${x.f5[0]}:${x.E}`)}" style="text-align:left;font:inherit;cursor:pointer"><span class="k">${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝</span><b>${esc(nm)}로 시작</b><span>~ ${mdhm(x.E)} · ${x.k === 'char' ? '픽업 50% · 놓치면 다음 확정' : '5성은 픽업 무기 확정'}</span></button>`; }).join('') || '<a class="mini-feat" href="#/sim"><b>튜닝 시뮬 열기</b><span>진행 중인 픽업을 불러오면 여기에 나옵니다.</span></a>'}</div></div></div></section>
     <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
+    <section class="data-info" id="home-data" aria-label="데이터 기준"></section>
   </div>`;
+  paintDataInfo();
   $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
   $$('[data-simstart]', el).forEach(b => b.addEventListener('click', () => { state.sim = { key: b.dataset.simstart, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] }; navigate('sim'); }));
   bindHscroll(el);
   clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
+}
+// 홈 맨 아래: 각 데이터가 언제 · 무엇을 기준으로 갱신됐는지
+function paintDataInfo() {
+  const el = $('#home-data'); if (!el) return;
+  const sn = curSeason(); const ev = EVENTS && EVENTS.updated ? evT(EVENTS.updated) : NaN;
+  const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `${Math.max(1, m)}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
+  const row = (k, v, d) => `<div><span>${k}</span><b>${v}</b>${d ? `<small>${d}</small>` : ''}</div>`;
+  el.innerHTML = `<h2>데이터 기준</h2><div class="di-grid">
+    ${row('픽업 · 이벤트 일정', isNaN(ev) ? '불러오는 중' : `${mdhm(ev)} 갱신`, isNaN(ev) ? '공식 공지 · 3시간마다 확인' : `${ago(ev)} · 공식 공지를 3시간마다 확인`)}
+    ${row('게임 데이터', DATA_META.gameVer ? `${esc(DATA_META.gameVer)} 버전` : `${CHARS.filter(c => !isUpcoming(c)).length}명 수록`, '새 공명자 · 무기 · 재료를 매일 확인')}
+    ${row('역경의 탑', `시즌 ${sn.n}`, `${mdhm(sn.end)} 초기화 · 층별 버프 · 적 속성`)}
+    ${row('사이트', `Ver. ${esc(APP_VERSION)}`, `${esc(patchNotes()[0].d)} 업데이트 · <a href="#/notice">업데이트 내역</a>`)}</div>`;
+  fixLinks(el);
 }
 function bannerMainHTML(s) {
   const c = s.c; const x = s.x;
@@ -2570,7 +2587,7 @@ function bannerMainHTML(s) {
       <h3>${esc(c.name)} ${s.next ? '' : '<span class="up">UP!</span>'}</h3>
       <div class="bnr-time">${s.next ? `${esc(releaseLabel(c))}` : `${mdhm(x.S)} — ${mdhm(x.E)}<small>KST</small>`}</div>
       <div class="bnr-chips"><span>${EL[c.el] ? EL[c.el].n : ''}</span><span>${WT[c.wt] || ''}</span><span>${ROLE_N[c.role] || ''}</span></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm solid-gold" href="#/character/${c.id}">육성 가이드</a>${x && x.url ? `<a class="btn sm glass" href="${esc(x.url)}" target="_blank" rel="noopener">공식 공지</a>` : ''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm solid-gold" href="#/character/${c.id}">육성 가이드</a>${x && x.url ? `<a class="btn sm glass" href="${esc(x.url)}" target="_blank" rel="noopener">공식 공지${/\/en\//.test(x.url) ? ' (영어)' : ''}</a>` : ''}</div>
       ${s.next ? '' : `<div class="cd"><span class="lbl">종료까지</span><div class="t" data-cd="${x.E}">${cdHTML(x.E)}</div></div>`}
     </div>
     ${f4.length ? `<div class="bnr-4"><span class="lbl">4성 UP</span><div class="row">${f4.map(c4 => `<a href="#/character/${c4.id}" title="${esc(c4.name)}">${portraitHTML(c4)}</a>`).join('')}</div></div>` : ''}
@@ -2580,6 +2597,8 @@ function bannerMainHTML(s) {
 /* ---------- 자료실 ---------- */
 const LINKS = [
   { cat: '공식', n: '명조 공식 공지', d: '업데이트 · 픽업 · 이벤트 공지 원문', url: 'https://wutheringwaves.kurogames.com/kr/main/news/' },
+  { cat: '커뮤니티', n: '아카라이브 명조 채널', d: '국내 명조 커뮤니티 · 공략 · 사이클 · 정보 글', url: 'https://arca.live/b/wutheringwaves' },
+  { cat: '공략', n: '나무위키 명조', d: '게임 시스템 · 공명자 · 스토리 정리', url: 'https://namu.wiki/w/%EB%AA%85%EC%A1%B0:%20%EC%9B%8C%EB%8D%94%EB%A7%81%20%EC%9B%A8%EC%9D%B4%EB%B8%8C' },
   { cat: '지도', n: '명조 맵스', d: '수집품 · 몬스터 위치 인터랙티브 지도', url: 'https://maps.wuwa.moe/' },
   { cat: '도구', n: '명조 맵스 트래커', d: '게임 화면과 지도를 연동해 내 위치 표시', url: 'https://github.com/wuwamoe/wuma-tracker/releases' },
   { cat: '도구', n: 'WuWa Tracker', d: '튜닝 기록 · 천장 확인 (영어)', url: 'https://wuwatracker.com/' },
@@ -2592,7 +2611,7 @@ const hostOf = u => { try { return new URL(u).host.replace(/^www\./, ''); } catc
 const linkHTML = l => `<a class="lk" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="cat">${esc(l.cat)}</span><b>${esc(l.n)}</b><span>${esc(l.d)}</span><span class="host">${esc(hostOf(l.url))} ↗</span></a>`;
 function renderLinks() {
   const el = $('[data-view="links"]'); const cats = ['전체', ...new Set(LINKS.map(l => l.cat))]; const f = state.linkCat || '전체';
-  el.innerHTML = `<div class="container page"><p class="eyebrow">자료실</p><h1 class="ph-t">함께 보면 좋은 <em>공략과 자료</em></h1><p class="ph-d">공식 공지, 지도, 데이터베이스, 공략 사이트를 모았습니다. 모두 외부 사이트로 새 창에서 열립니다.</p>
+  el.innerHTML = `<div class="container page"><p class="eyebrow">자료실</p><h1 class="ph-t">함께 보면 좋은 <em>공략과 자료</em></h1><p class="ph-d">공식 공지, 국내 커뮤니티, 지도, 데이터베이스, 공략 사이트를 모았습니다. 모두 외부 사이트로 새 창에서 열립니다.</p>
     <div class="fbar"><div class="grp">${cats.map(c => `<button class="fchip" data-lc="${esc(c)}" aria-pressed="${c === f}">${esc(c)}</button>`).join('')}</div></div>
     <div class="intro-grid">${LINKS.filter(l => f === '전체' || l.cat === f).map(linkHTML).join('')}</div></div>`;
   $$('[data-lc]', el).forEach(b => b.addEventListener('click', () => { state.linkCat = b.dataset.lc; renderLinks(); }));
@@ -2669,17 +2688,17 @@ function renderCharacters() {
 const SK_N = { n: '일반 공격', s: '공명 스킬', f: '공명 회로', l: '공명 해방', i: '변주 스킬', o: '반주 스킬' };
 function renderCharacter(id) {
   const el = $('[data-view="character"]'); const c = CH[id]; if (!c) return;
-  const rid = c.rid; const bs = (typeof RAW_BASE !== 'undefined' && RAW_BASE[rid]) || c.base || null;
-  const nd = (typeof RAW_NODE !== 'undefined' && RAW_NODE[rid]) || c.node || {};
-  const skn = (typeof RAW_SKILLN !== 'undefined' && RAW_SKILLN[rid]) || {};
-  const chain = (typeof RAW_CHAIN !== 'undefined' && RAW_CHAIN[rid]) || {};
+  const rid = c.rid; const bs = (RAW_BASE[rid]) || c.base || null;
+  const nd = (RAW_NODE[rid]) || c.node || {};
+  const skn = (RAW_SKILLN[rid]) || {};
+  const chain = (RAW_CHAIN[rid]) || {};
   const pk = bannersNow('char').find(x => x.f5[0] === rid);
   const bg = artUrl('bg', rid), full = artUrl('full', rid);
   const presets = PRESETS.filter(p => p.m.includes(c.id) && p.m.every(i => CH[i]));
   const alts = PRESETS.flatMap(p => (p.v || []).filter(v => v.m.includes(c.id) && !p.m.includes(c.id) && v.m.every(i => CH[i])).map(v => ({ ...v, t: p.t })));
   const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b></div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
   const setHTML = (sid, label) => { const st = RAW_SETS[sid]; if (!st) return ''; return `<div class="wp">${IMG_SET[sid] ? `<img src="${IMG_SET[sid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b>${esc(st.n)}</b></div>${st.e.map(([n, d]) => `<div class="d"><b>${n}세트</b> ${esc(d)}</div>`).join('')}</div></div>`; };
-  const G = typeof RAW_GROW !== 'undefined' && RAW_GROW.chars[rid];
+  const G = RAW_GROW.chars[rid];
   const mats = G && G.cat ? [['boss', '보스 재료'], ['spec', '특산물'], ['weekly', '주간 보스']].filter(([k]) => G.cat[k]).map(([k, n]) => [G.cat[k], n])
     .concat([[G.cat.forte && G.cat.forte[3], '스킬 재료(최고 등급)'], [G.cat.common && G.cat.common[3], '공용 재료(최고 등급)']].filter(x => x[0])) : [];
   const teamRow = (m, t, d, tag) => `<div class="team-row"><div class="mems">${m.map(i => `<a href="#/character/${i}">${portraitHTML(CH[i])}<div>${esc(CH[i].name)}</div></a>`).join('')}</div><div class="tt">${tag || ''}<b>${esc(t)}</b><span>${esc(d || '')}</span></div></div>`;
@@ -2697,7 +2716,8 @@ function renderCharacter(id) {
     <div class="container ch-body">
       <div>
         ${bs ? `<div class="box"><h3>Lv.90 기본 스탯 <small>게임 데이터 · 무기 · 에코 제외</small></h3><div class="kv"><div><span>공격력</span><b>${fmt(bs[0])}</b></div><div><span>HP</span><b>${fmt(bs[1])}</b></div><div><span>방어력</span><b>${fmt(bs[2])}</b></div><div><span>크리티컬</span><b>${bs[3]}%</b></div><div><span>크리티컬 피해</span><b>${bs[4]}%</b></div>${Object.entries(nd).map(([k, v]) => `<div><span>공명 노드 · ${esc({ cr: '크리티컬', cd: '크리티컬 피해', el: '속성 피해', atk: '공격력', hp: 'HP', def: '방어력', heal: '치료 효과' }[k] || k)}</span><b>+${v}%</b></div>`).join('')}</div></div>` : ''}
-        ${Object.keys(skn).length ? `<div class="box"><h3>스킬</h3><div class="sk">${Object.entries(SK_N).filter(([k]) => skn[k]).map(([k, n]) => `<div><span>${n}</span>${esc(skn[k])}</div>`).join('')}</div></div>` : ''}
+        <div class="box" id="ch-skills"><h3>스킬 <small>게임 데이터 · 눌러서 설명 보기</small></h3><div class="sk">${Object.entries(SK_N).filter(([k]) => skn[k]).map(([k, n]) => `<div><span>${n}</span>${esc(skn[k])}</div>`).join('')}</div></div>
+        ${rotBoxHTML(c, presets)}
         ${Object.keys(chain).length ? `<div class="box"><h3>공명 체인</h3><div class="chain">${[1, 2, 3, 4, 5, 6].filter(i => chain[i]).map(i => `<details><summary><span class="s">S${i}</span>${esc(chain[i].n)}</summary><p>${esc(chain[i].d)}</p></details>`).join('')}</div></div>` : ''}
         ${presets.length || alts.length ? `<div class="box"><h3>추천 조합 <small><a href="#/tools/presets">추천 조합 전체</a></small></h3>${presets.map(p => teamRow(p.m, p.t, p.d, `<span class="tag gold">${esc(p.tag)}</span> `)).join('')}${alts.slice(0, 4).map(v => teamRow(v.m, v.t, v.n, `<span class="tag">${v.k === 'f2p' ? '입문' : '대체'}</span> `)).join('')}</div>` : ''}
       </div>
@@ -2710,12 +2730,46 @@ function renderCharacter(id) {
   $('#ch-own').addEventListener('click', () => { if (state.owned.has(c.id)) state.owned.delete(c.id); else state.owned.add(c.id); save(); paintOwnedChip(); toast(state.owned.has(c.id) ? `${c.name}을(를) 보유 캐릭터에 넣었습니다.` : `${c.name}을(를) 보유 캐릭터에서 뺐습니다.`); renderCharacter(id); });
   if ($('#ch-grow')) $('#ch-grow').addEventListener('click', () => { state.grow = growDefault(c.id); save(); navigate('tools/grow'); });
   $('#ch-cfg').addEventListener('click', () => openCharCfg(c.id));
+  $$('[data-tlgo]', el).forEach(b => b.addEventListener('click', () => { state.tlSel = b.dataset.tlgo; navigate('tools/timeline'); window.scrollTo(0, 0); }));
+  loadSkills(rid).then(rows => { const box = $('#ch-skills'); if (rows && box && curView === 'character' && CH[id] && CH[id].rid === rid) box.innerHTML = skillsHTML(rows); });
+}
+// 스킬 설명: public/skills/<rid>.json (tools/build_skills.py가 게임 데이터로 만듦) — 이 화면을 열 때만 받아 옴
+const SKILL_CACHE = {};
+function loadSkills(rid) {
+  if (!SKILL_CACHE[rid]) SKILL_CACHE[rid] = fetch(`${BASE}skills/${rid}.json`).then(r => r.ok ? r.json() : null).catch(() => null);
+  return SKILL_CACHE[rid];
+}
+const SK_KIND = { ...SK_N, p: '고유 스킬' };
+const hlText = t => esc(t).replace(/⟦(.*?)⟧/g, '<b class="hl">$1</b>').replace(/\n/g, '<br>');
+function skillsHTML(rows) {
+  return `<h3>스킬 <small>게임 데이터 · 눌러서 설명 보기</small></h3><div class="chain skd">${rows.map(([k, n, sec]) => `<details><summary><span class="s">${esc(SK_KIND[k] || '')}</span>${esc(n)}</summary>${sec.map(([h, b]) => `${h ? `<h4>${esc(h)}</h4>` : ''}<p>${hlText(b)}</p>`).join('')}</details>`).join('')}</div>`;
+}
+// 딜 사이클: ROT 데이터(공명 모드별) + 추천 조합의 딜 사이클 탭 바로 가기
+function rotBoxHTML(c, presets) {
+  const r = ROT[c.id]; if (!r && !presets.length) return '';
+  const modes = r ? (r.modes ? Object.keys(r.modes).map(k => [(c.modes && c.modes[k] && c.modes[k].n) || k, rotOf(c, k)]) : [['', r]]) : [];
+  const one = (lbl, x) => x && x.loop ? `<div class="rot">${lbl ? `<p style="margin:0 0 6px"><span class="tag">${esc(lbl)} 모드</span></p>` : ''}<ol class="rot-l">${x.loop.map(st => `<li>${esc(st)}</li>`).join('')}</ol>
+    <p class="note" style="margin:6px 0 0">필드 시간 약 ${x.ft || '?'}초${x.full ? ' · 사이클을 끝까지 돌린 뒤 교체' : ''}</p>${x.tip ? `<p class="note" style="margin:4px 0 0">${esc(x.tip)}</p>` : ''}</div>` : '';
+  const body = modes.map(([l, x]) => one(l, x)).join('');
+  const go = presets.slice(0, 3).map(p => `<button class="btn sm" data-tlgo="k${esc(p.id)}">${esc(p.t)} 딜 사이클</button>`).join('');
+  return `<div class="box"><h3>딜 사이클 <small>${r ? '혼자 필드에 있을 때의 순서' : ''}</small></h3>${body || '<p class="note" style="margin:0">이 공명자의 단독 사이클 정보는 아직 없습니다. 추천 조합의 사이클을 확인해 보세요.</p>'}${go ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${go}</div><p class="note" style="margin:6px 0 0">파티 3명이 한 바퀴 도는 순서를 파티 편성의 딜 사이클 탭에서 보여 줍니다.</p>` : ''}</div>`;
 }
 function paintOwnedChip() { const c = $('#owned-chip'); if (c) c.textContent = `보유 ${state.owned.size}명`; }
 
 /* ---------- 에코 계산기 ---------- */
 const LS_ECHO_CALC = 'ddingjo-atm-echo-calc';
-const ECHO_GOAL = { cr: 75, cd: 260, er: 125, atk: Math.round(ATK_REF / 100) * 100 };
+// 목표치(참고값): 역할별 크리티컬 · 공명 효율, 주 스탯은 공명자가 쓰는 스탯(공격력 · HP · 방어력) 기준
+const ECHO_GOALS = {
+  main: { n: '메인 딜러', cr: 75, cd: 260, er: 120, d: '크리티컬 1 : 크리티컬 피해 2 비율 + 해방을 제때 쓸 정도의 공명 효율' },
+  sub: { n: '서브 딜러 · 버퍼', cr: 65, cd: 220, er: 140, d: '해방을 사이클마다 쓰는 것이 먼저, 그다음 크리티컬' },
+  sup: { n: '서포터', cr: 0, cd: 0, er: 160, d: '공명 효율로 해방 · 반주를 빨리 돌리고, 주 스탯(치유 · 버프 기준)을 올리기' }
+};
+function echoMainGoal(c, sc) {
+  const bs = (RAW_BASE[c.rid]) || null;
+  if (sc === 'hp' && bs) return Math.round((bs[1] * 2.1 + 4560) / 500) * 500;   // HP% 약 +110% + 1코스트 고정 HP
+  if (sc === 'def' && bs) return Math.round((bs[2] * 2.3) / 100) * 100;          // 방어력% 약 +130%
+  return Math.round(ATK_REF / 100) * 100;
+}
 function echoCalcState() {
   if (!state.ec) { try { state.ec = JSON.parse(lsGet(LS_ECHO_CALC) || 'null'); } catch (e) { state.ec = null; } }
   if (!state.ec || !CH[state.ec.id]) { const c0 = CHARS.find(c => c.q === 5 && c.role === 'main' && !isUpcoming(c)); state.ec = { id: c0.id, echo: null, w: 0 }; }
@@ -2727,10 +2781,11 @@ function echoGrade(cv) { return cv >= 200 ? ['SS', '종결급'] : cv >= 170 ? ['
 function renderEcho() {
   const el = $('[data-view="echo"]'); const E = echoCalcState(); const c = CH[E.id];
   const ws = weaponsForType(c.wt); const wid = E.w && RAW_WEAPONS[E.w] ? E.w : ((state.ov[c.id] || {}).w || c.w);
+  const gk = ECHO_GOALS[E.goal] ? E.goal : (ECHO_GOALS[c.role] ? c.role : 'main');
   const opts = Object.entries(EL).map(([k, v]) => `<optgroup label="${v.n}">${CHARS.filter(x => x.el === k).map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`).join('');
   el.innerHTML = `<div class="container page"><p class="eyebrow">에코 계산기</p><h1 class="ph-t">나의 에코,<em> 어디까지 강해질까요?</em></h1><p class="ph-d">에코 5개의 코스트 · 주옵션 · 부옵션을 넣으면 속성 화면 스탯(무기 · 에코 세트 상시 효과 포함)과 크리티컬 점수를 계산합니다. 입력은 이 브라우저에 저장됩니다.</p>
     <div class="two" style="margin-top:24px">
-      <div class="box"><div class="ec-pick"><label class="lbl" for="ec-char">공명자</label><select id="ec-char">${opts}</select><label class="lbl" for="ec-w">무기</label><select id="ec-w">${ws.map(w => `<option value="${w.id}" ${+w.id === +wid ? 'selected' : ''}>★${w.q} ${esc(w.n)}</option>`).join('')}</select></div>
+      <div class="box"><div class="ec-pick"><label class="lbl" for="ec-char">공명자</label><select id="ec-char">${opts}</select><label class="lbl" for="ec-w">무기</label><select id="ec-w">${ws.map(w => `<option value="${w.id}" ${+w.id === +wid ? 'selected' : ''}>★${w.q} ${esc(w.n)}</option>`).join('')}</select><label class="lbl" for="ec-goal">목표 기준</label><select id="ec-goal">${Object.entries(ECHO_GOALS).map(([k, g]) => `<option value="${k}" ${k === gk ? 'selected' : ''}>${g.n}${k === c.role ? ' (이 공명자 역할)' : ''}</option>`).join('')}</select></div>
         <div class="ec-grid" id="ec-slots">${E.echo.e.map((x, i) => echoSlotHTML(c, x, i)).join('')}</div>
         ${Object.entries(ECHO_SUB).map(([k, d]) => `<datalist id="ec-dl-${k}">${d[1].map(v => `<option value="${v}">`).join('')}</datalist>`).join('')}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn sm" id="ec-std">기본 주옵션으로</button><button class="btn sm" id="ec-clear">부옵션 모두 지우기</button></div></div>
@@ -2745,15 +2800,17 @@ function renderEcho() {
     const cv = subCr * 2 + subCd; const [g, gn] = echoGrade(cv);
     const ov = { ...state.ov, [c.id]: { ...(state.ov[c.id] || {}), st: null, w: E.w, r: (RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5, echo: { ...e, on: true } } };
     const pe = panelEstimate(c.id, state.settings, ov);
-    const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], null] : ['공격력', pe.atk, ECHO_GOAL.atk];
+    const G = ECHO_GOALS[gk]; const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], gk === 'sup' ? null : echoMainGoal(c, sc)] : ['공격력', pe.atk, gk === 'sup' ? null : echoMainGoal(c, 'atk')];
     const bar = (n, v, goal, unit = '') => `<div class="stat-bar"><div class="top"><span>${n}</span><b>${v > 999 ? fmt(v) : v}${unit}${goal ? ` <span>/ 목표 ${goal > 999 ? fmt(goal) : goal}${unit}</span>` : ''}</b></div>${goal ? `<div class="track"><div class="fill" style="width:${Math.min(100, v / goal * 100)}%"></div></div>` : ''}</div>`;
-    const tips = []; if (pe.cr < 60) tips.push('크리티컬이 낮아요. 4코스트 주옵션 크리티컬이나 부옵션 크리티컬을 먼저 올려 보세요.');
-    if (pe.cr > 0 && pe.cd / Math.max(pe.cr, 1) < 2.8 && pe.cr >= 60) tips.push('크리티컬 대비 크리티컬 피해가 낮아요. 크리티컬 피해 부옵션을 노려 보세요.');
+    const tips = []; if (gk === 'sup') { if ((pe.er || 100) < G.er) tips.push('서포터는 공명 효율이 먼저예요. 3코스트 주옵션 공명 효율이나 부옵션 공명 효율을 노려 보세요.'); if (sc !== 'atk') tips.push(`${sc === 'hp' ? 'HP' : '방어력'}에 비례하는 공명자라 1 · 3 · 4코스트 주옵션을 ${sc === 'hp' ? 'HP' : '방어력'}%로 맞추면 좋아요.`); }
+    else if (pe.cr < G.cr - 15) tips.push('크리티컬이 낮아요. 4코스트 주옵션 크리티컬이나 부옵션 크리티컬을 먼저 올려 보세요.');
+    if (gk !== 'sup' && (pe.er || 100) < G.er - 10) tips.push(`공명 효율이 목표(${G.er}%)보다 낮아요. 해방을 사이클마다 못 쓸 수 있어요.`);
+    if (gk !== 'sup' && pe.cr > 0 && pe.cd / Math.max(pe.cr, 1) < 2.8 && pe.cr >= 60) tips.push('크리티컬 대비 크리티컬 피해가 낮아요. 크리티컬 피해 부옵션을 노려 보세요.');
     if (pe.cr >= 95) tips.push('크리티컬이 100%에 가까워요. 이제 크리티컬 피해 · 공격력이 더 효율적입니다.');
     if (t.cost > 12) tips.push('코스트 합이 12를 넘었습니다. 게임에서는 장착할 수 없어요.');
     $('#ec-out').innerHTML = `<div class="score"><div class="g">${g}</div><div class="v">크리티컬 점수 <b class="num">${cv.toFixed(1)}</b> · ${gn}<br><span class="note">부옵션의 크리티컬×2 + 크리티컬 피해</span></div></div>
-      <div style="display:grid;gap:12px">${bar(main[0], main[1], main[2])}${bar('크리티컬', pe.cr, ECHO_GOAL.cr, '%')}${bar('크리티컬 피해', pe.cd, ECHO_GOAL.cd, '%')}${bar(`${EL[c.el].n} 피해 보너스`, pe.el, null, '%')}${bar('공명 효율', +(pe.er || 100).toFixed(1), ECHO_GOAL.er, '%')}</div>
-      <p class="note" style="margin:12px 0 0">코스트 <b class="num ${t.cost > 12 ? 'bad' : ''}">${t.cost}</b> / 12 · 목표치는 일반적인 메인 딜러 기준 참고값입니다. 크리티컬 기대 배율 ${(1 + Math.min(pe.cr, 100) / 100 * (pe.cd / 100 - 1)).toFixed(3)}배</p>
+      <div style="display:grid;gap:12px">${bar(main[0], main[1], main[2])}${bar('크리티컬', pe.cr, G.cr, '%')}${bar('크리티컬 피해', pe.cd, G.cd, '%')}${bar(`${EL[c.el].n} 피해 보너스`, pe.el, null, '%')}${bar('공명 효율', +(pe.er || 100).toFixed(1), G.er, '%')}</div>
+      <p class="note" style="margin:12px 0 0">코스트 <b class="num ${t.cost > 12 ? 'bad' : ''}">${t.cost}</b> / 12 · 목표치는 <b>${esc(G.n)}</b> 기준 참고값입니다(${esc(G.d)}). 크리티컬 기대 배율 ${(1 + Math.min(pe.cr, 100) / 100 * (pe.cd / 100 - 1)).toFixed(3)}배</p>
       ${tips.length ? `<ul class="prose" style="margin:10px 0 0">${tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm solid-gold" id="ec-apply">파티 편성 계산에 이 에코 쓰기</button><a class="btn sm" href="#/character/${c.id}">${esc(c.name)} 가이드</a></div>
       <p class="note" style="margin:8px 0 0">누르면 이 에코가 파티 편성 · 딜 계산에 반영됩니다(그 공명자의 무기 · 체인 설정 창에서도 바꿀 수 있어요).</p>`;
@@ -2764,6 +2821,7 @@ function renderEcho() {
   };
   $('#ec-char').addEventListener('change', e => { state.ec = { id: e.target.value, echo: null, w: 0 }; renderEcho(); });
   $('#ec-w').addEventListener('change', paint);
+  $('#ec-goal').addEventListener('change', e => { E.goal = e.target.value; lsSet(LS_ECHO_CALC, JSON.stringify(E)); renderEcho(); });
   $('#ec-slots').addEventListener('change', e => {
     if (e.target.classList.contains('ec-sk')) { const inp = e.target.parentElement.querySelector('.ec-sv'); inp.setAttribute('list', 'ec-dl-' + e.target.value); const d = ECHO_SUB[e.target.value]; inp.max = d ? d[1][d[1].length - 1] : ''; inp.placeholder = d ? `${d[1][0]}~${d[1][d[1].length - 1]}` : ''; if (!e.target.value) inp.value = ''; }
     paint();
@@ -3200,5 +3258,5 @@ function paintVersion() { const v = patchNotes()[0].v; const c = $('#ver-chip');
 init();
 refreshExtra();
 
-// 점검 · 테스트용(읽기 전용): 브라우저 콘솔에서 ATM_DEBUG()로 현재 상태를 볼 수 있음
-window.ATM_DEBUG = () => ({ curView, state, CHARS, APP_VERSION, evalParty, optimize });
+// 점검 · 테스트용(읽기 전용): 주소 끝에 ?debug를 붙여 열었을 때만 브라우저 콘솔에서 ATM_DEBUG()로 현재 상태를 볼 수 있음
+if (DEBUG) window.ATM_DEBUG = () => ({ curView, state, CHARS, APP_VERSION, evalParty, optimize });

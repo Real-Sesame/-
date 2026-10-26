@@ -291,7 +291,27 @@ def korean_overlay(base, ko):
         if y.get('url'):
             x['url'] = y['url']
         used_x.add(xi); used_y.add(yi); hit += 1
+    # 이름이 맞는 한국어 일정은 없어도, 같은 기간의 한국어 픽업 공지가 있으면 공지 주소만이라도 한국어로
+    for x in base:
+        if '/en/' not in (x.get('url') or '') or x['k'] == 'maint':
+            continue
+        grp = ('char', 'weapon') if x['k'] in ('char', 'weapon') else (x['k'],)
+        y = next((y for y in ko if y['k'] in grp and y.get('url') and near(T(x['e']), T(y['e']))
+                  and (near(T(x.get('s')), T(y.get('s'))) or (x.get('sv') and x.get('sv') == y.get('sv')))), None)
+        if y:
+            x['url'] = y['url']
     return hit
+
+
+def korean_banner_names(items):
+    """한국어 공지에 없어 영어 이름으로 남은 픽업은 게임 데이터의 한국어 이름으로 '○○ 캐릭터 이벤트 튜닝'"""
+    n = 0
+    for x in items:
+        if x['k'] in ('char', 'weapon') and not x.get('ko') and not x.get('gd') and x.get('f5') and not re.search(r'[가-힣]', x.get('n') or ''):
+            nm = KO_NAME.get((x['k'], x['f5'][0]))
+            if nm:
+                x['en'] = x['n']; x['n'] = f'{nm} {"캐릭터" if x["k"] == "char" else "무기"} 이벤트 튜닝'; n += 1
+    return n
 
 
 used = None
@@ -325,6 +345,7 @@ else:
         ko_items = tidy(got['ko'][0], 'kr')
         n = korean_overlay(out, ko_items); used = 'en+ko'
         print(f'한국어 이름으로 바꾼 일정: {n}개')
+print(f'게임 데이터 이름으로 바꾼 픽업: {korean_banner_names(out)}개')
 out.sort(key=lambda x: (x.get('s') or x['e'], x['k']))
 # 신규 / 복각: 게임 데이터의 튜닝 화면 목록에서 그 캐릭터 · 무기가 대표인 배너가 몇 번째인지 셈
 try:
