@@ -87,6 +87,7 @@ export default defineConfig({
       const pages = [
         ['intro', '소개', '띵조 AUTO TEAM MAKER가 할 수 있는 일과 데이터가 갱신되는 방식을 소개합니다.'],
         ['characters', '공명자 가이드', '공명자별 기본 스탯 · 스킬 · 공명 체인 · 추천 무기 · 에코 세트 · 추천 조합 · 육성 재료'],
+        ['season', '시즌 콘텐츠', '역경의 탑 · 죽음의 노래와 바닷속 폐허의 이번 시즌 적 · 버프 · 증표와 초기화까지 남은 시간'],
         ['echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
         ['sim', '튜닝 시뮬레이터', '캐릭터 · 무기 이벤트 튜닝을 공개된 확률 규칙으로 미리 돌려 봅니다.'],
         ['links', '자료실', '명조 공식 공지 · 커뮤니티 · 지도 · 데이터베이스 · 공략 사이트 모음'],
@@ -94,8 +95,8 @@ export default defineConfig({
         ['tools', '파티 편성', '보유 캐릭터로 역경의 탑 · 필드 파티를 자동 편성하고 1사이클 예상 피해를 계산합니다.']
       ];
       for (const [p, t, d] of pages) write(`${p}.html`, { path: p, title: t, desc: d });
-      write('tools/index.html', { path: 'tools', title: '파티 편성', desc: pages[6][2] }); // /-/tools/ (끝에 / 붙은 주소)
-      for (const [k, t] of Object.entries(TOOLS)) write(`tools/${k}.html`, { path: `tools/${k}`, title: `${t} · 파티 편성`, desc: pages[6][2] });
+      write('tools/index.html', { path: 'tools', title: '파티 편성', desc: pages.find(x => x[0] === 'tools')[2] }); // /-/tools/ (끝에 / 붙은 주소)
+      for (const [k, t] of Object.entries(TOOLS)) write(`tools/${k}.html`, { path: `tools/${k}`, title: `${t} · 파티 편성`, desc: pages.find(x => x[0] === 'tools')[2] });
       let n = 0;
       for (const c of characters()) {
         const og = existsSync(resolve('public/assets/og', `${c.rid}.jpg`)) ? `assets/og/${c.rid}.jpg` : '';

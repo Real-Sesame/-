@@ -18,6 +18,7 @@ on:
       - tools/update_chars.py
       - tools/build_assets.py
       - tools/build_skills.py
+      - tools/build_wastes.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -57,6 +58,7 @@ jobs:
             /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
             /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
             /BinData/gacha/gachaviewinfo.json \
+            /BinData/ShipTower/ /BinData/monster_Info/monsterinfo.json \
             /Textmaps/ko/multi_text/MultiText.json
           echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
           echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
@@ -72,6 +74,10 @@ jobs:
         continue-on-error: true
         run: python tools/build_skills.py gamedata public/skills
 
+      - name: 죽음의 노래와 바닷속 폐허 시즌 정보 만들기 (public/wastes.json)
+        continue-on-error: true
+        run: python tools/build_wastes.py gamedata public/wastes.json
+
       - name: 캐릭터 일러스트 만들기 (없는 것만)
         continue-on-error: true
         run: python tools/build_assets.py gamedata . --cache "$RUNNER_TEMP/asset-cache"
@@ -79,8 +85,8 @@ jobs:
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A public/assets public/skills 2>/dev/null || true
-          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets public/skills public/wastes.json 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"

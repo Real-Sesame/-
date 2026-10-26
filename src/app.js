@@ -2547,6 +2547,7 @@ function renderHome() {
   el.innerHTML = hero + `<div class="container">
     <section class="sec">${secHead('공명자 가이드', '이번 픽업과 최근 공명자의 무기 · 에코 · 추천 조합을 확인하세요.', '#/characters')}<div class="cc-grid">${cards.join('')}</div></section>
     <section class="sec">${secHead('캐릭터 이벤트 튜닝', '진행 중인 픽업과 남은 시간 · 다음 버전 예정 공명자', '')}${bnr}${wline}</section>
+    <section class="sec">${secHead('시즌 콘텐츠', '28일마다 바뀌는 엔드 콘텐츠의 이번 시즌과 남은 시간', '#/season')}<div class="ss-grid" style="margin-top:0">${[['역경의 탑', '심경 구역', sn], ['죽음의 노래와 바닷속 폐허', '재생 해역 · 해곡 · 급류', wastesSeasonAt(now)]].map(([n, k, s]) => `<a class="ss-card" href="#/season"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · 초기화까지 <b class="num">${leftTxt(s.end)}</b></span></a>`).join('')}</div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">에코 계산기</p><h3>나의 에코,<br><em>어디까지 왔을까요?</em></h3><p>에코 5개의 주옵션 · 부옵션을 넣으면 속성 화면 스탯과 크리티컬 점수를 바로 계산하고, 목표치와 비교해 다음에 올릴 옵션을 알려 줍니다.</p><a class="btn solid-gold" href="#/echo">에코 계산기 열기</a></div>
       <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">파티 편성 열기</a></div>
@@ -2572,6 +2573,7 @@ function paintDataInfo() {
     ${row('픽업 · 이벤트 일정', isNaN(ev) ? '불러오는 중' : `${mdhm(ev)} 마지막 변경`, isNaN(ev) ? '공식 공지 · 3시간마다 확인' : `${ago(ev)} 바뀜 · 공식 공지는 3시간마다 확인`)}
     ${row('게임 데이터', DATA_META.gameVer ? `${esc(DATA_META.gameVer)} 버전` : `${CHARS.filter(c => !isUpcoming(c)).length}명 수록`, '새 공명자 · 무기 · 재료를 매일 확인')}
     ${row('역경의 탑', `시즌 ${sn.n}`, `${mdhm(sn.end)} 초기화 · 층별 버프 · 적 속성`)}
+    ${row('죽음의 노래와 바닷속 폐허', `시즌 ${wastesSeasonAt(Date.now()).n}`, `${mdhm(wastesSeasonAt(Date.now()).end)} 초기화 · 게임 데이터로 매일 확인`)}
     ${row('사이트', `Ver. ${esc(APP_VERSION)}`, `${esc(patchNotes()[0].d)} 업데이트 · <a href="#/notice">업데이트 내역</a>`)}</div>`;
   fixLinks(el);
 }
@@ -2617,6 +2619,80 @@ function renderLinks() {
   $$('[data-lc]', el).forEach(b => b.addEventListener('click', () => { state.linkCat = b.dataset.lc; renderLinks(); }));
 }
 
+/* ---------- 시즌 콘텐츠 (역경의 탑 · 죽음의 노래와 바닷속 폐허) ----------
+   폐허 데이터: public/wastes.json (tools/build_wastes.py가 게임 데이터 BinData/ShipTower로 만듦)
+   시즌: 28일마다 월요일 04:00(한국 시간) 초기화, 역경의 탑과 2주 엇갈림. 23시즌 = 2026-10-26 시작(인벤 공략 글로 확인) */
+const WASTES_BASE = { n: 23, t: Date.UTC(2026, 9, 25, 19, 0, 0) };
+function wastesSeasonAt(now) {
+  const n = WASTES_BASE.n + Math.floor((now - WASTES_BASE.t) / (28 * DAY));
+  const start = WASTES_BASE.t + (n - WASTES_BASE.n) * 28 * DAY;
+  return { n, start, end: start + 28 * DAY };
+}
+let WASTES = null, WASTES_P = null;
+function loadWastes() {
+  if (!WASTES_P) WASTES_P = fetch(`${BASE}wastes.json?h=${Math.floor(Date.now() / 36e5)}`).then(r => r.ok ? r.json() : null).then(d => { WASTES = d; return d; }).catch(() => null);
+  return WASTES_P;
+}
+const elIdTag = id => elTag(EL_BY_ID[id]);
+const ymd = t => { const d = new Date(t); return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; };
+const leftTxt = t => { const p = leftParts(t); return `${p.d}일 ${p.h}시간`; };
+// 보유 캐릭터로 폐허 한 층(전반 · 후반 두 파티, 캐릭터 중복 없음)을 짬. 저항이 오른 속성의 메인 딜러는 뺌
+function wastesTeams(ranked, half) {
+  const pick = [], used = new Set();
+  half.forEach(h => {
+    const t = ranked.find(t => !t.ids.some(id => id && used.has(gk(id))) && !h.r.map(i => EL_BY_ID[i]).includes(CH[t.ids[0]].el));
+    pick.push(t || null); if (t) t.ids.forEach(id => id && used.add(gk(id)));
+  });
+  return pick;
+}
+function renderSeason() {
+  const el = $('[data-view="season"]'); const now = Date.now();
+  const ts = curSeason(); const ws = wastesSeasonAt(now);
+  const W = WASTES; const sel = state.wsSel && W && W.seasons[state.wsSel] ? state.wsSel : (W ? String(W.seasons[ws.n] ? ws.n : W.latest) : null);
+  const S = W && sel ? W.seasons[sel] : null;
+  const pool = availableIds(state);
+  let ranked = null;
+  if (S && pool.length >= 6) {
+    const ctx = { settings: state.settings, ov: state.ov, forcedModes: state.forced, zone: null, season: null };
+    ranked = candidateTeams(pool, ctx, { k: 7 }).slice(0, 160).map(t => bestTeam(t.ids, ctx)).sort((a, b) => b.score * teamPenalty(b) - a.score * teamPenalty(a));
+  }
+  const teamHTML = t => t ? `<div class="mini-team">${t.ids.filter(Boolean).map(id => `<div class="mini">${portraitHTML(CH[id])}<div>${esc(CH[id].name)}</div></div>`).join('')}</div>` : '<span class="note">겹치지 않는 파티가 부족합니다</span>';
+  const card = (k, n, s, sub, href, btn) => `<a class="ss-card" href="${href}"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · 초기화까지 <b class="num">${leftTxt(s.end)}</b></span><span class="note">${sub}</span><span class="more">${btn}</span></a>`;
+  // 역경의 탑 요약
+  const tower = ['L', 'C12', 'C34', 'R'].map(z => {
+    const fs = zoneFloors(ts.n, z); if (!fs.length) return '';
+    const rec = zoneRec(ts.n, z); const buffs = [...new Set(fs.flatMap(f => f.b))];
+    return `<article class="tower"><div><h3>${esc(ZONES[z].n)}</h3><div class="note">${esc(ZONES[z].sub)}</div></div>${rec.length ? `<div>추천 속성 ${rec.map(elTag).join(' ')}</div>` : ''}${buffs.map(b => `<div class="bufftxt">${esc(b)}</div>`).join('')}
+      <div class="stack" style="gap:4px">${fs.map(f => `<div class="floor-row"><b>${f.f}층</b><span class="mons">${esc(f.m.join(', '))}</span></div>`).join('')}</div></article>`;
+  }).join('');
+  // 폐허
+  const lvHTML = l => {
+    const tm = ranked ? wastesTeams(ranked, l.h) : null;
+    return `<article class="tower ws-lv"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap"><h3>${l.end ? '' : `${l.o - 6}층 · `}${esc(l.n)}</h3><span class="tag ${l.end ? 'gold' : ''}">${esc(l.z)}${l.end ? ' · 끝없는 도전' : ''}</span></div>
+      <div class="ws-sc">${l.sc.map((v, i) => `<span><small>${['B', 'A', 'S', 'SS', 'SSS'][i] || ''}</small>${fmt(v)}</span>`).join('')}<span class="note">목표 점수</span></div>
+      <div class="ws-h">${l.h.map((h, i) => `<div><div class="lbl">${i ? '후반' : '전반'} 파티${h.r.length ? ` · <span class="res">${h.r.map(elIdTag).join(' ')} 저항 +20%</span>` : ''}</div><div class="mons">${esc(h.m.map(m => m[0]).join(', '))}</div>${tm ? `<div style="margin-top:8px">${teamHTML(tm[i])}</div>` : ''}</div>`).join('')}</div></article>`;
+  };
+  const lvs = S ? S.lv : [];
+  el.innerHTML = `<div class="container page"><p class="eyebrow">시즌 콘텐츠</p><h1 class="ph-t">이번 시즌 <em>엔드 콘텐츠</em></h1><p class="ph-d">역경의 탑과 죽음의 노래와 바닷속 폐허는 28일마다 바뀝니다(서로 2주 엇갈림). 이번 시즌의 적 · 버프 · 증표와 남은 시간을 한곳에서 확인하세요.</p>
+    <div class="ss-grid">${card('역경의 탑 · 심경 구역', '역경의 탑', ts, '층별 버프 · 적 속성 · 추천 속성', '#/tools/tower-info', '탑 정보 · 자동 편성')}${card('재생 해역 · 해곡 · 급류', '죽음의 노래와 바닷속 폐허', ws, '전반 · 후반 2파티 · 연소 · 타오르는 조수', '#ws', '이번 시즌 구성 보기')}</div>
+    <section class="sec">${secHead('역경의 탑', `심경 구역 시즌 ${ts.n} · ${ymd(ts.start)} ~ ${ymd(ts.end)}`, '')}${tower ? `<div class="tower-grid">${tower}</div>` : '<div class="empty-note">이 시즌의 탑 구성이 아직 공개 데이터에 없습니다.</div>'}
+      <p style="margin-top:12px"><a class="btn sm solid-gold" href="#/tools/tower-build">내 캐릭터로 역경의 탑 자동 편성</a></p></section>
+    <section class="sec" id="ws">${secHead('죽음의 노래와 바닷속 폐허', S ? `재생 해역 시즌 ${sel}${+sel === ws.n ? ' · 진행 중' : +sel < ws.n ? ' · 지난 시즌' : ' · 다음 시즌'}` : '', '')}
+      ${!W ? '<div class="empty-note">폐허 데이터를 불러오는 중입니다…</div>' : !S ? '<div class="empty-note">이 시즌 구성이 아직 공개 데이터에 없습니다.</div>' : `
+      <div class="fbar"><div class="grp">${Object.keys(W.seasons).map(n => `<button class="fchip" data-ws="${n}" aria-pressed="${n === sel}">시즌 ${n}${+n === ws.n ? ' · 진행 중' : +n < ws.n ? ' · 지난' : ' · 다음'}</button>`).join('')}</div></div>
+      ${+sel !== ws.n ? `<p class="note">게임 데이터에는 시즌 ${W.latest}까지 있습니다. ${+sel < ws.n ? '진행 중인 시즌 데이터가 아직 없어 지난 시즌을 보여 줍니다.' : ''}</p>` : ''}
+      <div class="two ws-top"><div class="box"><h3>공통 규칙</h3><ul class="prose" style="margin:0">${[S.burn, S.hot].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}<li>층마다 파티 2개(전반 · 후반)가 필요하고, 같은 캐릭터는 한 층에서 한 번만 씁니다.</li><li>끝 없는 심연(급류)에서는 적이 받는 최종 피해가 30% 늘고, 증표를 제한 없이 씁니다.</li></ul></div>
+        <div class="box"><h3>이번 시즌 증표</h3><div class="stack" style="gap:8px">${S.tok.map(([n, d]) => `<div class="ws-tok"><b>${esc(n)}</b><span>${esc(d).replace(/\n/g, '<br>')}</span></div>`).join('') || '<p class="note">이번 시즌 전용 증표 정보가 없습니다.</p>'}</div></div></div>
+      ${ranked ? '<p class="note" style="margin:14px 0 0">각 층 아래의 파티는 내 보유 캐릭터로 짠 추천입니다(전반 · 후반 캐릭터 중복 없음, 저항이 오른 속성의 메인 딜러 제외). 예상 피해 순위는 파티 편성과 같은 계산입니다.</p>' : `<p class="note" style="margin:14px 0 0">보유 캐릭터를 6명 이상 등록하면 층마다 전반 · 후반 추천 파티가 나옵니다. <a href="#/tools/roster">보유 캐릭터 등록</a></p>`}
+      <h3 class="ws-zone">재생 해역 - 해곡 <small>5층 · 시즌마다 초기화</small></h3><div class="tower-grid">${lvs.filter(l => !l.end).map(lvHTML).join('')}</div>
+      <h3 class="ws-zone">재생 해역 - 급류 <small>끝 없는 심연 · 시즌마다 초기화</small></h3><div class="tower-grid">${lvs.filter(l => l.end).map(lvHTML).join('')}</div>
+      <details class="nt" style="margin-top:20px"><summary><span class="tag">상시</span><b>금기의 해역</b><time>한 번만 클리어 · 초기화 없음</time></summary><div class="body"><div class="tower-grid" style="margin-top:10px">${W.perm.map(l => `<article class="tower"><h3>${l.o}층 · ${esc(l.n)}</h3><div class="ws-h">${l.h.map((h, i) => `<div><div class="lbl">${l.h.length > 1 ? (i ? '후반' : '전반') : '적'}</div><div class="mons">${esc(h.m.map(m => m[0]).join(', '))}</div></div>`).join('')}</div></article>`).join('')}</div></div></details>`}
+    </section></div>`;
+  $$('[data-ws]', el).forEach(b => b.addEventListener('click', () => { state.wsSel = b.dataset.ws; renderSeason(); }));
+  const go = $('.ss-card[href="#ws"]', el); if (go) go.addEventListener('click', e => { e.preventDefault(); $('#ws').scrollIntoView({ behavior: 'smooth' }); });
+  if (!W) loadWastes().then(d => { if (d && curView === 'season') renderSeason(); });
+}
+
 /* ---------- 공지사항 ---------- */
 const NOTICES = [
   { d: '2026-10-26', t: '사이트 주소가 화면별로 바뀌었습니다', b: ['이제 화면마다 주소가 있습니다(예: /-/characters, /-/tools/grow). 예전 주소로 들어와도 자동으로 새 주소로 넘어가니 즐겨찾기는 그대로 쓰셔도 됩니다.', '사이트를 가볍게 나눠서 첫 화면이 더 빨리 열립니다.'] },
@@ -2641,6 +2717,7 @@ function renderIntro() {
     ['#/tools/tower-build', '역경의 탑 자동 편성', '보유 캐릭터와 이번 시즌 층별 버프로 파티 합산 1사이클 피해가 가장 높은 편성을 찾습니다.'],
     ['#/tools/timeline', '딜 사이클', '추천 조합이나 내 파티가 한 바퀴 도는 동안 누가 언제 무엇을 하는지 순서대로 보여 줍니다.'],
     ['#/echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
+    ['#/season', '시즌 콘텐츠', '역경의 탑과 죽음의 노래와 바닷속 폐허의 이번 시즌 적 · 버프 · 증표, 초기화까지 남은 시간, 폐허 전반 · 후반 추천 파티.'],
     ['#/sim', '튜닝 시뮬레이터', '공개된 확률 규칙으로 캐릭터 · 무기 이벤트 튜닝을 미리 돌려 봅니다.'],
     ['#/tools/grow', '육성 계산', '돌파 · 스킬 · 공명 노드에 필요한 재료와 파밍 횟수, 결정 웨이브 플레이트를 계산합니다.']];
   el.innerHTML = `<div class="container page"><p class="eyebrow">소개</p><h1 class="ph-t">명조를 더 똑똑하게,<br><em>띵조 AUTO TEAM MAKER</em></h1>
@@ -2903,8 +2980,8 @@ function renderSim() {
 }
 
 /* ---------- 화면 전환 ---------- */
-const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'echo', 'sim', 'links', 'notice'];
-const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항' };
+const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'sim', 'links', 'notice'];
+const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항' };
 let curView = null;
 // 주소: /-/ (홈), /-/characters, /-/character/<id>, /-/tools/<탭> … 예전 #/주소도 받아서 새 주소로 바꿈
 function parseRoute() {
@@ -2939,7 +3016,7 @@ function showView(r, keepScroll) {
   closeDrawer();
   if (v === 'tools' && (r.a === 'help' || r.a === 'patch')) { navigate(r.a === 'help' ? 'intro' : 'notice', true); if (r.a === 'help') setTimeout(scrollHelp, 60); return; }
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
-  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice }[v])(r.a);
+  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
   document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);

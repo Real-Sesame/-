@@ -724,3 +724,24 @@ select, input[type=text], input[type=number], input[type=password], input[type=s
 .di-grid b { font-size: 15px; font-variant-numeric: tabular-nums; }
 .di-grid small { font-size: 12px; color: var(--muted); }
 .data-info a { color: var(--gold); }
+
+/* 시즌 콘텐츠 */
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 24px; }
+.ss-card { display: grid; gap: 6px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; text-decoration: none; transition: border-color .15s; }
+.ss-card:hover { border-color: var(--gold); }
+.ss-card .k { font-size: 12px; color: var(--gold); font-weight: 700; }
+.ss-card > b { font-size: 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ss-card .more { font-size: 13px; color: var(--gold); font-weight: 600; margin-top: 4px; }
+.ws-top { margin-top: 4px; }
+.ws-tok { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
+.ws-tok span { color: var(--muted); line-height: 1.55; }
+.ws-zone { margin: 28px 0 12px; font-size: 17px; }
+.ws-zone small { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.ws-sc { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-variant-numeric: tabular-nums; }
+.ws-sc > span:not(.note) { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
+.ws-sc small { color: var(--gold); font-weight: 800; margin-right: 4px; }
+.ws-h { display: grid; gap: 10px; }
+.ws-h > div { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
+.ws-h .lbl { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.ws-h .res { color: var(--bad); font-weight: 600; }
+.ws-h .mons { font-size: 12px; color: var(--muted); line-height: 1.55; }

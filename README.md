@@ -15,6 +15,7 @@ public/                 그대로 올라가는 파일
   img/                  캐릭터 · 무기 · 에코 세트 · 재료 아이콘
   assets/               캐릭터 카드 · 전신 · 픽업 배너 · 링크 미리보기(og) 그림 (자동 생성)
   skills/<rid>.json     공명자 스킬 설명 (자동 생성 · 그 공명자 화면을 열 때만 받아 옴)
+  wastes.json           죽음의 노래와 바닷속 폐허 시즌 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
   chars-extra.json      새 공명자 (자동 갱신)
   Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
@@ -22,7 +23,7 @@ tools/                  자동 갱신 스크립트
 .github/workflows/      deploy.yml(배포) · update-chars.yml · update-events.yml
 ```
 
-- 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 에코 계산기 `/-/echo`, 튜닝 시뮬 `/-/sim`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
+- 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 시즌 콘텐츠 `/-/season`, 에코 계산기 `/-/echo`, 튜닝 시뮬 `/-/sim`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
 - **Settings → Pages → Source**는 **GitHub Actions**여야 합니다(브랜치 배포가 아님). Custom domain은 비워 둡니다.
 - 빌드할 때 화면 주소마다 페이지 파일(`characters.html`, `character/<id>.html`, `tools/<탭>.html` …)을 만들어 제목 · 설명 · 미리보기 그림(`public/assets/og/`)을 넣습니다. 하위 주소로 바로 들어와도 정상 페이지로 열리고, 카톡 등 링크 미리보기가 나옵니다.
 
@@ -38,7 +39,8 @@ tools/                  자동 갱신 스크립트
 ## 신규 공명자 자동 추가 (Ver. 1.0.09~)
 
 - `.github/workflows/update-chars.yml`과 `tools/update_chars.py`가 저장소에 있으면, GitHub Actions가 매일 한 번 명조 게임 데이터를 확인해 앱에 없는 공명자가 생겼을 때 `public/chars-extra.json`과 캐릭터 그림(`public/assets`)을 자동으로 갱신 · 커밋하고 사이트를 다시 배포합니다.
-- 같은 작업이 `tools/build_skills.py`로 공명자 스킬 설명(`public/skills/`)도 게임 데이터에 맞춰 다시 만듭니다.
+- 같은 작업이 `tools/build_skills.py`로 공명자 스킬 설명(`public/skills/`)을, `tools/build_wastes.py`로 죽음의 노래와 바닷속 폐허 시즌 구성(`public/wastes.json`)을 게임 데이터에 맞춰 다시 만듭니다.
+- 폐허 시즌 번호 · 기간은 `src/app.js`의 `WASTES_BASE`(23시즌 = 2026-10-26 월요일 04:00 시작, 28일 주기)로 계산합니다.
 - 사이트는 열릴 때 `chars-extra.json`을 읽어 새 공명자를 보유 캐릭터 · 육성 계산 · 도감에 추가합니다(역할 · 버프는 추정치, "자동 추가 · 추정" 표시).
 - 바로 돌려 보려면 **Actions → 신규 공명자 자동 갱신 → Run workflow**.
 - `src/app.js` · `src/data/`나 `tools/update_chars.py`를 새로 올리면 그때도 자동으로 한 번 돌아, 앱 코드에 이미 들어간 공명자는 `chars-extra.json`에서 빠집니다.
