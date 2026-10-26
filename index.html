@@ -20,7 +20,7 @@
     <a class="logo" href="#/" aria-label="홈으로"><span class="logo-mark" aria-hidden="true">✦</span><span class="logo-t">띵조 <b>AUTO</b> TEAM MAKER</span></a>
     <nav class="gnb" id="gnb" aria-label="주 메뉴"><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
     <div class="site-act">
-      <button class="btn sm ghost" id="btn-theme" aria-label="화면 테마 바꾸기">다크 모드</button>
+      <button class="btn ghost theme-btn" id="btn-theme" aria-label="화면 테마 바꾸기">☀</button>
       <button class="icon-btn menu-btn" id="btn-menu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -38,7 +38,7 @@
   <section class="view" data-view="notice" hidden></section>
   <div class="wrap view" data-view="tools" hidden>
   <div class="tools-head">
-    <div><p class="eyebrow">파티 편성 도구</p><h1 class="ph-t">내 캐릭터로 짜는 <em>최적의 파티</em></h1><p class="ph-d">역경의 탑 · 필드 파티 자동 편성, 1사이클 예상 피해, 딜 사이클, 육성 계산을 한곳에서.</p></div>
+    <div><p class="eyebrow">파티 편성</p><h1 class="ph-t">내 캐릭터로 짜는 <em>최적의 파티</em></h1><p class="ph-d">역경의 탑 · 필드 파티 자동 편성, 1사이클 예상 피해, 딜 사이클, 육성 계산을 한곳에서.</p></div>
     <div class="top-actions">
       <span class="chip" id="owned-chip">보유 0명</span>
       <button class="btn sm" id="btn-share">공유</button>
@@ -55,8 +55,6 @@
       <button class="tab" role="tab" data-tab="roster">보유 캐릭터</button>
       <button class="tab" role="tab" data-tab="db">도감</button>
       <button class="tab" role="tab" data-tab="settings">설정 · 계산식</button>
-      <button class="tab" role="tab" data-tab="help">사용 설명</button>
-      <button class="tab" role="tab" data-tab="patch">패치 노트</button>
     </nav>
   <!-- 역경의 탑 편성 -->
   <section data-panel="tower-build">
@@ -145,8 +143,8 @@
   </section>
 
 
-  <!-- 사용 설명 -->
-  <section data-panel="help" hidden>
+  <!-- 사용 설명 (소개 페이지로 옮겨서 보여 줌) -->
+  <div id="help-src" hidden>
     <div class="help">
       <nav class="help-toc card" aria-label="사용 설명 목차">
         <b>목차</b>
@@ -249,7 +247,7 @@
           </dl></article>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- 설정 -->
   <section data-panel="settings" hidden>
@@ -308,16 +306,12 @@ HP 비례     = HP × 환산 비율   (HP = 기본 HP × (1 + HP% 합) + 고정 
       </div>
     </div>
   </section>
-  <section data-panel="patch" hidden>
-    <div class="card"><h2>패치 노트</h2><p class="note">버전은 수정할 때마다 마지막 두 자리를 하나씩 올립니다. 1.0.01·1.0.02는 베타, 1.0.03부터 정식 버전입니다.</p>
-    <div class="patch" id="patch-list" style="margin-top:12px"></div></div>
-  </section>
   </div>
 </main>
 <footer class="site-foot">
   <div class="container foot-in">
     <div class="foot-brand"><span class="logo-mark" aria-hidden="true">✦</span> 띵조 AUTO TEAM MAKER <span class="chip num" id="ver-chip">Ver. 1.0.15</span></div>
-    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/tools/help">사용 설명</a><a href="#/tools/patch">패치 노트</a></nav>
+    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/intro">사용 설명</a><a href="#/notice">업데이트 내역</a></nav>
     <p class="foot-note">팬이 만든 비공식 사이트입니다. 명조: 워더링 웨이브의 이미지 · 이름 · 게임 데이터의 권리는 KURO GAMES에 있습니다. 예상 피해와 확률은 비교용 추정치입니다.</p>
   </div>
 </footer>

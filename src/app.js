@@ -2384,7 +2384,7 @@ function bindSettings() {
   $('#set-pbias').addEventListener('change', () => { upd(); optimize(true); });
 }
 function effectiveTheme() { const t = document.documentElement.getAttribute('data-theme'); if (t) return t; return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
-function paintThemeBtn() { $('#btn-theme').textContent = effectiveTheme() === 'dark' ? '라이트 모드' : '다크 모드'; }
+function paintThemeBtn() { const d = effectiveTheme() === 'dark'; const b = $('#btn-theme'); b.textContent = d ? '☀' : '☾'; b.setAttribute('aria-label', d ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기'); b.title = d ? '라이트 모드' : '다크 모드'; }
 function initTheme() {
   const t = lsGet(LS_KEY + '-theme'); document.documentElement.setAttribute('data-theme', t || 'dark'); // 기본은 우주(다크) 테마
   paintThemeBtn();
@@ -2403,7 +2403,7 @@ function switchTab(t) {
   state.tab = t;
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
-  ({ 'grow': renderGrow, 'timeline': renderTimeline, 'patch': renderPatch, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
+  ({ 'grow': renderGrow, 'timeline': renderTimeline, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
   if (typeof curView !== 'undefined' && curView === 'tools') { const u = BASE + 'tools/' + t; if (location.pathname !== u) try { history.replaceState(null, '', u); } catch (e) { } }
 }
@@ -2428,7 +2428,7 @@ function copyStr(txt, msg) {
 
 /* =====================================================================
    사이트 셸: 화면 전환(#/주소) · 홈 · 소개 · 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항
-   기존 파티 편성 도구는 #/tools/<탭> 으로 그대로 씁니다.
+   파티 편성은 #/tools/<탭> 으로 씁니다.
    ===================================================================== */
 
 /* ---------- 일러스트 (assets/, tools/build_assets.py가 자동으로 만듦) ---------- */
@@ -2516,7 +2516,7 @@ function renderHome() {
       <p class="eyebrow">명조: 워더링 웨이브${ver ? ` ${esc(ver.v)}버전` : ''}</p>
       <h1>${title}</h1>
       ${ver ? `<p class="period"><span>${ymdKo(ver.S)} 업데이트 후 ~ ${isNaN(ver.E) ? '' : ymdKo(ver.E)}</span>${lead && leadC ? `<span class="tag gold">PICK UP · ${esc(leadC.name)}</span>` : ''}</p>` : '<p class="period">명조 역경의 탑 · 필드 파티 자동 편성과 공명자 가이드</p>'}
-      <div class="cta"><a class="btn lg solid-gold" href="#/characters">공명자 가이드</a><a class="btn lg glass" href="#/tools/tower-build">파티 자동 편성</a></div>
+      <div class="cta"><a class="btn lg solid-gold" href="#/characters">공명자 가이드</a><a class="btn lg glass" href="#/tools/tower-build">파티 편성</a></div>
       <div class="hero-meta"><div><b>${CHARS.filter(c => !isUpcoming(c)).length}명</b>수록 공명자</div><div><b>시즌 ${sn.n}</b>역경의 탑 · 초기화까지 ${leftParts(sn.end).d}일</div>${lead ? `<div><b>${leftParts(lead.E).d}일 ${leftParts(lead.E).h}시간</b>픽업 종료까지</div>` : ''}</div>
     </div></section>`;
 
@@ -2547,15 +2547,14 @@ function renderHome() {
     <section class="sec">${secHead('캐릭터 이벤트 튜닝', '진행 중인 픽업과 남은 시간 · 다음 버전 예정 공명자', '')}${bnr}${wline}</section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">에코 계산기</p><h3>나의 에코,<br><em>어디까지 왔을까요?</em></h3><p>에코 5개의 주옵션 · 부옵션을 넣으면 속성 화면 스탯과 크리티컬 점수를 바로 계산하고, 목표치와 비교해 다음에 올릴 옵션을 알려 줍니다.</p><a class="btn solid-gold" href="#/echo">에코 계산기 열기</a></div>
       <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
-    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">자동 편성하기</a></div>
+    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">파티 편성 열기</a></div>
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${['tower-build:역경의 탑 편성:시즌 버프 반영 자동 편성', 'timeline:딜 사이클:누가 언제 무엇을 하는지 순서대로', 'grow:육성 계산:돌파 · 스킬 재료와 필요한 파밍 횟수'].map(s => { const [k, n, d] = s.split(':'); return `<a class="mini-feat" href="#/tools/${k}"><b>${n}</b><span>${d}</span></a>`; }).join('')}</div></div></div></section>
-    <section class="sec">${secHead('튜닝 시뮬레이터', '실제 확률 규칙으로 별의 소리를 써 보기 전에 미리 돌려 보세요.', '#/sim')}<div class="feat-row">
-      <a class="mini-feat" href="#/sim"><span class="k">캐릭터 이벤트 튜닝</span><b>50% 픽업 · 놓치면 다음 확정</b><span>80회 안에 5성 확정, 10회마다 4성 이상</span></a>
-      <a class="mini-feat" href="#/sim"><span class="k">무기 이벤트 튜닝</span><b>5성은 픽업 무기 확정</b><span>${wb.length ? esc(RAW_WEAPONS[wb[0].f5[0]] ? RAW_WEAPONS[wb[0].f5[0]].n : '') + ' 등 진행 중' : '진행 중인 무기 픽업으로 시뮬레이션'}</span></a>
-      <a class="mini-feat" href="#/sim"><span class="k">기록</span><b>천장 · 평균 · 별의 소리 환산</b><span>몇 번 만에 나왔는지 기록이 남아요</span></a></div></section>
+    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">튜닝 시뮬레이터</p><h3>별의 소리를 쓰기 전에,<br><em>미리 돌려 보기</em></h3><p>공개된 확률 규칙(5성 0.8% · 80회 확정 · 캐릭터 픽업 50%)으로 진행 중인 픽업을 돌려 보고, 천장 · 평균 · 쓴 별의 소리를 기록합니다.</p><a class="btn solid-gold" href="#/sim">튜닝 시뮬 열기</a></div>
+      <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${cb.concat(wb).slice(0, 4).map(x => { const nm = x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || ''); return `<button class="mini-feat" data-simstart="${esc(`${x.k}:${x.f5[0]}:${x.E}`)}" style="text-align:left;font:inherit;cursor:pointer"><span class="k">${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝</span><b>${esc(nm)}로 시작</b><span>~ ${mdhm(x.E)} · ${x.k === 'char' ? '픽업 50% · 놓치면 다음 확정' : '5성은 픽업 무기 확정'}</span></button>`; }).join('') || '<a class="mini-feat" href="#/sim"><b>튜닝 시뮬 열기</b><span>진행 중인 픽업을 불러오면 여기에 나옵니다.</span></a>'}</div></div></div></section>
     <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
   </div>`;
   $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
+  $$('[data-simstart]', el).forEach(b => b.addEventListener('click', () => { state.sim = { key: b.dataset.simstart, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] }; navigate('sim'); }));
   bindHscroll(el);
   clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
 }
@@ -2606,12 +2605,17 @@ const NOTICES = [
 ];
 function renderNotice() {
   const el = $('[data-view="notice"]'); const pn = patchNotes();
+  setTimeout(() => { const b = $('#nt-more'); if (b) b.addEventListener('click', () => { state.ntAll = true; renderNotice(); }); }, 0);
   el.innerHTML = `<div class="container page"><p class="eyebrow">공지사항</p><h1 class="ph-t">사이트 <em>소식</em></h1><p class="ph-d">사이트 안내와 업데이트 내역입니다. 게임 공지는 <a href="https://wutheringwaves.kurogames.com/kr/main/news/" target="_blank" rel="noopener">명조 공식 홈페이지</a>에서 확인해 주세요.</p>
     <section class="sec" style="margin-top:28px">${secHead('안내', '', '')}${NOTICES.map((n, i) => `<details class="nt" ${i === 0 ? 'open' : ''}><summary><span class="tag gold">공지</span><b>${esc(n.t)}</b><time>${esc(n.d)}</time></summary><div class="body"><ul>${n.b.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></details>`).join('')}</section>
-    <section class="sec">${secHead('업데이트 내역', '버전별 변경 사항', '#/tools/patch')}${pn.slice(0, 12).map((p, i) => `<details class="nt" ${i === 0 ? 'open' : ''}><summary><span class="tag">Ver. ${esc(p.v)}</span><b>${esc(p.s)}</b><time>${esc(p.d)}</time></summary><div class="body">${(p.g || []).map(g => `<p style="margin:10px 0 4px"><b>${esc(g.h)}</b></p><ul>${g.i.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</div></details>`).join('')}</section></div>`;
+    <section class="sec" id="updates">${secHead('업데이트 내역', `버전별 변경 사항 · 현재 Ver. ${esc(pn[0].v)}`, '')}${pn.map((p, i) => `<details class="nt" ${i === 0 ? 'open' : ''} ${i >= 8 && !state.ntAll ? 'hidden' : ''}><summary><span class="tag">Ver. ${esc(p.v)}</span><b>${esc(p.s)}</b><time>${esc(p.d)}</time></summary><div class="body">${(p.g || []).map(g => `<p style="margin:10px 0 4px"><b>${esc(g.h)}</b></p><ul>${g.i.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</div></details>`).join('')}
+      ${pn.length > 8 && !state.ntAll ? `<p style="text-align:center;margin-top:14px"><button class="btn" id="nt-more">이전 버전 ${pn.length - 8}개 더 보기</button></p>` : ''}</section></div>`;
 }
 
 /* ---------- 소개 ---------- */
+let HELP_NODE = null;
+const scrollHelp = () => { const h = $('#intro-help-sec'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+function showHelp() { if (curView === 'intro') scrollHelp(); else { navigate('intro'); setTimeout(scrollHelp, 60); } }
 function renderIntro() {
   const el = $('[data-view="intro"]');
   const F = [['#/characters', '공명자 가이드', '공명자마다 Lv.90 기본 스탯, 스킬, 공명 체인, 추천 무기 · 에코 세트, 추천 조합, 육성 재료를 한 페이지에.'],
@@ -2622,15 +2626,19 @@ function renderIntro() {
     ['#/tools/grow', '육성 계산', '돌파 · 스킬 · 공명 노드에 필요한 재료와 파밍 횟수, 결정 웨이브 플레이트를 계산합니다.']];
   el.innerHTML = `<div class="container page"><p class="eyebrow">소개</p><h1 class="ph-t">명조를 더 똑똑하게,<br><em>띵조 AUTO TEAM MAKER</em></h1>
     <p class="ph-d">명조: 워더링 웨이브를 즐기는 사람들을 위한 팬 사이트입니다. 게임 데이터로 공명자 정보를 정리하고, 보유 캐릭터로 짤 수 있는 최적의 파티를 계산합니다. 로그인 없이 쓰며, 설정은 이 브라우저에만 저장됩니다.</p>
+    <p style="margin-top:16px"><button class="btn sm" id="intro-to-help">사용 설명 바로 보기 ↓</button></p>
     <section class="sec">${secHead('이런 걸 할 수 있어요', '', '')}<div class="intro-grid">${F.map(([h, n, d]) => `<a class="mini-feat" href="${h}"><b>${n}</b><span>${d}</span></a>`).join('')}</div></section>
     <section class="sec">${secHead('데이터는 이렇게 갱신돼요', '', '')}<div class="intro-grid">
       <div class="box"><h3>게임 데이터</h3><p class="note">공명자 · 무기 · 재료 · 역경의 탑 구성은 공개 게임 데이터 저장소(Arikatsu/WutheringWaves_Data)를 씁니다. 새 공명자는 매일 자동으로 확인해 추가합니다.</p></div>
       <div class="box"><h3>픽업 · 버전 일정</h3><p class="note">명조 공식 홈페이지 공지를 3시간마다 읽어 픽업 기간과 버전 정보를 갱신합니다. 공지에 빠진 배너는 게임 데이터의 튜닝 화면 정보로 채웁니다.</p></div>
       <div class="box"><h3>일러스트</h3><p class="note">캐릭터 카드 · 전신 · 픽업 배너 그림은 게임 UI 리소스 저장소에서 받아 작게 줄여 씁니다. 새 공명자가 생기면 함께 만들어집니다.</p></div></div></section>
+    <section class="sec" id="intro-help-sec">${secHead('사용 설명', '파티 편성 · 캐릭터 설정 · 계산 방식 · 자주 묻는 질문', '')}<div id="intro-help"></div></section>
     <section class="sec">${secHead('알아 두세요', '', '')}<div class="box"><ul class="prose" style="margin:0">
       <li>예상 피해 · 튜닝 확률은 비교를 위한 추정치이며, 실제 게임 결과와 다를 수 있습니다.</li>
       <li>팬이 만든 비공식 사이트로, KURO GAMES와 관련이 없습니다. 게임 이미지와 이름의 권리는 KURO GAMES에 있습니다.</li>
       <li>스킬 레벨, 에코 옵션, 속성 화면 스탯은 공명자의 무기 · 체인 설정 창에서 입력하면 파티 편성 계산에 바로 반영됩니다.</li></ul></div></section></div>`;
+  const help = HELP_NODE || (HELP_NODE = $('#help-src .help')); if (help) $('#intro-help').appendChild(help);
+  $('#intro-to-help').addEventListener('click', scrollHelp);
 }
 
 /* ---------- 공명자 가이드 (목록) ---------- */
@@ -2871,6 +2879,7 @@ function showView(r, keepScroll) {
   const navKey = v === 'character' ? 'characters' : v;
   $$('#gnb a, #drawer a').forEach(a => { if (a.dataset.nav === navKey) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   closeDrawer();
+  if (v === 'tools' && (r.a === 'help' || r.a === 'patch')) { navigate(r.a === 'help' ? 'intro' : 'notice', true); if (r.a === 'help') setTimeout(scrollHelp, 60); return; }
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
   else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
@@ -2920,7 +2929,7 @@ function init() {
     location.reload();
   });
   $('#dlg-swap').addEventListener('click', e => { if (e.target.id === 'dlg-swap') closeSwap(); });
-  $('#guide-more').addEventListener('click', () => switchTab('help'));
+  $('#guide-more').addEventListener('click', () => showHelp());
   $$('.help-toc a').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   $('#guide-close').addEventListener('click', () => { state.guideHidden = true; save(); renderBuild(); });
   $('#own-all').addEventListener('click', () => { CHARS.forEach(c => state.owned.add(c.id)); save(); renderRoster(); toast('전체 보유로 바꿨습니다. 자동 편성을 다시 눌러 주세요.'); });
@@ -3186,14 +3195,6 @@ function renderTimeline() {
 /* ---------- 패치 노트 ----------
    내용은 src/data/patch-notes.json (맨 위 버전이 사이트 버전). GitHub에서 그 파일을 고치면 자동으로 다시 배포됩니다. */
 function patchNotes() { return PATCH_NOTES; }
-function renderPatch() {
-  const list = patchNotes();
-  $('#patch-list').innerHTML = list.map((v, i) => `<article class="${i ? '' : 'card'}" style="${i ? 'border-top:1px solid var(--line);padding-top:12px' : 'background:var(--surface-2)'}">
-    <h3>Ver. ${esc(v.v)} ${i === 0 ? '<span class="chip ok">현재 버전</span>' : ''}<span class="when">${esc(v.d)}</span></h3>
-    ${v.s ? `<p class="note" style="margin:0 0 4px">${esc(v.s)}</p>` : ''}
-    ${(v.g || []).map(g => `<h4>${esc(g.h)}</h4><ul>${(g.i || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}
-  </article>`).join('');
-}
 function paintVersion() { const v = patchNotes()[0].v; const c = $('#ver-chip'); if (c) c.textContent = `Ver. ${v}`; }
 
 init();
