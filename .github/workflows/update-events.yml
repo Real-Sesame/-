@@ -1,5 +1,5 @@
 # 띵조 AUTO TEAM MAKER — 이벤트 · 픽업 일정 자동 갱신
-# 3시간마다 명조 공식 홈페이지 공지(픽업 공지 · 패치 노트 · 이벤트 예고)를 읽어 events.json을 갱신하고 커밋합니다.
+# 3시간마다 명조 공식 홈페이지 공지(픽업 공지 · 패치 노트 · 이벤트 예고)를 읽어 public/events.json을 갱신하고 커밋합니다.
 # (Actions 탭 → "이벤트 · 픽업 일정 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
 name: 이벤트 · 픽업 일정 자동 갱신
 
@@ -43,18 +43,18 @@ jobs:
             /Textmaps/ko/multi_text/MultiText.json /Textmaps/en/multi_text/MultiText.json
 
       - name: 공식 공지에서 일정 읽기
-        run: python tools/update_events.py gamedata events.json --lang ko,en
+        run: python tools/update_events.py gamedata public/events.json --lang ko,en
 
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          if git diff --quiet -- events.json && git ls-files --error-unmatch events.json >/dev/null 2>&1; then
+          if git diff --quiet -- public/events.json && git ls-files --error-unmatch public/events.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
-          [ -f events.json ] || { echo "events.json이 없습니다"; exit 0; }
+          [ -f public/events.json ] || { echo "public/events.json이 없습니다"; exit 0; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add events.json
+          git add public/events.json
           git commit -m "이벤트 · 픽업 일정 자동 갱신"
           ok=0
           for i in 1 2 3; do

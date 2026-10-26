@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>띵조 AUTO TEAM MAKER</title>
+<meta name="robots" content="noindex">
+<script>
+  // 예전 주소(Index.html#/화면)를 새 주소(/-/화면)로 옮김
+  var h = location.hash || '', base = location.pathname.replace(/Index\.html$/i, '');
+  location.replace(base + (h.indexOf('#/') === 0 ? h.slice(2) : '') + (h.indexOf('#/') === 0 ? '' : h));
+</script></head><body><a href="./">띵조 AUTO TEAM MAKER로 이동</a></body></html>

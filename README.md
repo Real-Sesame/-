@@ -2,41 +2,47 @@
 
 명조(Wuthering Waves) 역경의 탑 · 필드 파티 자동 편성과 1사이클 예상 피해 계산기입니다.
 
-## GitHub Pages로 올리기 (무료 주소)
+## 구조 (Ver. 1.0.16~, Vite)
 
-1. GitHub에 로그인 → 오른쪽 위 **+ → New repository**.
-   - 이름 예: `ddingjo` → 주소는 `https://아이디.github.io/ddingjo/`
-   - 이름을 `아이디.github.io`로 하면 주소는 `https://아이디.github.io/`
-   - **Public** 선택 → **Create repository**
-2. 저장소 화면에서 **Add file → Upload files** → 이 폴더의 `Index.html`, `404.html`, `.nojekyll`, `README.md`를 끌어다 놓고 **Commit changes**.
-   - `.nojekyll`은 숨김 파일이라 안 보이면 없어도 동작합니다.
-3. **Settings → Pages** → Source: **Deploy from a branch**, Branch: **main** / **(root)** → **Save**.
-4. 1~2분 뒤 위 주소로 접속합니다. 첫 화면은 `404.html`이 `Index.html`로 자동 이동시킵니다.
+사이트는 [Vite](https://vitejs.dev/)로 만들어 GitHub Actions가 자동으로 배포합니다. `main`에 올리면 1~2분 뒤 `https://real-sesame.github.io/-/`에 반영됩니다.
 
-## 업데이트할 때
+```
+index.html              화면 뼈대(메뉴 · 각 화면의 틀)
+src/app.js              앱 코드 전체(계산 · 화면)
+src/styles/app.css      디자인
+src/data/*.json         게임 데이터(무기 · 에코 세트 · 육성 재료 · 공명 체인 …)와 패치 노트(patch-notes.json)
+public/                 그대로 올라가는 파일
+  img/                  캐릭터 · 무기 · 에코 세트 · 재료 아이콘
+  assets/               캐릭터 카드 · 전신 · 픽업 배너 그림 (자동 생성)
+  events.json           픽업 · 이벤트 일정 (자동 갱신)
+  chars-extra.json      새 공명자 (자동 갱신)
+  Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
+tools/                  자동 갱신 스크립트
+.github/workflows/      deploy.yml(배포) · update-chars.yml · update-events.yml
+```
 
-- 새 `Index.html`을 같은 방법(Upload files)으로 올려 덮어쓰면 됩니다. 파일 이름은 반드시 `Index.html`(대문자 I) 그대로 두세요.
-- 관리자 키로 인증하면 **패치 노트** 탭에서 패치 노트를 고친 뒤 **반영된 Index.html 내려받기**로 새 파일을 받을 수 있습니다. 그 파일을 올리면 모두에게 반영됩니다.
+- 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 에코 계산기 `/-/echo`, 튜닝 시뮬 `/-/sim`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
+- **Settings → Pages → Source**는 **GitHub Actions**여야 합니다(브랜치 배포가 아님). Custom domain은 비워 둡니다.
+
+## 고치고 올릴 때
+
+- GitHub 웹에서 파일을 열어 연필(✏️) 버튼으로 고치고 **Commit changes** 하면 자동으로 다시 배포됩니다.
+- 내 컴퓨터에서 미리 보려면 Node.js 설치 후 `npm install` → `npm run dev` (빌드 확인은 `npm run build` → `npm run preview`).
+- 패치 노트: 관리자 키로 인증 → **패치 노트** 탭에서 편집 → **patch-notes.json 내려받기** → 저장소의 `src/data/patch-notes.json`을 그 파일로 바꿉니다. 맨 위 버전이 사이트 버전이 됩니다.
+- 자료실 목록은 `src/app.js`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
 
 ## 신규 공명자 자동 추가 (Ver. 1.0.09~)
 
-- `.github/workflows/update-chars.yml`과 `tools/update_chars.py`가 저장소에 있으면, GitHub Actions가 매일 한 번 명조 게임 데이터를 확인해 앱에 없는 공명자가 생겼을 때 `chars-extra.json`을 자동으로 갱신 · 커밋합니다.
+- `.github/workflows/update-chars.yml`과 `tools/update_chars.py`가 저장소에 있으면, GitHub Actions가 매일 한 번 명조 게임 데이터를 확인해 앱에 없는 공명자가 생겼을 때 `public/chars-extra.json`과 캐릭터 그림(`public/assets`)을 자동으로 갱신 · 커밋하고 사이트를 다시 배포합니다.
 - 사이트는 열릴 때 `chars-extra.json`을 읽어 새 공명자를 보유 캐릭터 · 육성 계산 · 도감에 추가합니다(역할 · 버프는 추정치, "자동 추가 · 추정" 표시).
 - 바로 돌려 보려면 **Actions → 신규 공명자 자동 갱신 → Run workflow**.
-- `Index.html`이나 `tools/update_chars.py`를 새로 올리면 그때도 자동으로 한 번 돌아, 새 `Index.html`에 이미 들어간 공명자는 `chars-extra.json`에서 빠집니다.
+- `src/app.js` · `src/data/`나 `tools/update_chars.py`를 새로 올리면 그때도 자동으로 한 번 돌아, 앱 코드에 이미 들어간 공명자는 `chars-extra.json`에서 빠집니다.
 - 필요한 권한(커밋 · 사이트 재배포 · 예약 유지)은 워크플로 파일이 직접 받으므로 저장소 설정을 따로 바꿀 필요가 없습니다.
-- 갱신 커밋 뒤에는 사이트(GitHub Pages) 재배포를 자동으로 요청합니다.
+- 갱신 커밋 뒤에는 사이트 배포(deploy.yml)를 자동으로 실행합니다.
 - GitHub는 60일 동안 변경이 없는 저장소의 예약 실행을 멈추지만, 이 워크플로가 매번 스스로를 다시 켜 두므로 따로 손댈 필요가 없습니다.
 - 실행이 실패하면 GitHub가 저장소 주인 이메일로 알려 줍니다.
 - `update-chars.yml`은 꼭 `.github/workflows/` 안에 있어야 합니다. 저장소 맨 위에 있으면 실행되지 않습니다(`update_chars.py`는 맨 위나 `tools/` 어디든 됩니다).
 - `.github` 폴더는 웹 업로드 화면에서 숨김 폴더라 끌어다 놓기가 안 될 수 있습니다. 그럴 땐 **Add file → Create new file**에 이름을 `.github/workflows/update-chars.yml`로 적고 내용을 붙여 넣으면 됩니다.
-
-## 사이트 구성 (Ver. 1.0.15~)
-
-- 주소 뒤 `#/…`로 화면이 바뀝니다: 홈 `#/`, 소개 `#/intro`, 공명자 가이드 `#/characters` · `#/character/<id>`, 파티 편성 `#/tools/<탭>`, 에코 계산기 `#/echo`, 튜닝 시뮬 `#/sim`, 자료실 `#/links`, 공지사항 `#/notice`.
-- 자료실 목록은 `Index.html`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
-- `assets/` : 캐릭터 카드 · 전신 · 픽업 배너 그림. `tools/build_assets.py`가 게임 UI 리소스 저장소(555me/Wuthering-Waves-GameAssets)에서 받아 만들고, 신규 공명자 자동 갱신 때 없는 그림만 새로 만듭니다.
-- `events.json` : 픽업 · 이벤트 · 버전 일정. `tools/update_events.py`(`.github/workflows/update-events.yml`)가 3시간마다 명조 공식 공지를 읽어 갱신합니다. 영어 공지를 기준으로 하고 한국어 공지에 같은 일정이 있으면 이름을 한국어로 바꾸며, 공지에 빠진 신규 배너는 게임 데이터의 튜닝 화면 정보로 채웁니다.
 
 ## 참고
 

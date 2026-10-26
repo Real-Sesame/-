@@ -6,7 +6,7 @@
 아직 앱에 없는 플레이어블 공명자를 찾아 chars-extra.json으로 내보냅니다.
 사이트(Index.html)는 열릴 때 이 파일을 읽어 뽑기 추천·보유 캐릭터·육성 계산 등에 자동으로 추가합니다.
 
-  python tools/update_chars.py <게임데이터 폴더> <Index.html> <출력 chars-extra.json> [--version 3.8] [--commit abc123]
+  python tools/update_chars.py <게임데이터 폴더> <src 폴더 또는 Index.html> <출력 public/chars-extra.json> [--version 3.8] [--commit abc123]
 
 · 전투 수치(필드 비중·버프)는 게임 공식 역할 태그와 반주 스킬 설명으로 '추정'합니다.
 · 돌파·스킬·공명 노드 재화, 공명 체인, 전용 무기 후보는 게임 데이터 그대로입니다.
@@ -35,11 +35,20 @@ clean = lambda s: re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', s or '')).strip()
 norm = lambda s: re.sub(r'[\s·・]', '', s or '')
 
 # ---------------------------------------------------------------- 앱에 이미 있는 것
-html = open(args.index, encoding='utf-8').read()
+if os.path.isdir(args.index):  # Vite 프로젝트: src/의 코드 + src/data/*.json
+    html = ''.join(open(os.path.join(dp, f), encoding='utf-8').read() + '\n' for dp, _, fs in os.walk(args.index) for f in sorted(fs) if f.endswith('.js'))
+else:
+    html = open(args.index, encoding='utf-8').read()
 
 
 def js_const(name):
     m = re.search(r'const ' + name + r'=(\{.*?\});\n', html)
+    if not m and os.path.isdir(args.index):  # src/data/raw-weapons.json 같은 데이터 파일
+        f = os.path.join(args.index, 'data', name.lower().replace('_', '-') + '.json')
+        try:
+            return json.load(open(f, encoding='utf-8'))
+        except Exception:
+            return {}
     try:
         return json.loads(m.group(1)) if m else {}
     except Exception:

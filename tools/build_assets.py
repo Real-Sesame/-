@@ -6,10 +6,10 @@
 게임 UI 리소스 저장소(555me/Wuthering-Waves-GameAssets)에서 필요한 파일만 받아
 사이트에서 쓰는 작은 WebP로 줄여 assets/ 폴더에 저장합니다. 이미 있는 그림은 건너뜁니다.
 
-  assets/card/{rid}.webp  캐릭터 카드(반신)            348×480
-  assets/full/{rid}.webp  캐릭터 전신(투명 배경)        높이 900
-  assets/bg/{rid}.webp    픽업 배너 배경               1600×720
-  assets/art.json         어떤 그림이 있는지 목록
+  public/assets/card/{rid}.webp  캐릭터 카드(반신)            348×480
+  public/assets/full/{rid}.webp  캐릭터 전신(투명 배경)        높이 900
+  public/assets/bg/{rid}.webp    픽업 배너 배경               1600×720
+  public/assets/art.json         어떤 그림이 있는지 목록
 
   python tools/build_assets.py <게임데이터 폴더> <저장소 폴더> [--force]
 """
@@ -21,7 +21,7 @@ ap.add_argument('--force', action='store_true')
 ap.add_argument('--assets-repo', default='https://github.com/555me/Wuthering-Waves-GameAssets.git')
 ap.add_argument('--cache', default='.asset-cache')
 args = ap.parse_args()
-OUT = os.path.join(args.repo, 'assets')
+OUT = os.path.join(args.repo, 'public', 'assets') if os.path.isdir(os.path.join(args.repo, 'public')) else os.path.join(args.repo, 'assets')
 SPEC = {'card': ((348, 480), 76), 'full': ((900, 900), 78), 'bg': ((1600, 720), 62)}
 
 

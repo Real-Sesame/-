@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>띵조 AUTO TEAM MAKER</title>
+<meta name="description" content="명조(Wuthering Waves) 역경의 탑·필드 파티 자동 편성과 1사이클 예상 피해 계산기">
+<meta name="theme-color" content="#141413">
+<meta property="og:title" content="띵조 AUTO TEAM MAKER">
+<meta property="og:description" content="명조 파티 자동 편성 · 1사이클 예상 피해 · 딜 사이클 타임라인">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305060b'/%3E%3Cpath d='M32 8l6 18 18 6-18 6-6 18-6-18-18-6 18-6z' fill='%23ffcd3c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbit&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+</head>
+<body>
+<header class="site" id="site-top">
+  <div class="site-in">
+    <a class="logo" href="#/" aria-label="홈으로"><span class="logo-mark" aria-hidden="true">✦</span><span class="logo-t">띵조 <b>AUTO</b> TEAM MAKER</span></a>
+    <nav class="gnb" id="gnb" aria-label="주 메뉴"><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
+    <div class="site-act">
+      <button class="btn sm ghost" id="btn-theme" aria-label="화면 테마 바꾸기">다크 모드</button>
+      <button class="btn sm gold" id="btn-license">라이선스 인증</button>
+      <button class="icon-btn menu-btn" id="btn-menu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <nav class="drawer" id="drawer" aria-label="모바일 메뉴" hidden><a href="#/" data-nav="home">홈</a><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
+</header>
+
+<main id="main">
+  <section class="view" data-view="home" hidden></section>
+  <section class="view" data-view="intro" hidden></section>
+  <section class="view" data-view="characters" hidden></section>
+  <section class="view" data-view="character" hidden></section>
+  <section class="view" data-view="echo" hidden></section>
+  <section class="view" data-view="sim" hidden></section>
+  <section class="view" data-view="links" hidden></section>
+  <section class="view" data-view="notice" hidden></section>
+  <div class="wrap view" data-view="tools" hidden>
+  <div class="tools-head">
+    <div><p class="eyebrow">파티 편성 도구</p><h1 class="ph-t">내 캐릭터로 짜는 <em>최적의 파티</em></h1><p class="ph-d">역경의 탑 · 필드 파티 자동 편성, 1사이클 예상 피해, 딜 사이클, 육성 계산을 한곳에서.</p></div>
+    <div class="top-actions">
+      <span class="chip" id="owned-chip">보유 0명</span>
+      <button class="btn sm" id="btn-share">공유</button>
+      <button class="btn primary" id="btn-optimize">자동 편성</button>
+    </div>
+  </div>
+  <nav class="tabs tools-tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="tower-build" aria-selected="true">역경의 탑 편성</button>
+      <button class="tab" role="tab" data-tab="field">필드 파티</button>
+      <button class="tab" role="tab" data-tab="presets">추천 조합</button>
+      <button class="tab" role="tab" data-tab="timeline">딜 사이클</button>
+      <button class="tab" role="tab" data-tab="grow">육성 계산</button>
+      <button class="tab" role="tab" data-tab="tower-info">역경의 탑 정보</button>
+      <button class="tab" role="tab" data-tab="roster">보유 캐릭터</button>
+      <button class="tab" role="tab" data-tab="db">도감</button>
+      <button class="tab" role="tab" data-tab="settings">설정 · 계산식</button>
+      <button class="tab" role="tab" data-tab="help">사용 설명</button>
+      <button class="tab" role="tab" data-tab="patch">패치 노트</button>
+    </nav>
+  <!-- 역경의 탑 편성 -->
+  <section data-panel="tower-build">
+    <div class="season-strip" id="build-season"></div>
+    <div class="guide-wrap" id="guide-wrap">
+      <div class="guide-top"><span>사용 순서</span><span style="display:flex;gap:6px"><button class="btn sm" id="guide-more">자세한 사용 설명</button><button class="btn sm ghost" id="guide-close">안내 닫기</button></span></div>
+      <div class="guide">
+        <div><b class="n">1</b><span><b>보유 캐릭터</b> 탭에서 가진 캐릭터만 남겨 주세요.</span></div>
+        <div><b class="n">2</b><span><b>자동 편성</b>을 누르면 중복 없이 파티를 짜고 예상 딜을 계산합니다.</span></div>
+        <div><b class="n">3</b><span>초상화를 눌러 교체하고, 무기·에코를 바꾸면 바로 다시 계산됩니다. 마음에 드는 파티는 <b>고정</b>해 두세요.</span></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span><span class="lbl">파티 수</span><span class="seg" id="seg-parties"></span></span>
+      <span><span class="lbl">1~3층 단일 캐릭터</span><span class="seg" id="seg-solo"><button data-v="1">켜기</button><button data-v="0">끄기</button></span></span>
+      <span><span class="lbl">탑 버프 반영</span><span class="seg" id="seg-tower"><button data-v="1">반영</button><button data-v="0">미반영</button></span></span>
+      <span><span class="lbl">기본 무기</span><span class="seg" id="seg-weapon"><button data-v="sig">전용 5성</button><button data-v="f2p">4성</button></span></span>
+      <button class="btn sm" id="btn-img" style="margin-left:auto">편성 이미지 저장</button>
+    </div>
+    <div class="summary" id="build-summary"></div>
+    <div class="parties" id="parties"></div>
+    <p class="note" style="margin-top:14px" id="build-note"></p>
+  </section>
+
+  <!-- 필드 -->
+  <section data-panel="field" hidden>
+    <div class="card" style="margin-bottom:16px">
+      <h2>필드 파티 추천</h2>
+      <p class="desc">탐사·필드 사냥용 파티는 역경의 탑과 달리 생존력과 광역 처리, 이동 편의가 중요합니다. 딜 점수에 힐·실드·광역·편의 가중치를 더해 보유 캐릭터 중 상위 조합을 찾습니다. 캐릭터 중복 제한은 없습니다.</p>
+      <div class="toolbar" style="margin:0">
+        <span><span class="lbl">힐러</span><span class="seg" id="seg-fheal"><button data-v="need">필수</button><button data-v="any">상관없음</button></span></span>
+        <span><span class="lbl">중시</span><span class="seg" id="seg-fpref"><button data-v="comfort">편의·생존</button><button data-v="dmg">딜</button></span></span>
+      </div>
+    </div>
+    <div class="field-list" id="field-list"></div>
+  </section>
+
+  <!-- 추천 조합 -->
+  <section data-panel="presets" hidden>
+    <div class="filters" id="preset-filter"></div>
+    <div class="preset-grid" id="preset-grid"></div>
+  </section>
+
+  <section data-panel="timeline" hidden>
+    <div class="toolbar"><label class="lbl" for="tl-sel">파티 선택</label><select id="tl-sel" style="max-width:100%;min-width:0;flex:1 1 260px"></select></div>
+    <div class="stack" id="tl-body"></div>
+  </section>
+
+  <section data-panel="grow" hidden>
+    <div class="grow-layout">
+      <div class="card" id="grow-form"></div>
+      <div class="stack" style="gap:16px;min-width:0"><div class="card" id="grow-need"></div><div class="card" id="grow-farm"></div></div>
+    </div>
+  </section>
+
+  <!-- 역경의 탑 정보 -->
+  <section data-panel="tower-info" hidden>
+    <div class="season-strip" id="info-season"></div>
+    <div class="update-box" id="update-box"></div>
+    <div class="seg" id="seg-season" style="margin-bottom:14px"></div>
+    <div class="tower-grid" id="tower-grid"></div>
+    <p class="note" style="margin-top:14px">시즌은 날짜에 맞춰 28일마다 자동으로 넘어갑니다. 탑 구성은 페이지를 열 때 공개 게임 데이터 저장소(GitHub)에서 최신본을 확인해 갱신하고, 인터넷이 안 되면 내장 데이터(시즌 40~42)를 씁니다.</p>
+  </section>
+
+  <!-- 보유 캐릭터 -->
+  <section data-panel="roster" hidden>
+    <div class="card">
+      <h2>보유 캐릭터</h2>
+      <p class="desc">눌러서 보유/미보유를 바꾸세요. 보유한 캐릭터만 자동 편성에 들어갑니다. 설정은 이 브라우저에 저장됩니다.</p>
+      <p class="note" id="extra-status" style="margin:4px 0 10px"></p>
+      <div class="toolbar">
+        <button class="btn sm" id="own-all">전체 보유</button>
+        <button class="btn sm" id="own-free">배포 캐릭터만</button>
+        <button class="btn sm" id="own-none">전체 해제</button>
+        <input class="search" id="roster-search" type="search" placeholder="이름 검색" aria-label="캐릭터 이름 검색">
+      </div>
+      <div class="filters" id="roster-filter"></div>
+      <div class="roster-grid" id="roster-grid"></div>
+    </div>
+  </section>
+
+  <!-- 도감 -->
+  <section data-panel="db" hidden>
+    <div class="seg" id="seg-db" style="margin-bottom:14px"><button data-v="chars" aria-pressed="true">공명자 반주</button><button data-v="chains">공명 체인</button><button data-v="weapons">무기</button><button data-v="sets">에코 세트</button></div>
+    <div class="card"><div class="scroll-x" id="db-body"></div></div>
+  </section>
+
+
+  <!-- 사용 설명 -->
+  <section data-panel="help" hidden>
+    <div class="help">
+      <nav class="help-toc card" aria-label="사용 설명 목차">
+        <b>목차</b>
+        <a href="#h-start">처음 시작하기</a><a href="#h-build">역경의 탑 편성</a><a href="#h-cfg">캐릭터 설정 · 에코 · 내 스탯</a>
+        <a href="#h-lic">라이선스 인증</a><a href="#h-solo">1~3층 단일 캐릭터</a><a href="#h-cycle">딜 사이클 보기</a><a href="#h-grow">육성 계산</a><a href="#h-gacha">새 공명자 · 편성 이미지</a><a href="#h-field">필드 파티 · 추천 조합</a>
+        <a href="#h-tower">역경의 탑 정보</a><a href="#h-data">저장 · 백업</a><a href="#h-calc">계산 방식과 한계</a><a href="#h-faq">자주 묻는 질문</a>
+      </nav>
+      <div class="help-body">
+        <article class="card" id="h-start"><h2>처음 시작하기</h2>
+          <ol class="prose">
+            <li><b>보유 캐릭터</b> 탭을 엽니다. 처음에는 모든 캐릭터가 보유로 되어 있으니, 없는 캐릭터를 눌러 흐리게 만드세요. "전체 해제"를 누른 뒤 가진 캐릭터만 눌러도 됩니다.</li>
+            <li>가진 캐릭터 아래 <b>설정</b>을 눌러 공명 체인, 무기, 재련, 에코 세트를 맞춰 주세요. 귀찮으면 건너뛰어도 됩니다. 기본값은 5성 0체인·1재련, 4성 6체인·5재련입니다.</li>
+            <li>오른쪽 위 <b>자동 편성</b>을 누르면 캐릭터가 겹치지 않게 파티를 짜고 예상 <b>1사이클 피해량</b>(세 캐릭터가 한 바퀴 도는 동안 넣는 피해)을 계산합니다. 사이클 시간과 초당 피해는 참고용으로 아래에 작게 표시됩니다.</li>
+            <li>결과가 마음에 들지 않으면 초상화를 눌러 직접 바꾸고, 마음에 드는 파티는 <b>고정</b>한 뒤 다시 자동 편성하세요. 고정한 파티는 그대로 두고 나머지만 다시 짭니다.</li>
+          </ol></article>
+        <article class="card" id="h-build"><h2>역경의 탑 편성</h2>
+          <ul class="prose">
+            <li><b>파티 수</b>: 3파티는 잔향의 탑 · 심연의 탑 3~4층 · 울림의 탑, 4파티는 심연의 탑 1~2층까지 넣습니다. 피로도가 캐릭터당 10이라 전 층을 돌려면 4파티가 필요합니다.</li>
+            <li><b>탑 버프 반영</b>: 현재 시즌의 구역별 저항 증감과 버프를 계산에 넣습니다. 끄면 탑과 상관없는 기본 성능으로 비교합니다.</li>
+            <li><b>기본 무기</b>: 무기를 따로 정하지 않은 캐릭터를 전용 5성 무기로 볼지, 4성 무기로 볼지 정합니다.</li>
+            <li><b>파티 카드</b>: 초상화(교체), 장비 칸(설정), 공명 모드(여우의 별자리·루실라 등)를 바꿀 수 있습니다. 막대는 파티 안에서 각자 차지하는 딜 비중입니다.</li>
+            <li><b>칩 표시</b>: 힐러·실드 유무, 자동으로 고른 공명 모드, 메인 딜러 속성의 탑 저항이 보입니다. "힐·실드 없음"이 뜨면 생존이 불안한 구성입니다.</li>
+            <li><b>방랑자</b>는 속성이 달라도 피로도를 공유하므로 한 파티에만 들어갑니다.</li>
+            <li>오른쪽 위 <b>공유</b>에서 편성 결과를 글로 복사하거나, 내 설정 전체를 <b>공유 코드</b>로 만들어 친구에게 보낼 수 있습니다.</li>
+          </ul></article>
+        <article class="card" id="h-cfg"><h2>캐릭터 설정 · 에코 옵션 · 내 스탯</h2>
+          <ul class="prose">
+            <li>파티 슬롯이나 보유 캐릭터 탭의 <b>장비 칸</b>(무기·세트 아이콘과 S0·R1 표시)을 누르면 설정 창이 열립니다.</li>
+            <li>공명 체인을 올리면 체인 효과가 자동으로 계산에 들어갑니다. 어떤 효과가 반영되는지는 <b>도감 → 공명 체인</b>에서 확인할 수 있습니다.</li>
+            <li><b>스탯 계산 기준</b>은 세 가지 중 하나를 고릅니다. <b>추정치</b>(설정의 에코 완성도), <b>에코 옵션 입력</b>(에코 5개를 하나씩 입력), <b>속성 화면 스탯</b>(게임 속성 화면 숫자). 에코 옵션과 속성 화면 스탯은 라이선스 인증 사용자 전용입니다.</li>
+            <li><b>에코 옵션 입력</b>: 에코마다 코스트(4·3·1)와 주옵션을 고르고, 부옵션 5줄에 종류와 수치를 넣습니다. 주옵션은 5성 +25 기준 값(예: 4코스트 크리티컬 22%, 3코스트 속성 피해 30%, 1코스트 공격력 18%)과 고정 공격력·HP가 자동으로 들어가고, 부옵션 수치 칸을 누르면 단계 값(크리티컬 6.3~10.5% 등)을 고를 수 있습니다. 캐릭터 Lv.90 기본 공격력, 기본 크리티컬 5% / 크리티컬 피해 150%, 공명 노드 보너스(예: 크리티컬 8% · 공격력 12%)는 게임 데이터로 자동 더해집니다.</li>
+            <li>입력하는 동안 아래에 코스트 합계(12 초과 시 경고), 속성 화면 예상치, 크리티컬 기대값, 추정치 대비 본인 1사이클 피해 변화가 바로 표시됩니다. 소나타 세트는 위쪽 에코 세트에서 고르면 세트 효과가 따로 계산됩니다.</li>
+            <li><b>속성 화면 스탯</b>을 고르면 게임의 <b>공명자 → 속성</b> 화면 숫자를 그대로 넣으세요. 공격력, 크리티컬, 크리티컬 피해, 속성 피해 보너스는 꼭 넣고, 일반 공격·강공격·공명 스킬·공명 해방 피해 보너스는 화면에 있을 때만 넣습니다.</li>
+            <li><b>스킬 레벨</b>: 일반 공격·공명 스킬·공명 회로·공명 해방·변주 스킬 레벨(1~10)을 게임과 똑같이 맞추면 그 레벨의 배율로 계산합니다. 기본값은 모두 10입니다. 레벨을 낮추면 설정 창 아래에 "모두 10일 때의 약 ○○%"가 바로 표시되고, 10보다 낮은 캐릭터는 장비 칸에 "Lv 10/9/…"가 붙습니다. 스킬 레벨은 라이선스를 인증한 사용자만 쓸 수 있고, 인증 전에는 모두 10으로 계산합니다.</li>
+            <li>속성 화면 값에는 무기·에코·상시 효과가 이미 들어 있으니 따로 더하지 않습니다. 반주처럼 전투 중에만 붙는 버프는 계산기가 알아서 더합니다.</li>
+            <li>에코 옵션을 쓰는 캐릭터에는 "에코", 속성 화면 스탯을 쓰는 캐릭터에는 "내 스탯" 표시가 붙습니다. "기본값으로"를 누르면 그 캐릭터 설정이 모두 초기화됩니다.</li>
+          </ul></article>
+        <article class="card" id="h-lic"><h2>라이선스 인증 (스킬 레벨 · 에코 옵션 · 상세 스탯)</h2>
+          <ul class="prose">
+            <li><b>스킬 레벨</b> 설정, <b>에코 옵션 입력</b>, <b>속성 화면 스탯</b>(캐릭터 상세 스탯 입력)은 라이선스 키를 인증한 사용자만 쓸 수 있습니다. 나머지 기능은 누구나 쓸 수 있습니다.</li>
+            <li>오른쪽 위 <b>라이선스 인증</b>을 누르고 받은 키를 입력하세요. 대소문자를 구분합니다. 한 번 인증하면 그 브라우저에서는 계속 유지됩니다.</li>
+            <li>다른 기기나 브라우저에서는 다시 인증해야 합니다. 인증을 풀어도 입력해 둔 스탯은 지워지지 않고, 다시 인증하면 그대로 쓰입니다. 스킬 레벨도 마찬가지입니다.</li>
+            <li><b>관리자 키</b>로 인증하면 <b>패치 노트</b> 탭에 편집 칸이 생깁니다. 고친 내용은 그 브라우저에만 미리보기로 저장되고, <b>patch-notes.json 내려받기</b>로 받은 파일로 GitHub 저장소의 <code>src/data/patch-notes.json</code>을 바꾸면 자동으로 다시 배포되어 모두에게 보입니다.</li>
+          </ul></article>
+        <article class="card" id="h-solo"><h2>1~3층 단일 캐릭터</h2>
+          <ul class="prose">
+            <li>잔향·울림의 탑 1~3층은 추천 속성(속성 접대) 캐릭터 한 명으로 깰 수 있는 경우가 많습니다. <b>1~3층 단일 캐릭터 → 켜기</b>를 누르면 그 칸을 단일 캐릭터로 채웁니다.</li>
+            <li>켜면 파티 수를 4~7 중에서 고릅니다. 4파티는 단일 2명 + 잔향·울림 4층을 한 파티가 함께 + 심연 3~4층, 5파티는 심연 1~2층 추가, 6파티는 잔향 4층과 울림 4층을 따로, 7파티는 심연 1층도 단일 캐릭터로 맡깁니다.</li>
+            <li>단일 칸에는 "속성 접대" 또는 "추천 속성 아님"이 표시됩니다. 강한 메인 딜러는 4층 파티에 먼저 쓰고, 남는 캐릭터로 단일 칸을 채우도록 계산합니다.</li>
+          </ul></article>
+        <article class="card" id="h-cycle"><h2>딜 사이클 보기</h2>
+          <ul class="prose">
+            <li>파티 카드의 <b>딜 사이클</b>을 펼치면 교체 순서, 캐릭터별 행동 순서, 필드 시간, 메인이 받는 반주 버프가 나옵니다.</li>
+            <li>"끝까지 필드 유지"는 도중에 교체하면 손해인 캐릭터입니다(예: 방랑자·전도는 혼자서는 협주 에너지를 빨리 못 채워 3-2-1 운영이 어렵습니다). 복링처럼 짝이 맞는 파트너가 있으면 그 조합 전용 퀵스왑 사이클이 대신 나옵니다.</li>
+            <li>조합별 전용 사이클이 있는 파티(예: 여우의 별자리·방랑자·복링)는 <b>팀 전체 순서</b>를 캐릭터별 색으로 구분해 보여 줍니다. 맨 위 "색 구분"에서 색과 캐릭터를 확인하고, 칸 앞 숫자 순서대로 따라 하면 됩니다. 점선 칸은 퀵스왑 구간입니다.</li>
+            <li><b>딜 사이클 탭</b>: 파티 카드의 <b>타임라인으로 크게 보기</b>를 누르거나 위쪽 <b>딜 사이클</b> 탭을 열면, 내 편성 파티나 추천 조합을 골라 큰 화면으로 볼 수 있습니다. 위쪽 막대는 누가 언제 필드에 있는지(빗금은 퀵스왑), 아래 <b>순서대로 따라 하기</b>는 몇 초에 누가 무엇을 하는지 한 줄씩 보여 줍니다. 교체 시점은 "↓ A → B" 줄로 표시됩니다.</li>
+            <li>"첫 사이클"은 변주 없이 시작할 때, "두 번째 사이클부터"는 변주로 들어올 때의 순서입니다.</li>
+            <li>파티 사이클 시간은 세 캐릭터 필드 시간의 합이고, 공명 해방 쿨타임 때문에 최소 25초로 봅니다. 파티 비교와 자동 편성은 <b>1사이클 피해량</b> 기준이고, 여우의 별자리 2체인처럼 사이클을 줄이는 체인은 사이클 시간과 초당 피해에 반영됩니다.</li>
+          </ul></article>
+        <article class="card" id="h-grow"><h2>육성 계산</h2>
+          <ul class="prose">
+            <li><b>육성 계산</b> 탭에서 공명자를 고르고, 현재·목표 레벨과 스킬 레벨, 공명 노드(고유 스킬 2개, 능력치 노드 1단·2단 각 4개)를 정하면 필요한 재화가 아이콘과 이름으로 나옵니다.</li>
+            <li>20·40·50·60·70·80레벨에서 이미 돌파했다면 "돌파 완료"에 체크하세요. 돌파 재료 계산이 달라집니다.</li>
+            <li>각 재화 옆 <b>보유</b> 칸에 가진 개수를 넣으면 부족한 개수가 바로 계산됩니다. 보유 개수는 모든 공명자가 함께 쓰고 이 브라우저에 저장됩니다. "하위 재료 3개 → 상위 1개 합성 반영"을 켜면 남는 하위 재료를 상위 재료로 합성해 계산합니다.</li>
+            <li><b>솔라리스 랭크</b>를 고르면 보스·단조 도전·주간 보스·시뮬레이션 훈련을 몇 번 돌아야 하는지와 필요한 결정 웨이브 플레이트, 자연 회복 기준 일수를 보여 줍니다. 몬스터 재료와 지역 특산물은 필드에서 얻으므로 플레이트 계산에서 뺍니다.</li>
+            <li>1회 획득량은 추정 기본값입니다. 게임 보상 화면에서 본 숫자로 고치면 그 값으로 계산되고 저장됩니다.</li>
+          </ul></article>
+        <article class="card" id="h-gacha"><h2>새 공명자 · 편성 이미지</h2>
+          <ul class="prose">
+            <li><b>사이트 메뉴</b>: 위쪽 메뉴에서 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항으로 갈 수 있고, 이 편성 도구는 "파티 편성" 메뉴에 있습니다.</li>
+            <li><b>새 공명자 자동 추가</b>: GitHub Pages 주소로 열면 게임 업데이트로 생긴 새 공명자가 자동으로 목록에 들어옵니다(매일 확인). 역할·버프는 공식 태그와 반주 설명으로 추정한 값이라 "자동 추가 · 추정" 표시가 붙습니다. 보유 캐릭터 탭 위쪽에서 확인 상태를 볼 수 있습니다.</li>
+            <li><b>편성 이미지 저장</b>: 역경의 탑 편성 탭의 버튼(또는 공유 창)을 누르면 파티별 초상화·피해량이 들어간 이미지가 저장됩니다.</li>
+          </ul></article>
+        <article class="card" id="h-field"><h2>필드 파티 · 추천 조합</h2>
+          <ul class="prose">
+            <li><b>추천 조합</b>: 정석 조합 아래에 캐릭터가 부족할 때 쓰는 <b>대체</b> 조합과 배포 캐릭터 위주의 <b>입문</b> 조합이 함께 나옵니다. 정석을 짤 수 없으면 내 보유 캐릭터로 짤 수 있는 조합 중 피해가 가장 큰 것에 "내 캐릭터로 최선" 표시가 붙고, 정석 대비 몇 % 피해인지 보여 줍니다. 대체 조합도 바로 편성에 넣을 수 있습니다.</li>
+            <li><b>추천 조합 가중치</b>: 자동 편성은 추천 조합과 같은 파티에 점수를 조금 더 줍니다(기본 5%). 설정 · 계산식에서 끄거나 강도를 바꿀 수 있습니다.</li>
+            <li><b>필드 파티</b>: 탐사·필드 사냥용입니다. 딜과 함께 힐·실드, 광역, 이동 편의를 점수에 넣습니다. 캐릭터 중복 제한은 없습니다.</li>
+            <li><b>추천 조합</b>: 커뮤니티에서 정설로 쓰는 조합 모음입니다. 히유키 최고점, 여우의 별자리 전자(뉴비·정석), 합일(쇄명 출시 후) 등이 있고, 가지고 있지 않은 캐릭터는 흐리게 표시됩니다. "편성에 넣기"로 원하는 파티 칸에 바로 넣을 수 있습니다.</li>
+          </ul></article>
+        <article class="card" id="h-tower"><h2>역경의 탑 정보</h2>
+          <ul class="prose">
+            <li>현재 시즌, 초기화까지 남은 시간, 구역별 추천 속성·버프 원문·층별 적, 내 보유 캐릭터 기준 추천 파티와 단일 캐릭터 후보를 보여 줍니다.</li>
+            <li>시즌은 날짜에 맞춰 28일마다 자동으로 넘어갑니다. 지난 시즌과 다음 시즌도 미리 볼 수 있습니다.</li>
+            <li>내려받은 HTML 파일로 열면 페이지를 열 때 공개 게임 데이터 저장소에서 최신 탑 구성을 확인합니다. 공유 링크로 열면 내장 데이터를 쓰고, 새 시즌은 링크가 업데이트될 때 반영됩니다.</li>
+          </ul></article>
+        <article class="card" id="h-data"><h2>저장 · 백업</h2>
+          <ul class="prose">
+            <li>보유 캐릭터, 체인·무기·스탯, 파티 구성은 지금 쓰는 브라우저에 자동 저장됩니다. 다른 사람이 같은 링크를 열어도 서로의 설정은 섞이지 않습니다.</li>
+            <li>다른 기기로 옮기려면 <b>설정 · 계산식 → 내 데이터 → 파일로 내보내기</b>로 저장한 뒤, 새 기기에서 <b>파일 불러오기</b>를 하세요.</li>
+            <li><b>공유 코드</b>: 오른쪽 위 <b>공유 → 코드 만들기</b>로 보유 캐릭터·캐릭터 설정·스킬 레벨·파티를 짧은 코드 하나로 만듭니다. 받은 사람은 <b>공유 → 코드 불러오기</b>에 붙여 넣고 <b>내용 확인</b>을 누르면 무엇이 바뀌는지 먼저 보고, <b>이 내용으로 바꾸기</b>를 눌러야 적용됩니다. 내 스탯은 인증 사용자가 직접 체크했을 때만 코드에 들어갑니다.</li>
+            <li>브라우저 방문 기록·사이트 데이터를 지우면 설정도 지워지니 가끔 내보내 두는 것을 권합니다.</li>
+          </ul></article>
+        <article class="card" id="h-calc"><h2>계산 방식과 한계</h2>
+          <ul class="prose">
+            <li>피해 보너스끼리, 피해 심화(부스트)끼리 더한 뒤 서로 곱하는 게임 공식 구조로 계산합니다. 반주 대상(다음 등장 캐릭터 / 파티 전원)과 조건(서리·전자·합일 등)을 따집니다. 자세한 식은 <b>설정 · 계산식</b> 탭에 있습니다.</li>
+            <li>캐릭터별 딜 규모, 필드 시간, 무기 효과의 가동률은 가이드를 바탕으로 한 추정치입니다. 숫자는 <b>파티끼리 비교하는 용도</b>로 보세요. 실제 클리어 시간은 컨트롤과 적 패턴에 따라 달라집니다.</li>
+            <li>공명 체인은 게임 원문을 자동으로 읽어 반영합니다. 특정 스킬 하나만 강해지는 효과는 근사치라 일부 캐릭터는 실제보다 높거나 낮을 수 있습니다.</li>
+            <li>릴리(3.8)처럼 출시 전 캐릭터는 추정 수치입니다. 쇄명은 10/22 출시일이 지나면 자동으로 편성에 들어갑니다.</li>
+          </ul></article>
+        <article class="card" id="h-faq"><h2>자주 묻는 질문</h2>
+          <dl class="faq">
+            <dt>자동 편성 결과가 매번 같아요.</dt><dd>같은 보유·설정이면 같은 답이 나옵니다. 다른 조합을 보고 싶으면 원하는 파티를 고정하거나 직접 교체해 보세요.</dd>
+            <dt>힐러가 없는 파티가 나왔어요.</dt><dd>힐·실드가 없으면 점수를 깎지만 딜 차이가 크면 남을 수 있습니다. 슬롯을 눌러 힐러로 바꾸면 바로 다시 계산됩니다.</dd>
+            <dt>내 스탯을 넣었더니 딜이 많이 달라졌어요.</dt><dd>기본 추정치는 준종결 에코(에코 5개 합계 크리티컬 45% · 크리티컬 피해 50% · 공격력 50%) 기준이고, 에코 옵션을 입력하면 같은 기준으로 계산합니다. 설정 탭의 에코 완성도를 바꾸면 스탯을 넣지 않은 캐릭터들의 기준도 같이 바뀝니다.</dd>
+            <dt>일러스트가 안 보여요.</dt><dd>이미지는 파일 안에 들어 있어 인터넷이 없어도 보입니다. 릴리처럼 출시 전 캐릭터만 이니셜로 나옵니다.</dd>
+          </dl></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설정 -->
+  <section data-panel="settings" hidden>
+    <div class="stack">
+      <div class="card">
+        <h2>계산 설정</h2>
+        <div class="settings-grid" style="margin-top:12px">
+          <div class="field"><label for="set-preset">에코 완성도</label>
+            <select id="set-preset"><option value="end">종결 (에코 합계 크리 55 · 크피 75 · 공격력 55%)</option><option value="std">준종결 (에코 합계 크리 45 · 크피 50 · 공격력 50%)</option><option value="start">입문 (에코 합계 크리 30 · 크피 20 · 공격력 40%)</option></select>
+            <span class="hint">에코 5개(4-3-3-1-1)가 주는 합계입니다. 기본 크리티컬 5% / 150%, 캐릭터 기본 공격력, 공명 노드 보너스, 무기 부옵션·버프는 따로 더해집니다. 에코 옵션을 입력한 캐릭터는 그 값을 씁니다.</span></div>
+          <div class="field"><label>캐릭터별 설정</label><span class="hint">공명 체인·무기·재련·에코 세트·에코 옵션·내 스탯은 보유 캐릭터 탭이나 파티 슬롯의 장비 칸을 눌러 정합니다.</span></div>
+          <div class="field"><label for="set-lv">적 레벨</label><input type="number" id="set-lv" min="60" max="120" step="1"><span class="hint">방어력 = 8 × 레벨 + 792</span></div>
+          <div class="field"><label for="set-res">적 기본 저항(%)</label><input type="number" id="set-res" min="0" max="60" step="1"><span class="hint">탑 구역 보정은 별도 적용</span></div>
+          <div class="field"><label for="set-rot">사이클 시간(초)</label><input type="number" id="set-rot" min="0" max="60" step="1"><span class="hint">0이면 자동: 세 캐릭터의 필드 시간 합으로 계산합니다. 1사이클 피해량은 그대로이고, 참고용 초당 피해 = 1사이클 피해 ÷ 사이클 시간</span></div>
+          <div class="field"><label for="set-pbias">추천 조합 가중치</label><select id="set-pbias"><option value="0">끄기</option><option value="3">약하게 (3%)</option><option value="5">보통 (5%)</option><option value="10">강하게 (10%)</option></select><span class="hint">자동 편성에서 추천 조합(정석·대체·입문)과 같은 파티의 점수를 올려 줍니다. 정석은 100%, 대체는 70%, 입문은 60%만큼 적용됩니다.</span></div>
+          <div class="field"><label for="set-up">출시 전 캐릭터</label><select id="set-up"><option value="0">자동 편성에서 제외</option><option value="1">포함해서 미리 보기</option></select><span class="hint">쇄명(10/22 출시)은 출시일이 지나면 자동으로 포함됩니다. 릴리(3.8)는 추정 수치입니다.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>라이선스</h2>
+        <p class="desc" id="lic-status-text"></p>
+        <button class="btn sm" id="lic-open2">라이선스 관리</button>
+      </div>
+      <div class="card">
+        <h2>내 데이터</h2>
+        <p class="desc">보유 캐릭터, 체인·무기·스탯, 파티 구성은 이 브라우저에만 저장됩니다. 다른 기기로 옮기거나 백업하려면 파일로 내보내세요.</p>
+        <div class="toolbar" style="margin:0">
+          <button class="btn sm" id="data-export">파일로 내보내기</button>
+          <label class="btn sm" for="data-import">파일 불러오기</label><input type="file" id="data-import" accept="application/json,.json" hidden>
+          <button class="btn sm" id="data-reset">처음 상태로 되돌리기</button>
+          <span class="note" id="data-msg"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>계산식</h2>
+        <p class="desc">이전 버전은 심화 버프를 하나씩 곱하고, 메인 딜러의 주력 피해 유형과 일치할 때만 반주 버프를 넣어서 실제보다 높거나 낮게 나왔습니다. 지금은 게임 공식 구조대로 구간별로 합산한 뒤 곱합니다.</p>
+        <div class="formula">피해 = 배율 × 공격력 × (1 + 피해 보너스 합) × (1 + 피해 심화 합) × 크리 기대값 × 방어 계수 × 저항 계수 × (1 + 최종 피해 합)
+
+공격력      = (캐릭터 Lv.90 기본 + 무기 기본) × (1 + 공격력% 합) + 고정 공격력
+HP 비례     = HP × 환산 비율   (HP = 기본 HP × (1 + HP% 합) + 고정 HP, 카르티시아 · 경연)
+크리 기대값 = 1 + min(크리티컬, 100%) × (크리티컬 피해 − 100%)
+방어 계수   = 1520 ÷ (1520 + 적 방어력 × (1 − 방어 무시)),  적 방어력 = 8 × 적 레벨 + 792
+저항 계수   = 1 − 저항   (저항 &lt; 0이면 1 − 저항 ÷ 2,  80% 이상이면 1 ÷ (1 + 5 × 저항))
+이상 효과   = 이상 효과 배율 × (1 + 이상 효과 보너스) × (1 + 이상 효과·전체 피해 부스트) × 방어 계수 × 저항 계수 × (1 + 최종 피해)   ※ 크리티컬 없음</div>
+        <ul class="prose">
+          <li><b>피해 보너스</b>: "○○ 피해가 증가" 효과. 속성·유형이 맞는 것끼리 더합니다.</li>
+          <li><b>피해 심화</b>: 반주 스킬의 "○○ 피해가 부스트" 효과. 보너스와 다른 구간이라 곱연산이 됩니다. 속성 심화와 유형 심화는 같은 구간에서 더해집니다.</li>
+          <li><b>반주 대상</b>: "다음 등장 캐릭터"용 반주는 서포터 → 서브 → 메인 → 서포터 순서로 넘겨 줍니다. 서브의 반주는 메인이, 서포터의 반주는 서브가 받습니다. "파티 내 캐릭터"용 반주는 셋 모두 받습니다.</li>
+          <li><b>같은 이름의 효과</b>: 소나타 5세트·무기·합일 버프처럼 이름이 같은 파티 버프는 여러 명이 줘도 한 번만, 가장 큰 값으로 적용합니다(게임 규칙).</li>
+          <li><b>HP 비례 캐릭터</b>: 카르티시아·경연은 공격력 대신 HP로 계산합니다. 공격력% 버프는 효과가 없고, HP% 버프·무기 HP 부옵션·에코 HP%가 반영됩니다. 환산 비율은 준종결 에코 + 전용 무기일 때 5성 메인 딜러의 준종결 공격력(약 2,080)과 같아지도록 캐릭터마다 맞춥니다.</li>
+          <li><b>조건부 버프</b>: 서리·전자·암흑·합일 같은 조건은 실제로 그 효과를 쓰는 캐릭터가 파티에 있을 때만 적용합니다. 예를 들어 히유키 반주는 서리 효과 부여자가 없으면 0입니다.</li>
+          <li><b>공명 모드</b>: 여우의 별자리(전자/합일), 루실라(서리/에코), 데니아(불꽃/조화 밀집), 에이메스, 페비는 파티마다 두 모드를 모두 계산해서 높은 쪽을 고릅니다.</li>
+          <li><b>공명 체인</b>: 게임 원문에서 스킬 배율 상승, 크리티컬·공격력·피해 증가, 파티 버프를 자동으로 읽어 반영합니다. 특정 스킬 하나만 강화되는 효과는 그 유형 피해의 60%에 적용하는 근사치입니다. 여우의 별자리 S2처럼 사이클을 줄이는 효과는 사이클 시간에 반영합니다. 도감 → 공명 체인에서 반영 내용을 확인할 수 있습니다.</li>
+          <li><b>스킬 레벨</b>: 게임 데이터의 스킬 배율표를 보면 모든 스킬이 Lv.10 대비 같은 비율로 오릅니다(Lv.1 50.3% · Lv.5 68.5% · Lv.8 86.4% · Lv.9 93.0% · Lv.10 100%). 캐릭터마다 일반 공격·강공격·공명 스킬·해방·변주 피해가 실제로 어느 스킬 트리(공명 회로 포함)에서 나오는지 배율 비중을 게임 데이터에서 뽑아, 그 비중대로 레벨 배율을 섞습니다.</li>
+          <li><b>무기 재련</b>: 패시브 수치가 재련 단계만큼(보통 5재련 = 2배) 커집니다. 부옵션은 그대로입니다.</li>
+          <li><b>에코 옵션</b>: 공격력 = (캐릭터 Lv.90 기본 공격력 + 무기 기본 공격력) × (1 + 에코 공격력% + 공명 노드 공격력% + 버프) + 에코 고정 공격력. 크리티컬 = 5% + 에코 + 공명 노드, 크리티컬 피해 = 150% + 에코 + 공명 노드, 속성 피해 보너스 = 3코스트 속성 주옵션 + 공명 노드, 공격 유형 피해 보너스 부옵션은 해당 공격에만 더합니다. 크리티컬은 100%에서 멈춥니다.</li>
+          <li><b>내 스탯</b>: 캐릭터 설정에서 게임 속성 화면의 공격력·크리티컬·크리티컬 피해·속성 피해 보너스를 넣으면, 에코 완성도 추정치 대신 그 값을 씁니다. 무기 부옵션·무기 상시 효과·에코 2세트처럼 속성 화면에 이미 들어간 효과는 빼고, 반주·조건부 버프만 더합니다.</li>
+          <li><b>이상 효과 피해</b>(서리·불꽃·전자·풍식·광학 등): 게임 설명대로 <b>크리티컬이 발생하지 않고</b>("이상 효과 피해는 크리티컬을 발생시킬 수 없다"), 내 레벨로 정해지는 "이상 효과 피해 배율"을 써서 공격력·속성 피해 보너스의 영향을 받지 않습니다. 이상 효과 전용 보너스·부스트·최종 피해, "전체 피해" 부스트, 방어 무시, 저항 감소만 적용합니다. 여우의 별자리 S6(전자 효과)처럼 크리티컬을 켜 주는 효과는 그 고정값(예: 80% / 230%)으로 계산합니다. 최대 스택 증가(10 → 13)는 ×1.3으로 반영합니다.</li>
+          <li><b>본인 딜 규모</b>: 한 사이클 동안 각자 내는 딜은 메인 딜러 100 기준의 추정값입니다. 실제 로테이션·숙련도·돌파에 따라 달라지니 수치는 파티끼리 비교하는 용도로 보세요.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <section data-panel="patch" hidden>
+    <div class="card"><h2>패치 노트</h2><p class="note">버전은 수정할 때마다 마지막 두 자리를 하나씩 올립니다. 1.0.01·1.0.02는 베타, 1.0.03부터 정식 버전입니다.</p>
+    <div class="patch" id="patch-list" style="margin-top:12px"></div></div>
+  </section>
+  </div>
+</main>
+<footer class="site-foot">
+  <div class="container foot-in">
+    <div class="foot-brand"><span class="logo-mark" aria-hidden="true">✦</span> 띵조 AUTO TEAM MAKER <span class="chip num" id="ver-chip">Ver. 1.0.15</span></div>
+    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/tools/help">사용 설명</a><a href="#/tools/patch">패치 노트</a></nav>
+    <p class="foot-note">팬이 만든 비공식 사이트입니다. 명조: 워더링 웨이브의 이미지 · 이름 · 게임 데이터의 권리는 KURO GAMES에 있습니다. 예상 피해와 확률은 비교용 추정치입니다.</p>
+  </div>
+</footer>
+
+<dialog id="dlg-swap">
+  <div class="dlg-head"><h3 id="swap-title">캐릭터 교체</h3><button class="btn sm" id="swap-close">닫기</button></div>
+  <div class="dlg-body">
+    <div class="filters" id="swap-filter"></div>
+    <div class="roster-grid" id="swap-grid"></div>
+  </div>
+</dialog>
+<dialog id="dlg-char">
+  <div class="dlg-head"><h3 id="char-title">캐릭터 설정</h3><button class="btn sm" id="char-close">닫기</button></div>
+  <div class="dlg-body" id="char-body"></div>
+</dialog>
+<dialog id="dlg-share">
+  <div class="dlg-head"><h3>공유</h3><button class="btn sm" id="share-close">닫기</button></div>
+  <div class="dlg-body">
+    <section class="cfg-sec" style="margin-top:0;border-top:0;padding-top:0">
+      <h4>조합 텍스트</h4>
+      <p class="note" style="margin:0 0 8px">카톡·디스코드에 붙여 넣기 좋은 파티 요약입니다.</p>
+      <button class="btn sm" id="share-text">조합 텍스트 복사</button> <button class="btn sm" id="share-img">편성 이미지 저장</button>
+    </section>
+    <section class="cfg-sec">
+      <h4>내 설정 공유 코드</h4>
+      <p class="note" style="margin:0 0 8px">보유 캐릭터, 체인·무기·스킬 레벨, 파티 구성을 짧은 코드 하나로 만듭니다. 친구가 이 코드를 <b>공유 → 코드 불러오기</b>에 붙여 넣으면 같은 화면이 됩니다.</p>
+      <label class="note" style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><input type="checkbox" id="share-st"> 내 스탯·에코 옵션(인증 사용자 입력값)도 포함</label>
+      <div class="toolbar" style="margin:0 0 8px"><button class="btn sm primary" id="share-make">코드 만들기</button><button class="btn sm" id="share-copy" disabled>코드 복사</button><span class="note" id="share-len"></span></div>
+      <textarea id="share-out" class="code-box" rows="3" readonly placeholder="코드 만들기를 누르면 여기에 나옵니다." aria-label="공유 코드"></textarea>
+    </section>
+    <section class="cfg-sec">
+      <h4>코드 불러오기</h4>
+      <textarea id="share-in" class="code-box" rows="3" placeholder="받은 공유 코드를 붙여 넣으세요 (DJ1. 로 시작)" aria-label="받은 공유 코드"></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button class="btn sm" id="share-check">내용 확인</button></div>
+      <div id="share-preview" class="note" role="status" style="margin-top:8px"></div>
+    </section>
+  </div>
+</dialog>
+<dialog id="dlg-license">
+  <div class="dlg-head"><h3>라이선스 인증</h3><button class="btn sm" id="lic-close">닫기</button></div>
+  <div class="dlg-body" id="lic-body"></div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>

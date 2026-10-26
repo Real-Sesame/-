@@ -1,7 +1,7 @@
 # 띵조 AUTO TEAM MAKER — 신규 공명자 자동 갱신
 # 매일 한 번 명조 게임 데이터(Arikatsu/WutheringWaves_Data)를 확인해
-# 앱에 없는 공명자가 생기면 chars-extra.json을 갱신하고 커밋합니다.
-# Index.html이나 스크립트를 새로 올렸을 때도 바로 한 번 돌아 목록을 맞춥니다.
+# 앱에 없는 공명자가 생기면 public/chars-extra.json과 일러스트(public/assets)를 갱신하고 커밋합니다.
+# 앱 코드(src/)나 스크립트를 새로 올렸을 때도 바로 한 번 돌아 목록을 맞춥니다.
 # (Actions 탭 → "신규 공명자 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
 # ※ 이 파일은 반드시 저장소의 .github/workflows/ 폴더 안에 있어야 GitHub가 실행합니다.
 name: 신규 공명자 자동 갱신
@@ -12,7 +12,8 @@ on:
   push:
     branches: [main]
     paths:
-      - Index.html
+      - src/app.js
+      - src/data/**
       - tools/update_chars.py
       - tools/build_assets.py
       - .github/workflows/update-chars.yml
@@ -20,7 +21,7 @@ on:
 
 # 저장소 설정의 기본 권한과 상관없이 이 작업에 필요한 권한만 직접 받습니다.
 permissions:
-  contents: write   # chars-extra.json 커밋
+  contents: write   # public/chars-extra.json · 일러스트 커밋
   actions: write    # 60일 비활성 방지 · 커밋 뒤 사이트 배포 작업 실행
 
 concurrency:
@@ -63,7 +64,7 @@ jobs:
         run: |
           # 스크립트는 tools/ 폴더나 저장소 맨 위 어디에 있어도 됩니다
           SCRIPT=tools/update_chars.py; [ -f "$SCRIPT" ] || SCRIPT=update_chars.py
-          python "$SCRIPT" gamedata Index.html chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
+          python "$SCRIPT" gamedata src public/chars-extra.json --version "$GAME_VER" --commit "$DATA_SHA"
 
       - name: 캐릭터 일러스트 만들기 (없는 것만)
         continue-on-error: true
@@ -72,13 +73,13 @@ jobs:
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A assets 2>/dev/null || true
-          if git diff --quiet -- chars-extra.json && git diff --cached --quiet -- assets && git ls-files --error-unmatch chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add chars-extra.json
+          git add public/chars-extra.json
           git commit -m "신규 공명자 자동 갱신 (게임 데이터 $GAME_VER)"
           # 그사이 다른 커밋이 올라왔어도 밀리지 않게 최신 상태 위에 다시 얹어서 올립니다
           ok=0
