@@ -2569,7 +2569,7 @@ function paintDataInfo() {
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `${Math.max(1, m)}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
   const row = (k, v, d) => `<div><span>${k}</span><b>${v}</b>${d ? `<small>${d}</small>` : ''}</div>`;
   el.innerHTML = `<h2>데이터 기준</h2><div class="di-grid">
-    ${row('픽업 · 이벤트 일정', isNaN(ev) ? '불러오는 중' : `${mdhm(ev)} 갱신`, isNaN(ev) ? '공식 공지 · 3시간마다 확인' : `${ago(ev)} · 공식 공지를 3시간마다 확인`)}
+    ${row('픽업 · 이벤트 일정', isNaN(ev) ? '불러오는 중' : `${mdhm(ev)} 마지막 변경`, isNaN(ev) ? '공식 공지 · 3시간마다 확인' : `${ago(ev)} 바뀜 · 공식 공지는 3시간마다 확인`)}
     ${row('게임 데이터', DATA_META.gameVer ? `${esc(DATA_META.gameVer)} 버전` : `${CHARS.filter(c => !isUpcoming(c)).length}명 수록`, '새 공명자 · 무기 · 재료를 매일 확인')}
     ${row('역경의 탑', `시즌 ${sn.n}`, `${mdhm(sn.end)} 초기화 · 층별 버프 · 적 속성`)}
     ${row('사이트', `Ver. ${esc(APP_VERSION)}`, `${esc(patchNotes()[0].d)} 업데이트 · <a href="#/notice">업데이트 내역</a>`)}</div>`;
