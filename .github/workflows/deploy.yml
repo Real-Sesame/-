@@ -1,0 +1,60 @@
+# 띵조 AUTO TEAM MAKER — 사이트 배포 (GitHub Pages · GitHub Actions 방식)
+# main에 올리면 사이트를 만들어 GitHub Pages에 배포합니다.
+#  · package.json이 있으면 Vite로 빌드(npm run build)한 dist/를 배포
+#  · 없으면 저장소 파일을 그대로 배포
+# 신규 공명자 · 이벤트 일정 자동 갱신이 커밋하면 그 작업이 이 배포를 다시 불러 줍니다.
+name: 사이트 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 준비 (Vite 프로젝트일 때)
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 사이트 만들기
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            npm run build
+            mv dist _site
+          else
+            mkdir _site
+            rsync -a --exclude .git --exclude .github --exclude tools --exclude '_site' ./ _site/
+          fi
+          ls -la _site | head -30
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
