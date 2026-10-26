@@ -58,3 +58,11 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: 로그인 서버 확인 (ddingjo-sync)
+        continue-on-error: true
+        run: |
+          U=https://ddingjo-sync.ddingjo-atm.workers.dev
+          curl -fsS -m 20 "$U/" && echo
+          code=$(curl -s -o /dev/null -w '%{http_code}' -m 20 -X POST -H 'Content-Type: application/json' -H 'Origin: https://real-sesame.github.io' -d '{"id":"zz_probe","key":"x"}' "$U/login")
+          echo "로그인 응답: $code (401이면 정상)"; [ "$code" = 401 ] || [ "$code" = 429 ] || { echo "::warning::로그인 서버 응답이 이상합니다 ($code)"; }

@@ -16,9 +16,11 @@ public/                 그대로 올라가는 파일
   assets/               캐릭터 카드 · 전신 · 픽업 배너 · 링크 미리보기(og) 그림 (자동 생성)
   skills/<rid>.json     공명자 스킬 설명 (자동 생성 · 그 공명자 화면을 열 때만 받아 옴)
   wastes.json           죽음의 노래와 바닷속 폐허 시즌 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
+  tower.json            역경의 탑 시즌 구성 · 한국어 텍스트 (자동 생성)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
   chars-extra.json      새 공명자 (자동 갱신)
   Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
+server/                 로그인 · 설정 동기화 서버 (Cloudflare Workers + D1)
 tools/                  자동 갱신 스크립트
 .github/workflows/      deploy.yml(배포) · update-chars.yml · update-events.yml
 ```
@@ -51,7 +53,15 @@ tools/                  자동 갱신 스크립트
 - `update-chars.yml`은 꼭 `.github/workflows/` 안에 있어야 합니다. 저장소 맨 위에 있으면 실행되지 않습니다(`update_chars.py`는 맨 위나 `tools/` 어디든 됩니다).
 - `.github` 폴더는 웹 업로드 화면에서 숨김 폴더라 끌어다 놓기가 안 될 수 있습니다. 그럴 땐 **Add file → Create new file**에 이름을 `.github/workflows/update-chars.yml`로 적고 내용을 붙여 넣으면 됩니다.
 
+## 로그인 · 설정 동기화 (Ver. 1.0.21~)
+
+- 서버: `server/worker.js`, Cloudflare 계정의 Worker `ddingjo-sync`(주소 `https://ddingjo-sync.ddingjo-atm.workers.dev`)와 D1 데이터베이스 `ddingjo-sync`. 무료 요금제 안에서 돌아갑니다(하루 요청 10만 회).
+- 아이디 · 비밀번호 계정. 비밀번호는 브라우저에서 PBKDF2(15만 회)로 늘린 값만 보내고, 서버는 무작위 소금으로 한 번 더 PBKDF2 해서 저장합니다. 로그인 토큰은 SHA-256으로만 저장(180일). 로그인 · 가입 시도 횟수 제한이 있습니다.
+- 계정에 저장되는 것: 보유 캐릭터 · 파티 · 캐릭터 설정 · 계산 설정 · 육성 계산 · 에코 계산기(localStorage `ddingjo-atm-v2`, `ddingjo-atm-echo-calc`). 계정당 최대 256KB.
+- 서버 코드를 고친 뒤 다시 올리기: `cd server && npx wrangler login && npx wrangler deploy` (표 구조는 `schema.sql`).
+- 사이트 배포(deploy.yml) 때마다 로그인 서버가 응답하는지 확인합니다.
+
 ## 참고
 
-- 사용자 설정(보유 캐릭터, 파티, 캐릭터 설정)은 각자 브라우저에만 저장됩니다.
+- 사용자 설정(보유 캐릭터, 파티, 캐릭터 설정)은 각자 브라우저에 저장되고, 로그인하면 계정에도 저장됩니다.
 - 역경의 탑 정보는 게임 데이터 저장소(Arikatsu/WutheringWaves_Data)에서 자동으로 갱신됩니다.

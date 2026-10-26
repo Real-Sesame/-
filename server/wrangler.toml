@@ -1,0 +1,15 @@
+# 띵조 AUTO TEAM MAKER 로그인 · 설정 동기화 서버
+# 다시 올리기: cd server && npx wrangler deploy   (처음 한 번 npx wrangler login)
+# 표(스키마) 만들기: npx wrangler d1 execute ddingjo-sync --remote --file=schema.sql
+name = "ddingjo-sync"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ddingjo-sync"
+database_id = "29441925-2b4c-4364-820f-c131e7a16d03"
+
+[triggers]
+crons = ["17 18 * * *"]

@@ -745,3 +745,27 @@ select, input[type=text], input[type=number], input[type=password], input[type=s
 .ws-h .lbl { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
 .ws-h .res { color: var(--bad); font-weight: 600; }
 .ws-h .mons { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+/* 로그인 */
+.acct-btn { display: inline-flex; align-items: center; gap: 6px; max-width: 150px; font-size: 13px; padding: 6px 12px; }
+.acct-btn #acct-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; display: none; }
+.acct-btn.on .acct-dot { display: inline-block; background: var(--good); }
+.acct-btn.on.busy .acct-dot { background: var(--gold); }
+.acct-btn.on.err .acct-dot { background: var(--bad); }
+dialog.dlg-sm { width: min(440px, calc(100vw - 32px)); }
+.acct-tabs { margin-bottom: 14px; }
+.acct-form { display: grid; gap: 12px; margin: 0; }
+.acct-form label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.acct-form input { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 400; }
+.acct-form input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.acct-msg { margin: 0; min-height: 1.2em; font-size: 13px; color: var(--bad); }
+.acct-info { margin: 16px 0 0; font-size: 12.5px; }
+.acct-me { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+.acct-av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; background: var(--gold); color: var(--on-gold); }
+.acct-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.acct-q p { margin: 0 0 10px; }
+.acct-me + .acct-row + .note + details, .acct-me ~ details { margin-top: 10px; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.bad { color: var(--bad); }
+@media (max-width: 420px) { .acct-btn { max-width: 96px; padding: 5px 9px; font-size: 12px; } }

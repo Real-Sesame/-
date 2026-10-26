@@ -20,6 +20,7 @@
     <a class="logo" href="#/" aria-label="홈으로"><span class="logo-mark" aria-hidden="true">✦</span><span class="logo-t">띵조 <b>AUTO</b> TEAM MAKER</span></a>
     <nav class="gnb" id="gnb" aria-label="주 메뉴"><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/season" data-nav="season">시즌 콘텐츠</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
     <div class="site-act">
+      <button class="btn ghost acct-btn" id="btn-acct" aria-haspopup="dialog"><span class="acct-dot" aria-hidden="true"></span><span id="acct-label">로그인</span></button>
       <button class="btn ghost theme-btn" id="btn-theme" aria-label="화면 테마 바꾸기">☀</button>
       <button class="icon-btn menu-btn" id="btn-menu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
     </div>
@@ -317,6 +318,10 @@ HP 비례     = HP × 환산 비율   (HP = 기본 HP × (1 + HP% 합) + 고정 
   </div>
 </footer>
 
+<dialog id="dlg-acct" class="dlg-sm" aria-labelledby="acct-title">
+  <div class="dlg-head"><h3 id="acct-title">로그인</h3><button class="btn sm" id="acct-close">닫기</button></div>
+  <div class="dlg-body" id="acct-body"></div>
+</dialog>
 <dialog id="dlg-swap">
   <div class="dlg-head"><h3 id="swap-title">캐릭터 교체</h3><button class="btn sm" id="swap-close">닫기</button></div>
   <div class="dlg-body">

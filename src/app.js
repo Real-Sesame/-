@@ -1406,7 +1406,17 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const fmt = n => Math.round(n).toLocaleString('ko-KR');
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 */ } };
+const lsSet = (k, v) => {
+  const sk = SYNC_KEYS.includes(k); const prev = sk ? lsGet(k) : null;
+  try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 */ }
+  if (sk) { if (prev !== null && noTab(prev) !== noTab(v)) markTouched(); syncDirty(); }
+};
+const SYNC_KEYS = ['ddingjo-atm-v2', 'ddingjo-atm-echo-calc']; // 로그인하면 계정에 저장되는 설정(보유 캐릭터 · 파티 · 캐릭터 설정 · 육성 · 에코 계산기)
+// 이 기기에서 설정을 직접 바꾼 적이 있는지(처음 로그인할 때 계정 설정을 바로 불러올지, 물어볼지 정함)
+const LS_TOUCHED = 'ddingjo-atm-touched';
+const noTab = t => { try { const o = JSON.parse(t); if (o && typeof o === 'object') delete o.tab; return JSON.stringify(o); } catch (e) { return t; } };
+const markTouched = () => { try { localStorage.setItem(LS_TOUCHED, '1'); } catch (e) { } };
+try { if (!localStorage.getItem('ddingjo-atm-sync-v')) { if (localStorage.getItem(SYNC_KEYS[0])) markTouched(); localStorage.setItem('ddingjo-atm-sync-v', '1'); } } catch (e) { } // 1.0.21 전부터 쓰던 기기는 '바꾼 적 있음'으로
 
 /* ---------- 신규 공명자 자동 반영 ----------
    GitHub Actions(tools/update_chars.py)가 게임 데이터를 매일 확인해 chars-extra.json을 갱신하면,
@@ -2236,12 +2246,25 @@ async function fetchJSON(path) { const r = await fetch(DATA_BASE + path, { cache
 async function refreshTower(force) {
   const cache = (() => { try { return JSON.parse(lsGet(LS_TOWER) || 'null'); } catch (e) { return null; } })();
   if (cache && cache.db) { setTowerDB({ ...RAW_TOWER, ...cache.db }); }
-  if (!force && cache && Date.now() - cache.at < 6 * 3600000) {
+  if (!force && cache && Date.now() - cache.at < 6 * 3600000 && (cache.latest || 0) >= curSeason().n) {
     state.towerStatus = { kind: cache.missing && cache.missing.length ? 'warn' : 'ok', msg: `최신 데이터 확인 ${new Date(cache.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · 시즌 ${cache.latest}까지 수록`, missing: cache.missing || [] };
     return;
   }
   if (IN_ARTIFACT) { state.towerStatus = { kind: 'ok', msg: `공유 링크 버전: 내장 탑 데이터(시즌 ${Math.max(...Object.keys(RAW_TOWER).map(Number))}까지)를 사용합니다. 새 시즌은 링크가 업데이트되면 반영됩니다.`, noBtn: true }; return; }
   state.towerStatus = { kind: 'busy', msg: '최신 탑 구성 확인 중…' }; paintUpdateBox();
+  // 1) 사이트가 매일 게임 데이터로 만들어 두는 tower.json(한국어 포함) → 2) 없으면 게임 데이터를 직접 받음
+  try {
+    const r = await fetch(`${BASE}tower.json?h=${Math.floor(Date.now() / 36e5)}`, { cache: 'no-cache' });
+    const d = r.ok ? await r.json() : null;
+    if (d && d.db && Object.keys(d.db).length) {
+      const latest = Math.max(...Object.keys(d.db).map(Number), ...Object.keys(RAW_TOWER).map(Number));
+      lsSet(LS_TOWER, JSON.stringify({ at: Date.now(), db: d.db, missing: [], latest }));
+      setTowerDB({ ...RAW_TOWER, ...d.db });
+      state.towerStatus = { kind: 'ok', msg: `최신 데이터 확인 완료 · 시즌 ${latest}까지 수록${d.at ? ` · 게임 데이터 반영 ${mdhm(Date.parse(d.at))}` : ''}`, missing: [] };
+      paintUpdateBox(); if (state.tab === 'tower-info') renderTowerInfo(); if (state.tab === 'tower-build') renderBuild(); if (curView === 'season' || curView === 'home') route(true);
+      return;
+    }
+  } catch (e) { /* 아래 방법으로 */ }
   try {
     const [cfg, tb, mi] = await Promise.all([fetchJSON('BinData/tower/towerconfig.json'), fetchJSON('BinData/tower/towerbuff.json'), fetchJSON('BinData/monster_Info/monsterinfo.json')]);
     const extra = towerTxtDict();
@@ -2721,7 +2744,7 @@ function renderIntro() {
     ['#/sim', '튜닝 시뮬레이터', '공개된 확률 규칙으로 캐릭터 · 무기 이벤트 튜닝을 미리 돌려 봅니다.'],
     ['#/tools/grow', '육성 계산', '돌파 · 스킬 · 공명 노드에 필요한 재료와 파밍 횟수, 결정 웨이브 플레이트를 계산합니다.']];
   el.innerHTML = `<div class="container page"><p class="eyebrow">소개</p><h1 class="ph-t">명조를 더 똑똑하게,<br><em>띵조 AUTO TEAM MAKER</em></h1>
-    <p class="ph-d">명조: 워더링 웨이브를 즐기는 사람들을 위한 팬 사이트입니다. 게임 데이터로 공명자 정보를 정리하고, 보유 캐릭터로 짤 수 있는 최적의 파티를 계산합니다. 로그인 없이 쓰며, 설정은 이 브라우저에만 저장됩니다.</p>
+    <p class="ph-d">명조: 워더링 웨이브를 즐기는 사람들을 위한 팬 사이트입니다. 게임 데이터로 공명자 정보를 정리하고, 보유 캐릭터로 짤 수 있는 최적의 파티를 계산합니다. 로그인 없이도 쓸 수 있고(설정은 이 브라우저에 저장), 위쪽 로그인 버튼으로 계정을 만들면 휴대폰과 컴퓨터에서 같은 설정을 씁니다.</p>
     <p style="margin-top:16px"><button class="btn sm" id="intro-to-help">사용 설명 바로 보기 ↓</button></p>
     <section class="sec">${secHead('이런 걸 할 수 있어요', '', '')}<div class="intro-grid">${F.map(([h, n, d]) => `<a class="mini-feat" href="${h}"><b>${n}</b><span>${d}</span></a>`).join('')}</div></section>
     <section class="sec">${secHead('데이터는 이렇게 갱신돼요', '', '')}<div class="intro-grid">
@@ -3022,6 +3045,15 @@ function showView(r, keepScroll) {
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
   fixLinks();
 }
+// 시즌이 바뀌는 순간(역경의 탑 · 폐허 초기화) 열어 둔 화면도 새 시즌 데이터로 바꿈
+function watchSeasons() {
+  const next = Math.min(curSeason().end, wastesSeasonAt(Date.now()).end);
+  const wait = Math.min(Math.max(next - Date.now() + 60000, 5000), DAY); // 최대 하루마다 다시 확인
+  setTimeout(() => {
+    if (Date.now() >= next) { WASTES = null; WASTES_P = null; refreshTower(true); if (['home', 'season'].includes(curView)) route(true); }
+    watchSeasons();
+  }, wait);
+}
 function closeDrawer() { const d = $('#drawer'); if (d) { d.hidden = true; $('#btn-menu').setAttribute('aria-expanded', 'false'); } }
 function initSite() {
   $('#btn-menu').addEventListener('click', () => { const d = $('#drawer'); d.hidden = !d.hidden; $('#btn-menu').setAttribute('aria-expanded', String(!d.hidden)); });
@@ -3034,7 +3066,7 @@ function initSite() {
     const path = pathOf(a.getAttribute('href')); if (path === null) return;
     e.preventDefault(); navigate(path);
   });
-  loadArt(); refreshEvents();
+  loadArt(); refreshEvents(); watchSeasons();
 }
 
 /* ---------- 시작 ---------- */
@@ -3332,7 +3364,153 @@ function renderTimeline() {
 function patchNotes() { return PATCH_NOTES; }
 function paintVersion() { const v = patchNotes()[0].v; const c = $('#ver-chip'); if (c) c.textContent = `Ver. ${v}`; }
 
+/* ---------- 로그인 · 설정 동기화 ----------
+   서버: server/worker.js (Cloudflare Workers + D1). 아이디 · 비밀번호로 가입하면 위 SYNC_KEYS 설정을 계정에 저장하고,
+   다른 기기에서 같은 아이디로 로그인하면 그대로 불러옵니다. 비밀번호는 이 브라우저에서 PBKDF2로 늘린 값만 서버로 보냅니다. */
+const SYNC_URL = (DEBUG && lsGet('ddingjo-atm-sync-url')) || 'https://ddingjo-sync.ddingjo-atm.workers.dev';
+const LS_AUTH = 'ddingjo-atm-auth';      // {id, token, base: 마지막으로 맞춘 서버 시각, snap: 그때의 설정 내용}
+let AUTH = (() => { try { const a = JSON.parse(lsGet(LS_AUTH) || 'null'); return a && a.token ? a : null; } catch (e) { return null; } })();
+const sync = { busy: false, timer: null, status: '', err: '' };
+const saveAuth = () => { try { if (AUTH) localStorage.setItem(LS_AUTH, JSON.stringify(AUTH)); else localStorage.removeItem(LS_AUTH); } catch (e) { } };
+const payloadStr = () => JSON.stringify(localPayload());
+const isDirty = () => !!AUTH && payloadStr() !== AUTH.snap; // 마지막으로 맞춘 뒤 이 기기에서 바뀐 게 있는지(내용으로 비교)
+let syncApplying = false;
+function syncDirty() {
+  if (syncApplying || !AUTH) return;
+  clearTimeout(sync.timer); sync.timer = setTimeout(() => syncPush(), 2500); paintAcct();
+}
+async function deriveKey(id, pw) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode('ddingjo-atm:' + id), iterations: 150000 }, k, 256);
+  return btoa(String.fromCharCode(...new Uint8Array(bits)));
+}
+async function api(path, { method = 'GET', body, token = AUTH && AUTH.token } = {}) {
+  let r;
+  try { r = await fetch(SYNC_URL + path, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { const err = new Error('서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.'); err.offline = true; throw err; }
+  let d = {}; try { d = await r.json(); } catch (e) { }
+  if (!r.ok) { const err = new Error(d.error || `서버 오류 (${r.status})`); err.status = r.status; err.data = d; if (d.relogin) { AUTH = null; saveAuth(); paintAcct(); } throw err; }
+  return d;
+}
+function localPayload() {
+  const get = k => { try { return JSON.parse(lsGet(k) || 'null'); } catch (e) { return null; } };
+  const main = get(SYNC_KEYS[0]); if (main) delete main.tab; // 마지막으로 연 탭은 기기마다 따로
+  return { v: 1, main, echo: get(SYNC_KEYS[1]) };
+}
+const localIsEmpty = () => !lsGet(LS_TOUCHED);
+function applyRemote(data, updated) {
+  syncApplying = true;
+  try {
+    if (data && data.main) { const cur = (() => { try { return JSON.parse(lsGet(SYNC_KEYS[0]) || '{}'); } catch (e) { return {}; } })(); lsSet(SYNC_KEYS[0], JSON.stringify({ ...data.main, tab: cur.tab || data.main.tab })); }
+    if (data && data.echo) lsSet(SYNC_KEYS[1], JSON.stringify(data.echo));
+  } finally { syncApplying = false; }
+  load(); state.ec = null; ensureParties();
+  AUTH.base = updated; AUTH.snap = payloadStr(); saveAuth();
+  paintOwnedChip(); route(true);
+}
+async function syncPush(force) {
+  if (!AUTH || sync.busy || (!force && !isDirty())) return; sync.busy = true; sync.err = ''; paintAcct();
+  const snap = payloadStr();
+  try {
+    const r = await api('/data', { method: 'PUT', body: { data: JSON.parse(snap), base: AUTH.base || 0, force: !!force } });
+    AUTH.base = r.updated; AUTH.snap = snap; saveAuth(); sync.status = `저장됨 ${mdhm(r.updated)}`;
+  } catch (e) {
+    if (e.status === 409) { sync.busy = false; return syncPull(true); }
+    sync.err = e.message;
+  } finally { sync.busy = false; paintAcct(); }
+}
+// 서버에 더 새 설정이 있으면: 이 기기에서 바꾼 게 없으면 바로 불러오고, 양쪽 다 바뀌었으면 고르게 함
+async function syncPull(conflictOnly) {
+  if (!AUTH || sync.busy) return; sync.busy = true; paintAcct();
+  try {
+    const r = await api('/data');
+    if (r.updated && r.updated !== AUTH.base) {
+      if (!isDirty()) { applyRemote(r.data, r.updated); toast('다른 기기에서 저장한 설정을 불러왔습니다.'); }
+      else { sync.busy = false; return askConflict(r); }
+    } else if (isDirty() && !conflictOnly) { sync.busy = false; return syncPush(); }
+    sync.status = r.updated ? `최신 상태 · ${mdhm(r.updated)}` : '아직 저장된 설정 없음';
+  } catch (e) { sync.err = e.message; } finally { sync.busy = false; paintAcct(); }
+}
+function askConflict(r) {
+  openAcct(`<div class="acct-q"><p><b>다른 기기에서 저장한 설정(${mdhm(r.updated)})</b>과 이 기기에서 바꾼 설정이 다릅니다. 어느 쪽을 쓸까요?</p>
+    <div class="acct-row"><button class="btn solid-gold" id="cf-remote">저장된 설정 불러오기</button><button class="btn" id="cf-local">이 기기 설정으로 덮어쓰기</button></div>
+    <p class="note">불러오면 이 기기에서 바꾼 내용이, 덮어쓰면 계정에 저장된 내용이 사라집니다.</p></div>`, '설정 맞추기');
+  $('#cf-remote').addEventListener('click', () => { applyRemote(r.data, r.updated); closeDlg('#dlg-acct'); toast('저장된 설정을 불러왔습니다.'); });
+  $('#cf-local').addEventListener('click', () => { AUTH.base = r.updated; saveAuth(); closeDlg('#dlg-acct'); syncPush(true); toast('이 기기 설정을 계정에 저장했습니다.'); });
+}
+function paintAcct() {
+  const l = $('#acct-label'); const b = $('#btn-acct'); if (!l) return;
+  l.textContent = AUTH ? AUTH.id : '로그인';
+  b.classList.toggle('on', !!AUTH); b.classList.toggle('err', !!(AUTH && sync.err)); b.classList.toggle('busy', !!(AUTH && (sync.busy || isDirty())));
+  b.setAttribute('aria-label', AUTH ? `계정 ${AUTH.id} · ${sync.err ? '동기화 오류' : isDirty() || sync.busy ? '저장 중' : '동기화됨'}` : '로그인 · 회원가입');
+  if ($('#dlg-acct').open && AUTH && $('#acct-st')) $('#acct-st').innerHTML = acctStatusHTML();
+}
+const acctStatusHTML = () => sync.err ? `<span class="bad">${esc(sync.err)}</span>` : sync.busy || isDirty() ? '저장하는 중…' : esc(sync.status || '동기화됨');
+function openAcct(html, title) {
+  $('#acct-title').textContent = title || (AUTH ? '내 계정' : '로그인');
+  $('#acct-body').innerHTML = html;
+  const d = $('#dlg-acct'); if (!d.open) { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); }
+}
+function acctForm(mode) {
+  const su = mode === 'signup';
+  openAcct(`<div class="seg acct-tabs" role="tablist"><button data-am="login" aria-pressed="${!su}">로그인</button><button data-am="signup" aria-pressed="${su}">회원가입</button></div>
+    <form id="acct-form" class="acct-form" autocomplete="on">
+      <label>아이디<input name="id" autocomplete="username" inputmode="latin" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="20" pattern="[a-z0-9_]{3,20}" placeholder="영어 소문자 · 숫자 · _ 3~20자"></label>
+      <label>비밀번호<input name="pw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}" required minlength="${su ? 8 : 1}" maxlength="128" placeholder="${su ? '8자 이상' : ''}"></label>
+      ${su ? '<label>비밀번호 확인<input name="pw2" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>' : ''}
+      <p class="acct-msg" id="acct-msg" role="alert"></p>
+      <button class="btn solid-gold lg" type="submit">${su ? '가입하고 이 기기 설정 저장' : '로그인'}</button>
+    </form>
+    <ul class="prose note acct-info">
+      <li>로그인하면 보유 캐릭터 · 파티 · 캐릭터 설정 · 육성 계산 · 에코 계산기 입력이 계정에 저장되어, 휴대폰과 컴퓨터에서 똑같이 쓸 수 있습니다.</li>
+      <li>이메일 없이 아이디 · 비밀번호만 씁니다. <b>비밀번호를 잊으면 찾을 수 없으니</b> 잘 기억해 두세요.</li>
+      <li>비밀번호는 이 기기에서 암호화한 값만 보내며, 서버에는 원래 비밀번호가 남지 않습니다.</li></ul>`, su ? '회원가입' : '로그인');
+  $$('[data-am]').forEach(b => b.addEventListener('click', () => acctForm(b.dataset.am)));
+  const f = $('#acct-form');
+  f.addEventListener('submit', async e => {
+    e.preventDefault(); const msg = $('#acct-msg'); const btn = f.querySelector('button[type=submit]');
+    const id = f.elements.id.value.trim().toLowerCase(); const pw = f.elements.pw.value;
+    if (!/^[a-z0-9_]{3,20}$/.test(id)) { msg.textContent = '아이디는 영어 소문자 · 숫자 · 밑줄(_) 3~20자입니다.'; return; }
+    if (su && pw.length < 8) { msg.textContent = '비밀번호는 8자 이상으로 정해 주세요.'; return; }
+    if (su && pw !== f.elements.pw2.value) { msg.textContent = '비밀번호 확인이 다릅니다.'; return; }
+    btn.disabled = true; msg.textContent = su ? '가입하는 중…' : '로그인하는 중…';
+    try {
+      const key = await deriveKey(id, pw);
+      const r = await api(su ? '/signup' : '/login', { method: 'POST', body: { id, key }, token: null });
+      AUTH = { id: r.id, token: r.token, base: 0, snap: '' }; saveAuth();
+      if (!r.updated) { await syncPush(true); closeDlg('#dlg-acct'); toast(su ? `${r.id} 계정을 만들고 이 기기 설정을 저장했습니다.` : '로그인했습니다. 이 기기 설정을 계정에 저장했습니다.'); }
+      else {
+        const d = await api('/data');
+        if (JSON.stringify(d.data) === payloadStr()) { AUTH.base = d.updated; AUTH.snap = payloadStr(); saveAuth(); closeDlg('#dlg-acct'); toast('로그인했습니다. 설정이 이미 같습니다.'); }
+        else if (localIsEmpty()) { applyRemote(d.data, d.updated); closeDlg('#dlg-acct'); toast(`${r.id} 계정의 설정을 불러왔습니다.`); }
+        else askConflict({ ...d, updated: d.updated });
+      }
+      paintAcct();
+    } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+  });
+}
+function acctPanel() {
+  openAcct(`<div class="acct-me"><div class="acct-av" aria-hidden="true">${esc(AUTH.id.slice(0, 1).toUpperCase())}</div><div><b>${esc(AUTH.id)}</b><div class="note" id="acct-st">${acctStatusHTML()}</div></div></div>
+    <div class="acct-row"><button class="btn" id="acct-sync">지금 동기화</button><button class="btn" id="acct-logout">로그아웃</button></div>
+    <p class="note">설정을 바꾸면 몇 초 안에 자동으로 저장되고, 다른 기기에서 사이트를 열거나 화면으로 돌아오면 최신 설정을 불러옵니다.</p>
+    <details class="nt"><summary><b>비밀번호 바꾸기</b></summary><form class="acct-form" id="acct-pwf"><label>지금 비밀번호<input name="pw" type="password" autocomplete="current-password" required></label><label>새 비밀번호<input name="np" type="password" autocomplete="new-password" required minlength="8"></label><p class="acct-msg" id="pw-msg" role="alert"></p><button class="btn sm" type="submit">바꾸기</button></form></details>
+    <details class="nt"><summary><b>계정 삭제</b></summary><form class="acct-form" id="acct-delf"><p class="note">계정과 저장된 설정이 서버에서 지워집니다. 이 기기의 설정은 그대로 남습니다.</p><label>비밀번호<input name="pw" type="password" autocomplete="current-password" required></label><p class="acct-msg" id="del-msg" role="alert"></p><button class="btn sm danger" type="submit">계정 삭제</button></form></details>`, '내 계정');
+  $('#acct-sync').addEventListener('click', () => syncPull());
+  $('#acct-logout').addEventListener('click', async () => { try { await api('/logout', { method: 'POST' }); } catch (e) { } AUTH = null; saveAuth(); sync.status = ''; sync.err = ''; paintAcct(); closeDlg('#dlg-acct'); toast('로그아웃했습니다. 이 기기의 설정은 그대로 남아 있습니다.'); });
+  $('#acct-pwf').addEventListener('submit', async e => { e.preventDefault(); const f = e.target; const m = $('#pw-msg'); if (f.np.value.length < 8) { m.textContent = '새 비밀번호는 8자 이상입니다.'; return; }
+    m.textContent = '바꾸는 중…'; try { const r = await api('/password', { method: 'POST', body: { key: await deriveKey(AUTH.id, f.pw.value), newKey: await deriveKey(AUTH.id, f.np.value) } }); AUTH.token = r.token; saveAuth(); f.reset(); m.textContent = '비밀번호를 바꿨습니다. 다른 기기에서는 다시 로그인해 주세요.'; } catch (err) { m.textContent = err.message; } });
+  $('#acct-delf').addEventListener('submit', async e => { e.preventDefault(); const m = $('#del-msg');
+    m.textContent = '삭제하는 중…'; try { await api('/delete', { method: 'POST', body: { key: await deriveKey(AUTH.id, e.target.pw.value) } }); AUTH = null; saveAuth(); paintAcct(); closeDlg('#dlg-acct'); toast('계정을 삭제했습니다.'); } catch (err) { m.textContent = err.message; } });
+}
+function initAcct() {
+  $('#btn-acct').addEventListener('click', () => AUTH ? acctPanel() : acctForm('login'));
+  $('#acct-close').addEventListener('click', () => closeDlg('#dlg-acct'));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncPull(); else if (isDirty()) syncPush(); });
+  paintAcct(); if (AUTH) syncPull();
+}
+
 init();
+initAcct();
 refreshExtra();
 
 // 점검 · 테스트용(읽기 전용): 주소 끝에 ?debug를 붙여 열었을 때만 브라우저 콘솔에서 ATM_DEBUG()로 현재 상태를 볼 수 있음

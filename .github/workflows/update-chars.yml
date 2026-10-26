@@ -10,6 +10,7 @@ name: 신규 공명자 자동 갱신
 on:
   schedule:
     - cron: '23 3 * * *'   # 매일 12:23 (한국 시간)
+    - cron: '7 19 * * 0'   # 월요일 04:07 (한국 시간) — 역경의 탑 · 폐허 시즌이 바뀌는 시각 바로 뒤
   push:
     branches: [main]
     paths:
@@ -19,6 +20,7 @@ on:
       - tools/build_assets.py
       - tools/build_skills.py
       - tools/build_wastes.py
+      - tools/build_tower.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -58,7 +60,7 @@ jobs:
             /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
             /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
             /BinData/gacha/gachaviewinfo.json \
-            /BinData/ShipTower/ /BinData/monster_Info/monsterinfo.json \
+            /BinData/ShipTower/ /BinData/tower/ /BinData/monster_Info/monsterinfo.json \
             /Textmaps/ko/multi_text/MultiText.json
           echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
           echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
@@ -78,6 +80,10 @@ jobs:
         continue-on-error: true
         run: python tools/build_wastes.py gamedata public/wastes.json
 
+      - name: 역경의 탑 시즌 구성 만들기 (public/tower.json)
+        continue-on-error: true
+        run: python tools/build_tower.py gamedata public/tower.json
+
       - name: 캐릭터 일러스트 만들기 (없는 것만)
         continue-on-error: true
         run: python tools/build_assets.py gamedata . --cache "$RUNNER_TEMP/asset-cache"
@@ -85,8 +91,8 @@ jobs:
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A public/assets public/skills public/wastes.json 2>/dev/null || true
-          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets public/skills public/wastes.json public/tower.json 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json public/tower.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"
