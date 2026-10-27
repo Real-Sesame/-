@@ -264,7 +264,8 @@
           <div class="field"><label for="set-lv">적 레벨</label><input type="number" id="set-lv" min="60" max="120" step="1"><span class="hint">방어력 = 8 × 레벨 + 792</span></div>
           <div class="field"><label for="set-res">적 기본 저항(%)</label><input type="number" id="set-res" min="0" max="60" step="1"><span class="hint">탑 구역 보정은 별도 적용</span></div>
           <div class="field"><label for="set-rot">사이클 시간(초)</label><input type="number" id="set-rot" min="0" max="60" step="1"><span class="hint">0이면 자동: 세 캐릭터의 필드 시간 합으로 계산합니다. 1사이클 피해량은 그대로이고, 참고용 초당 피해 = 1사이클 피해 ÷ 사이클 시간</span></div>
-          <div class="field"><label for="set-pbias">추천 조합 가중치</label><select id="set-pbias"><option value="0">끄기</option><option value="3">약하게 (3%)</option><option value="5">보통 (5%)</option><option value="10">강하게 (10%)</option></select><span class="hint">자동 편성에서 추천 조합(정석·대체·입문)과 같은 파티의 점수를 올려 줍니다. 정석은 100%, 대체는 70%, 입문은 60%만큼 적용됩니다.</span></div>
+          <div class="field"><label for="set-pbias">추천 조합 가중치</label><select id="set-pbias"><option value="0">끄기</option><option value="4">약하게 (4%)</option><option value="8">보통 (8%)</option><option value="15">강하게 (15%)</option></select><span class="hint">자동 편성에서 추천 조합(사이트 정리 조합 + 공략 사이트 커뮤니티 조합)과 같은 파티의 점수를 올려 줍니다. 정석은 100%, 대체는 70%, 입문은 60%만큼 적용됩니다.</span></div>
+          <div class="field"><label for="set-tbias">커뮤니티 평가 반영</label><select id="set-tbias"><option value="0">끄기 (계산만)</option><option value="50">약하게</option><option value="100">보통</option><option value="200">강하게</option></select><span class="hint">공략 사이트의 3.7 역경의 탑 티어(T0~T4)로 점수를 조금 보정합니다. 보통일 때 메인 딜러 T0 +4.5% ~ T4 −4.5%, 서브 · 서포터 ±1.5%. 계산 모델이 놓치는 조작감 · 메커니즘 차이를 메웁니다.</span></div>
           <div class="field"><label for="set-up">출시 전 캐릭터</label><select id="set-up"><option value="0">자동 편성에서 제외</option><option value="1">포함해서 미리 보기</option></select><span class="hint">쇄명(10/22 출시)은 출시일이 지나면 자동으로 포함됩니다. 릴리(3.8)는 추정 수치입니다.</span></div>
         </div>
       </div>

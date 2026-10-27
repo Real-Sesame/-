@@ -21,6 +21,7 @@ on:
       - tools/build_skills.py
       - tools/build_wastes.py
       - tools/build_tower.py
+      - tools/build_echoes.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -61,6 +62,8 @@ jobs:
             /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
             /BinData/gacha/gachaviewinfo.json \
             /BinData/ShipTower/ /BinData/tower/ /BinData/monster_Info/monsterinfo.json \
+            /BinData/phantom/phantomitem.json /BinData/phantom/phantomskill.json /BinData/VisionRecommend/ \
+            /Textmaps/en/multi_text/MultiText.json \
             /Textmaps/ko/multi_text/MultiText.json
           echo "GAME_VER=$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_ENV"
           echo "DATA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
@@ -84,15 +87,19 @@ jobs:
         continue-on-error: true
         run: python tools/build_tower.py gamedata public/tower.json
 
-      - name: 캐릭터 일러스트 만들기 (없는 것만)
+      - name: 추천 메인 에코 만들기 (public/echoes.json)
+        continue-on-error: true
+        run: python tools/build_echoes.py gamedata .
+
+      - name: 캐릭터 일러스트 · 에코 아이콘 만들기 (없는 것만)
         continue-on-error: true
         run: python tools/build_assets.py gamedata . --cache "$RUNNER_TEMP/asset-cache"
 
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A public/assets public/skills public/wastes.json public/tower.json 2>/dev/null || true
-          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json public/tower.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets public/skills public/wastes.json public/tower.json public/echoes.json 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json public/tower.json public/echoes.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"

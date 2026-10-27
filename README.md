@@ -17,6 +17,7 @@ public/                 그대로 올라가는 파일
   skills/<rid>.json     공명자 스킬 설명 (자동 생성 · 그 공명자 화면을 열 때만 받아 옴)
   wastes.json           죽음의 노래와 바닷속 폐허 시즌 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
   tower.json            역경의 탑 시즌 구성 · 한국어 텍스트 (자동 생성)
+  echoes.json           공명자별 추천 메인 에코 (자동 생성, 아이콘은 assets/echo/)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
   chars-extra.json      새 공명자 (자동 갱신)
   Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
@@ -35,6 +36,7 @@ tools/                  자동 갱신 스크립트
 - 내 컴퓨터에서 미리 보려면 Node.js 설치 후 `npm install` → `npm run dev` (빌드 확인은 `npm run build` → `npm run preview`).
 - 패치 노트: 저장소의 `src/data/patch-notes.json`을 고칩니다. 맨 위 버전이 사이트 버전이 됩니다.
 - 자료실 목록은 `src/app.js`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
+- 자동 편성 보정: 공략 사이트 추천 파티는 `src/app.js`의 `COMMUNITY_TEAMS`, 티어는 `CHAR_TIER`(패치마다 갱신 권장). 추천 메인 에코는 `src/data/main-echo-picks.json`(게임 영어 이름)을 고치면 다음 자동 갱신 때 반영됩니다.
 - 빌드하면 사이트 코드와 게임 데이터(`src/data`)가 따로 나뉘어, 코드만 바뀐 업데이트에서는 방문자 브라우저에 저장된 데이터 파일을 다시 받지 않습니다.
 - 점검용: 주소 끝에 `?debug`를 붙여 열면 브라우저 콘솔에서 `ATM_DEBUG()`로 현재 상태를 볼 수 있습니다.
 

@@ -769,3 +769,8 @@ dialog.dlg-sm { width: min(440px, calc(100vw - 32px)); }
 .btn.danger { color: var(--bad); border-color: var(--bad); }
 .bad { color: var(--bad); }
 @media (max-width: 420px) { .acct-btn { max-width: 96px; padding: 5px 9px; font-size: 12px; } }
+
+/* 추천 메인 에코 */
+.me-row img { border-radius: 12px; background: var(--surface); }
+.me-sets { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0; }
+.me-row + .me-row { margin-top: 8px; }

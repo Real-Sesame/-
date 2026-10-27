@@ -9,6 +9,7 @@
   public/assets/card/{rid}.webp  캐릭터 카드(반신)            348×480
   public/assets/full/{rid}.webp  캐릭터 전신(투명 배경)        높이 900
   public/assets/bg/{rid}.webp    픽업 배너 배경               1600×720
+  public/assets/echo/{id}.webp   메인 에코 아이콘              96×96
   public/assets/art.json         어떤 그림이 있는지 목록
 
   python tools/build_assets.py <게임데이터 폴더> <저장소 폴더> [--force]
@@ -22,7 +23,7 @@ ap.add_argument('--assets-repo', default='https://github.com/555me/Wuthering-Wav
 ap.add_argument('--cache', default='.asset-cache')
 args = ap.parse_args()
 OUT = os.path.join(args.repo, 'public', 'assets') if os.path.isdir(os.path.join(args.repo, 'public')) else os.path.join(args.repo, 'assets')
-SPEC = {'card': ((348, 480), 76), 'full': ((900, 900), 78), 'bg': ((1600, 720), 62)}
+SPEC = {'card': ((348, 480), 76), 'full': ((900, 900), 78), 'bg': ((1600, 720), 62), 'echo': ((96, 96), 80)}
 
 
 def load(p):
@@ -54,6 +55,14 @@ try:
 except Exception as e:
     print('배너 정보 없음', e, file=sys.stderr)
 
+# 메인 에코 아이콘: public/echoes.json(tools/build_echoes.py)에 적힌 에코만
+try:
+    _ej = json.load(open(os.path.join(OUT, '..', 'echoes.json'), encoding='utf-8'))
+    for _eid, _e in _ej.get('echoes', {}).items():
+        if _e.get('icon'):
+            want[('echo', int(_eid))] = _e['icon']
+except Exception as e:
+    print('에코 목록 없음', e, file=sys.stderr)
 todo = {k: p for k, p in want.items() if args.force or not os.path.exists(os.path.join(OUT, k[0], f'{k[1]}.webp'))}
 print(f'그림 후보 {len(want)}개 · 새로 만들 것 {len(todo)}개')
 

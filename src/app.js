@@ -483,13 +483,88 @@ const PRESETS = [
   { id: 'f_newbie', t: '필드 · 무료 캐릭터만', tag: '필드', m: ['rover_havoc', 'sanhua', 'baizhi'], d: '배포 캐릭터만으로 짠 기본 필드 파티.' }
 ];
 // 자동 편성 가중치용: 추천 조합(정석·대체·입문) 목록
+/* ---------- 커뮤니티 정보 (자동 편성 보정용) ----------
+   COMMUNITY_TEAMS: 공략 사이트(wuwabuild.com 공명자 빌드, 3.7 기준 — Prydwen 역경의 탑 순위를 따름)에 올라온 추천 파티.
+                    [종류, 이름, 캐릭터…] 종류 best = 대표 조합, mid = 대체, f2p = 입문
+   CHAR_TIER      : 같은 사이트의 3.7 역경의 탑 티어(0 = T0 … 6 = T4). 계산 모델이 놓치는 손맛 · 메커니즘 차이를 조금 보정합니다. */
+const COMMUNITY_TEAMS = [
+  ['best', '전자', 'hsin', 'rover_electro', 'suisui'], ['f2p', '전자 입문', 'hsin', 'rover_electro', 'buling'], ['best', '합일', 'hsin', 'suoming', 'shorekeeper'], ['mid', '금희 합일', 'hsin', 'jinhsi', 'shorekeeper'],
+  ['best', '서리', 'hiyuki', 'sanhua', 'shorekeeper'], ['mid', '서리', 'hiyuki', 'carlotta', 'zhezhi'], ['best', '서리 하이퍼캐리', 'hiyuki', 'lucilla', 'chisa'],
+  ['best', '용융', 'jingran', 'iuno', 'shorekeeper'], ['mid', '모노 용융', 'jingran', 'lupa', 'mornye'], ['mid', '모노 용융', 'jingran', 'brant', 'lupa'], ['mid', '하이퍼캐리', 'jingran', 'rebecca', 'shorekeeper'], ['mid', '용융', 'jingran', 'denia', 'lupa'], ['f2p', '입문', 'jingran', 'mortefi', 'verina'],
+  ['best', '조화 밀집', 'qingxiao', 'denia', 'mornye'], ['mid', '린네', 'qingxiao', 'lynae', 'mornye'],
+  ['best', '암흑', 'xuanling', 'lynae', 'chisa'], ['mid', '암흑', 'xuanling', 'lynae', 'mornye'], ['best', '암흑', 'xuanling', 'suisui', 'chisa'], ['best', '암흑', 'xuanling', 'rebecca', 'chisa'],
+  ['best', '불꽃 순환', 'denia', 'lupa', 'brant'], ['mid', '데니아', 'denia', 'changli', 'shorekeeper'],
+  ['mid', '루실라', 'sigrika', 'lucilla', 'shorekeeper'],
+  ['best', '회절 컬러 버스트', 'phoebe', 'lynae', 'shorekeeper'], ['mid', '린네', 'lynae', 'verina', 'shorekeeper'],
+  ['best', '체인소', 'cantarella', 'chisa', 'shorekeeper'], ['mid', '치사', 'roccia', 'chisa', 'verina'],
+  ['best', '용융 증폭', 'lupa', 'changli', 'mornye'], ['mid', '모니에', 'galbrena', 'brant', 'mornye'],
+  ['best', '조화 파동', 'aemeath', 'lynae', 'mornye'], ['mid', '루파', 'aemeath', 'lupa', 'mornye'],
+  ['best', '회절 아우레올', 'luuk', 'shorekeeper', 'verina'], ['mid', '페비', 'luuk', 'phoebe', 'shorekeeper'],
+  ['best', '에코 스킬', 'sigrika', 'qiuyuan', 'shorekeeper'], ['mid', '기류', 'sigrika', 'cartethyia', 'iuno'], ['mid', '기류', 'qiuyuan', 'cartethyia', 'iuno'],
+  ['best', '엣지러너', 'lucy', 'rebecca', 'mornye'], ['mid', '레베카', 'phoebe', 'rebecca', 'rover_spectro'], ['mid', '강공격', 'augusta', 'rebecca', 'shorekeeper'],
+  ['mid', '금희 합일', 'jinhsi', 'suoming', 'shorekeeper'], ['mid', '방랑자·전도', 'hiyuki', 'rover_electro', 'shorekeeper'],
+  ['mid', '공명 스킬', 'xiangli_yao', 'buling', 'yuanwu'], ['mid', '복링', 'calcharo', 'buling', 'shorekeeper'],
+  ['best', '전도 강공격', 'augusta', 'yinlin', 'shorekeeper'], ['mid', '아우구스타', 'augusta', 'yuanwu', 'verina'],
+  ['best', '용융 에코', 'galbrena', 'brant', 'shorekeeper'], ['mid', '갈브레나', 'galbrena', 'changli', 'verina'],
+  ['best', '인멸 강공격', 'phrolova', 'cantarella', 'shorekeeper'], ['mid', '플로로', 'phrolova', 'roccia', 'verina'],
+  ['best', '풍식', 'cartethyia', 'ciaccona', 'shorekeeper'], ['mid', '풍식', 'cartethyia', 'ciaccona', 'rover_aero'], ['mid', '유노', 'cartethyia', 'iuno', 'shorekeeper'],
+  ['best', '울부짖는 늑대', 'lupa', 'changli', 'brant'], ['mid', '루파', 'encore', 'lupa', 'mortefi']
+];
+const TIER_N = ['T0', 'T0.5', 'T1', 'T1.5', 'T2', 'T3', 'T4'];
+const CHAR_TIER = Object.fromEntries([
+  [0, 'hiyuki jingran qingxiao xuanling denia iuno lucilla lynae chisa mornye suisui shorekeeper'],
+  [1, 'aemeath hsin luuk sigrika lupa qiuyuan rebecca verina suoming'],
+  [2, 'augusta cartethyia galbrena lucy phrolova ciaccona mortefi rover_electro lily'],
+  [3, 'carlotta buling rover_aero'],
+  [4, 'brant jiyan zani cantarella changli phoebe sanhua rover_spectro'],
+  [5, 'camellya encore jinhsi lingyang xiangli_yao danjin roccia yinlin zhezhi baizhi'],
+  [6, 'calcharo chixia rover_havoc aalto jianxin lumi taoqi yangyang youhu yuanwu']
+].flatMap(([t, ids]) => ids.split(' ').map(id => [id, t])));
+const tierOf = id => CHAR_TIER[id] ?? 4;
+const TIER_TARGET = [1, .93, .86, .8, .74, .66, .58]; // 티어별로 기대하는 상대 화력(T0 = 1)
+/* 커뮤니티 평가 보정
+   1) 메인 딜러마다 '대표 조합(추천 · 커뮤니티 조합)'의 계산 피해를 구해, 가장 센 조합 대비 비율(모델 평가)을 냄
+   2) 그 비율과 티어가 기대하는 비율을 기하평균으로 섞음: 보정 = (티어 기대 / 모델 평가)^α, α는 설정 세기(보통 0.5), 0.7~1.45배로 제한
+   3) 서브 · 서포터는 티어에 따라 ±1.5%만
+   계산 모델이 덜 반영하는 메커니즘(이상 효과 · 특수 상호작용 · 실전 손맛)을 공략 사이트 평가로 메우되, 보유 캐릭터 · 탑 버프에 따른 계산 차이는 그대로 살립니다.
+   화면의 피해 숫자는 계산값 그대로이고, 자동 편성 순위에만 씁니다. */
+let _cal = null;
+function tierCal() {
+  const key = JSON.stringify({ ...state.settings, parties: 0 }) + CHARS.length;
+  if (_cal && _cal.key === key) return _cal.v;
+  const ctx = { settings: state.settings, ov: {}, zone: null, season: null };
+  const ref = {};
+  presetTeams().forEach(x => { const m = x.m[0]; if (!CH[m] || isUpcoming(CH[m]) && !state.settings.upcoming) return; const r = bestTeam(x.m, ctx); if (r && r.score > (ref[m] || 0)) ref[m] = r.score; });
+  const max = Math.max(1, ...Object.values(ref));
+  const v = {}; Object.entries(ref).forEach(([m, sc]) => { v[m] = { rel: sc / max, tgt: TIER_TARGET[tierOf(m)] }; });
+  _cal = { key, v }; return v;
+}
+function tierBias(ids, detail) {
+  const w = (state.settings.tierBias ?? 100) / 100; if (!w) return detail ? { f: 1 } : 1;
+  const a = w >= 2 ? .75 : w >= 1 ? .5 : .3;
+  const [m, ...o] = ids; const c = m && tierCal()[m];
+  const fm = c ? Math.min(1.45, Math.max(.7, Math.pow(c.tgt / c.rel, a))) : 1;
+  const fo = 1 + o.filter(Boolean).reduce((s, id) => s + (3 - tierOf(id)) / 2 * 0.01 * w, 0);
+  const f = fm * fo;
+  return detail ? { f, fm, fo, tier: m ? TIER_N[tierOf(m)] : '', c } : f;
+}
+const ROLE_ORD = { main: 0, sub: 1, sup: 2 };
+const byRole = ids => ids.slice().sort((a, b) => (ROLE_ORD[CH[a] && CH[a].role] ?? 1) - (ROLE_ORD[CH[b] && CH[b].role] ?? 1));
+let _ptCache = null;
 function presetTeams() {
+  if (_ptCache && _ptCache.n === CHARS.length) return _ptCache.v;
   const out = [];
   PRESETS.filter(p => p.tag !== '필드').forEach(p => {
     out.push({ p, k: 'best', m: p.m });
     (p.v || []).forEach(v => out.push({ p, k: v.k, m: v.m, n: v.n }));
   });
-  return out.filter(x => x.m.every(id => CH[id]));
+  COMMUNITY_TEAMS.forEach(([k, n, ...m]) => {
+    if (!m.every(id => CH[id]) || out.some(x => sameTeam(x.m, m))) return;
+    const ids = byRole(m);
+    out.push({ p: { t: `${CH[ids[0]].name} ${n}`, src: 'wuwabuild' }, k, m: ids, community: true });
+  });
+  const v = out.filter(x => x.m.every(id => CH[id]));
+  _ptCache = { n: CHARS.length, v }; return v;
 }
 
 /* =====================================================================
@@ -727,7 +802,7 @@ const ECHO_PRESETS = {
   start: { n: '입문', cr: 30, cd: 20, elem: 30, atk: 40, flat: 350 }
 };
 const MIN_ROT = 25;
-const DEFAULT_SETTINGS = { preset: 'std', enemyLv: 100, baseRes: 10, rot: 0, weapon: 'sig', upcoming: false, parties: 3, towerMode: true, presetBias: 5 };
+const DEFAULT_SETTINGS = { preset: 'std', enemyLv: 100, baseRes: 10, rot: 0, weapon: 'sig', upcoming: false, parties: 3, towerMode: true, presetBias: 8, tierBias: 100 };
 
 // --- 캐릭터 인덱스 구성 ---
 const CH = {};
@@ -983,7 +1058,7 @@ function calcTeam(ids, ctx) {
   team.forEach((m, i) => { if (m && i > 0 && m.role === 'main') m.pw *= 0.4; }); // 메인 딜러를 서브 칸에 넣으면 필드 시간이 줄어듦
   const order = rotationOrder(team, ctx.ord || 0);
   const buffs = collectBuffs(team);
-  const tz = (zone && season) ? getTowerMod(season, zone) : null;
+  const tz = ctx.tz || ((zone && season) ? getTowerMod(season, zone) : null); // ctx.tz: 탑 밖 콘텐츠(폐허 등)의 저항 · 버프
   const zoneBuffs = tz ? tz.b.map(b => ({ ...b, to: 'team', kind: '탑', src: '탑 버프' })) : [];
 
   // 모드 유효성(합일 모드는 다른 합일 캐릭터 필요)
@@ -1119,13 +1194,14 @@ function candidateTeams(pool, ctx, opts = {}) {
   const mainList = mains.length ? mains : pool.slice();
   mainList.forEach(m => {
     const others = pool.filter(x => gk(x) !== gk(m));
-    // 2인 사전 평가로 파트너 후보 추리기
-    const duo = others.map(x => {
+    // 2인 사전 평가로 파트너 후보 추리기 (opts.duo가 있으면 앞서 구한 목록을 다시 씀)
+    const cand = (opts.duo && opts.duo[m]) ? opts.duo[m].slice(0, opts.k || 9) : others.map(x => {
       const asSub = bestTeam([m, x, null], ctx).score;
       const asSup = bestTeam([m, null, x], ctx).score;
       return { x, v: Math.max(asSub, asSup) };
-    }).sort((a, b) => b.v - a.v).slice(0, opts.k || 9);
-    const cand = duo.map(d => d.x);
+    }).sort((a, b) => b.v - a.v).slice(0, Math.max(opts.k || 9, opts.keepDuo || 0)).map(d => d.x);
+    if (opts.saveDuo) opts.saveDuo[m] = cand;
+    cand.splice(opts.k || 9);
     for (let i = 0; i < cand.length; i++) for (let j = 0; j < cand.length; j++) {
       if (i === j) continue;
       const s = cand[i], p = cand[j];
@@ -1515,6 +1591,7 @@ function load() {
     state.ov = d.ov || {}; state.forced = d.forced || {};
     state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
     if (state.settings.rot === 25) state.settings.rot = 0; // 이전 버전 고정값 → 자동
+    if (![0, 4, 8, 15].includes(state.settings.presetBias)) state.settings.presetBias = state.settings.presetBias > 8 ? 15 : state.settings.presetBias ? 8 : 0; // 1.0.22에서 단계 변경
     state.parties = (d.parties || []).filter(p => p && Array.isArray(p.ids)).map(p => ({ ...p, ids: p.ids.map(id => (id && CH[id]) ? id : null) }));
     if (d.tab && document.querySelector(`#tabs .tab[data-tab="${d.tab}"]`)) state.tab = d.tab;
     state.guideHidden = !!d.guideHidden;
@@ -1607,18 +1684,29 @@ const sameTeam = (a, b) => { const x = a.filter(Boolean).map(gk).sort().join('|'
 const PB_TIER = { best: 1, mid: .7, f2p: .6 };
 function presetMatch(ids) { return presetTeams().find(x => sameTeam(ids, x.m)) || null; }
 // 설정의 가중치(%)만큼 추천 조합 점수를 올림. 정석 100%, 대체 70%, 입문 60% 비율
-function presetBias(ids) { const w = (state.settings.presetBias ?? 5) / 100; if (!w) return 1; const m = presetMatch(ids); return m ? 1 + w * PB_TIER[m.k] : 1; }
+function presetBias(ids) { const w = (state.settings.presetBias ?? 8) / 100; if (!w) return 1; const m = presetMatch(ids); return m ? 1 + w * PB_TIER[m.k] : 1; }
 
 /* ---------- 자동 편성 ---------- */
 // 주어진 후보 풀과 현재 파티(고정 포함)로 새 편성을 계산해 돌려줌 (화면·상태는 건드리지 않음)
 function planParties(pool, parties) {
   const plan = slotPlan();
   const baseCtx = { ...ctxFor(null), zone: null };
-  const cands = candidateTeams(pool, baseCtx, { k: pool.length > 30 ? 8 : 10 }).slice(0, 240);
+  const k = pool.length > 30 ? 8 : 10;
+  const duo = {};
+  const cands = candidateTeams(pool, baseCtx, { k, saveDuo: duo, keepDuo: k + 2 }).slice(0, 240);
+  // 구역(탑 버프 · 적 저항)마다 강한 파티가 다르므로, 구역별로도 후보를 뽑아 합침
+  const seenK = new Set(cands.map(t => t.ids.map(gk).sort().join('|')));
+  [...new Set(plan.flatMap(key => SLOT[key].type === 'team' ? SLOT[key].zones : []))].forEach(z => {
+    candidateTeams(pool, { ...ctxFor(z), zone: z }, { k: k - 1, duo }).slice(0, 60).forEach(t => { const key = t.ids.map(gk).sort().join('|'); if (!seenK.has(key)) { seenK.add(key); cands.push(t); } });
+  });
   // 추천 조합(정석·대체·입문) 중 보유 캐릭터로 짤 수 있는 것도 후보에 넣고, 점수에 가중치를 줍니다
   const poolSet = new Set(pool);
   presetTeams().forEach(x => { if (x.m.every(id => poolSet.has(id)) && new Set(x.m.map(gk)).size === 3 && !cands.some(t => sameTeam(t.ids, x.m))) cands.push({ ids: x.m.slice() }); });
+  // 같은 세 명이라도 메인 · 서브 · 서포터 배치를 바꿔 가장 좋은 쪽으로
+  cands.forEach(t => { if (t.ids.filter(Boolean).length === 3 && !t._perm) { const alt = [[t.ids[1], t.ids[0], t.ids[2]], [t.ids[2], t.ids[1], t.ids[0]]].filter(a => CH[a[0]].role !== 'sup'); const z = { ...ctxFor(null), zone: null }; let b = bestTeam(t.ids, z).score; alt.forEach(a => { const r = bestTeam(a, z); if (r.score > b * 1.02) { b = r.score; t.ids = a; } }); t._perm = 1; } });
   const tf = v => Math.log(Math.max(v, 1e-4)); // 파티 간 균형을 맞추는 방향으로 편성
+  const memo = new Map(); const zctx = {}; // 같은 파티 · 같은 구역 계산은 한 번만
+  const zoneScore = (ids, z) => { const k = ids.join('|') + '@' + z; if (!memo.has(k)) memo.set(k, bestTeam(ids, zctx[z] || (zctx[z] = ctxFor(z)))); return memo.get(k); };
   const sn = curSeason().data;
   const lists = plan.map((key, i) => {
     const p = parties[i];
@@ -1635,8 +1723,8 @@ function planParties(pool, parties) {
       return sc.map(x => ({ ...x, _s: 0.35 * tf(x.raw / best) }));
     }
     const sc = cands.map(t => {
-      const raw = sl.zones.reduce((a, z) => { const r = bestTeam(t.ids, ctxFor(z)); return a + r.score * teamPenalty(r); }, 0) / sl.zones.length * presetBias(t.ids);
-      return { ids: t.ids, raw };
+      const raw = sl.zones.reduce((a, z) => { const r = zoneScore(t.ids, z); return a + r.score * teamPenalty(r); }, 0) / sl.zones.length * presetBias(t.ids);
+      return { ids: t.ids, raw: raw * tierBias(t.ids) };
     });
     const best = Math.max(...sc.map(x => x.raw), 1);
     return sc.map(x => ({ ...x, _s: tf(x.raw / best) }));
@@ -1764,7 +1852,8 @@ function partyHTML(p, r, pi) {
   let body = '';
   if (r) {
     const chips = [];
-    const pm = presetMatch(p.ids); if (pm) chips.push(`<span class="chip acc">추천 조합 · ${esc(pm.p.t)}${pm.k === 'best' ? '' : pm.k === 'mid' ? ' (대체)' : ' (입문)'}</span>`);
+    const pm = presetMatch(p.ids); if (pm) chips.push(`<span class="chip acc" title="${pm.community ? '공략 사이트(wuwabuild.com, 3.7) 추천 파티' : '사이트에 정리된 추천 조합'}">${pm.community ? '커뮤니티 조합' : '추천 조합'} · ${esc(pm.p.t)}${pm.k === 'best' ? '' : pm.k === 'mid' ? ' (대체)' : ' (입문)'}</span>`);
+    if (sl.type === 'team') { const tb = tierBias(p.ids.filter(Boolean).length ? p.ids : [], true); const pct = Math.round((tb.f - 1) * 100); if (tb.tier && Math.abs(pct) >= 1) chips.push(`<span class="chip" title="자동 편성 순위에만 쓰는 보정입니다. 메인 딜러 커뮤니티 티어 ${tb.tier}(계산 모델 평가 ${tb.c ? Math.round(tb.c.rel * 100) + '%' : '-'} · 티어 기대 ${tb.c ? Math.round(tb.c.tgt * 100) + '%' : '-'})와 서브 · 서포터 티어를 반영합니다. 설정 → 커뮤니티 평가 반영에서 바꿀 수 있어요.">커뮤니티 ${esc(tb.tier)} · 순위 보정 ${pct > 0 ? '+' : ''}${pct}%</span>`); }
     chips.push(r.hasHeal ? '<span class="chip ok">힐러 있음</span>' : r.hasShield ? '<span class="chip ok">실드 있음</span>' : '<span class="chip warn">힐·실드 없음</span>');
     Object.entries(r.modes || {}).forEach(([id, k]) => chips.push(`<span class="chip acc">${esc(CH[id].name)} · ${esc(CH[id].modes[k].n)}</span>`));
     if (r.invalid) chips.push('<span class="chip warn">합일 상대 없음</span>');
@@ -2400,14 +2489,15 @@ function renderDB() {
 /* ---------- 설정 · 테마 ---------- */
 function bindSettings() {
   const s = state.settings;
-  $('#set-preset').value = s.preset; $('#set-lv').value = s.enemyLv; $('#set-res').value = s.baseRes; $('#set-rot').value = s.rot; $('#set-up').value = s.upcoming ? '1' : '0'; $('#set-pbias').value = String(s.presetBias ?? 5);
+  $('#set-preset').value = s.preset; $('#set-lv').value = s.enemyLv; $('#set-res').value = s.baseRes; $('#set-rot').value = s.rot; $('#set-up').value = s.upcoming ? '1' : '0'; $('#set-pbias').value = String(s.presetBias ?? 8); $('#set-tbias').value = String(s.tierBias ?? 100);
   const upd = () => {
     s.preset = $('#set-preset').value; s.enemyLv = +$('#set-lv').value || 100; s.baseRes = +$('#set-res').value || 0;
-    s.rot = Math.max(0, +$('#set-rot').value || 0); s.upcoming = $('#set-up').value === '1'; s.presetBias = +$('#set-pbias').value;
+    s.rot = Math.max(0, +$('#set-rot').value || 0); s.upcoming = $('#set-up').value === '1'; s.presetBias = +$('#set-pbias').value; s.tierBias = +$('#set-tbias').value;
     save(); renderBuild(); toast('설정을 반영했습니다.');
   };
   ['#set-preset', '#set-lv', '#set-res', '#set-rot', '#set-up'].forEach(sel => $(sel).addEventListener('change', upd));
   $('#set-pbias').addEventListener('change', () => { upd(); optimize(true); });
+  $('#set-tbias').addEventListener('change', () => { upd(); optimize(true); });
 }
 function effectiveTheme() { const t = document.documentElement.getAttribute('data-theme'); if (t) return t; return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
 function paintThemeBtn() { const d = effectiveTheme() === 'dark'; const b = $('#btn-theme'); b.textContent = d ? '☀' : '☾'; b.setAttribute('aria-label', d ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기'); b.title = d ? '라이트 모드' : '다크 모드'; }
@@ -2659,14 +2749,19 @@ function loadWastes() {
 const elIdTag = id => elTag(EL_BY_ID[id]);
 const ymd = t => { const d = new Date(t); return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`; };
 const leftTxt = t => { const p = leftParts(t); return `${p.d}일 ${p.h}시간`; };
-// 보유 캐릭터로 폐허 한 층(전반 · 후반 두 파티, 캐릭터 중복 없음)을 짬. 저항이 오른 속성의 메인 딜러는 뺌
-function wastesTeams(ranked, half) {
-  const pick = [], used = new Set();
-  half.forEach(h => {
-    const t = ranked.find(t => !t.ids.some(id => id && used.has(gk(id))) && !h.r.map(i => EL_BY_ID[i]).includes(CH[t.ids[0]].el));
-    pick.push(t || null); if (t) t.ids.forEach(id => id && used.add(gk(id)));
+// 보유 캐릭터로 폐허 한 층(전반 · 후반 두 파티, 캐릭터 중복 없음)을 짬
+// 전반 · 후반마다 저항(+20%)을 넣어 다시 계산하고, 두 파티 점수(로그 합 = 균형)가 가장 좋은 조합을 고름
+function wastesTeams(cands, half) {
+  const base = { settings: state.settings, ov: state.ov, forcedModes: state.forced, zone: null, season: null };
+  const lists = half.map(h => {
+    const res = {}; h.r.forEach(i => { res[EL_BY_ID[i]] = 20; });
+    const ctx = { ...base, tz: { res, b: [], resEchoExempt: 0 } };
+    const sc = cands.map(t => { const r = h.r.length ? bestTeam(t.ids, ctx) : t; return { ids: t.ids, r, raw: r.score * teamPenalty(r) * presetBias(t.ids) * tierBias(t.ids) }; });
+    const best = Math.max(1, ...sc.map(x => x.raw));
+    return sc.map(x => ({ ...x, _s: Math.log(Math.max(x.raw / best, 1e-4)) }));
   });
-  return pick;
+  const pick = pickDisjoint(lists, false, 120);
+  return half.map((h, i) => pick[i] ? pick[i].r : null);
 }
 function renderSeason() {
   const el = $('[data-view="season"]'); const now = Date.now();
@@ -2677,7 +2772,9 @@ function renderSeason() {
   let ranked = null;
   if (S && pool.length >= 6) {
     const ctx = { settings: state.settings, ov: state.ov, forcedModes: state.forced, zone: null, season: null };
-    ranked = candidateTeams(pool, ctx, { k: 7 }).slice(0, 160).map(t => bestTeam(t.ids, ctx)).sort((a, b) => b.score * teamPenalty(b) - a.score * teamPenalty(a));
+    const cs = candidateTeams(pool, ctx, { k: 7 }).slice(0, 160);
+    const ps = new Set(pool); presetTeams().forEach(x => { if (x.m.every(id => ps.has(id)) && new Set(x.m.map(gk)).size === 3 && !cs.some(t => sameTeam(t.ids, x.m))) cs.push(bestTeam(x.m, ctx)); });
+    ranked = cs.map(t => t.out ? t : bestTeam(t.ids, ctx));
   }
   const teamHTML = t => t ? `<div class="mini-team">${t.ids.filter(Boolean).map(id => `<div class="mini">${portraitHTML(CH[id])}<div>${esc(CH[id].name)}</div></div>`).join('')}</div>` : '<span class="note">겹치지 않는 파티가 부족합니다</span>';
   const card = (k, n, s, sub, href, btn) => `<a class="ss-card" href="${href}"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · 초기화까지 <b class="num">${leftTxt(s.end)}</b></span><span class="note">${sub}</span><span class="more">${btn}</span></a>`;
@@ -2706,7 +2803,7 @@ function renderSeason() {
       ${+sel !== ws.n ? `<p class="note">게임 데이터에는 시즌 ${W.latest}까지 있습니다. ${+sel < ws.n ? '진행 중인 시즌 데이터가 아직 없어 지난 시즌을 보여 줍니다.' : ''}</p>` : ''}
       <div class="two ws-top"><div class="box"><h3>공통 규칙</h3><ul class="prose" style="margin:0">${[S.burn, S.hot].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}<li>층마다 파티 2개(전반 · 후반)가 필요하고, 같은 캐릭터는 한 층에서 한 번만 씁니다.</li><li>끝 없는 심연(급류)에서는 적이 받는 최종 피해가 30% 늘고, 증표를 제한 없이 씁니다.</li></ul></div>
         <div class="box"><h3>이번 시즌 증표</h3><div class="stack" style="gap:8px">${S.tok.map(([n, d]) => `<div class="ws-tok"><b>${esc(n)}</b><span>${esc(d).replace(/\n/g, '<br>')}</span></div>`).join('') || '<p class="note">이번 시즌 전용 증표 정보가 없습니다.</p>'}</div></div></div>
-      ${ranked ? '<p class="note" style="margin:14px 0 0">각 층 아래의 파티는 내 보유 캐릭터로 짠 추천입니다(전반 · 후반 캐릭터 중복 없음, 저항이 오른 속성의 메인 딜러 제외). 예상 피해 순위는 파티 편성과 같은 계산입니다.</p>' : `<p class="note" style="margin:14px 0 0">보유 캐릭터를 6명 이상 등록하면 층마다 전반 · 후반 추천 파티가 나옵니다. <a href="#/tools/roster">보유 캐릭터 등록</a></p>`}
+      ${ranked ? '<p class="note" style="margin:14px 0 0">각 층 아래의 파티는 내 보유 캐릭터로 짠 추천입니다. 전반 · 후반의 저항 증가를 넣어 계산하고, 캐릭터가 겹치지 않으면서 두 파티가 고르게 강한 조합을 고릅니다(파티 편성과 같은 계산 + 추천 조합 · 커뮤니티 평가 보정).</p>' : `<p class="note" style="margin:14px 0 0">보유 캐릭터를 6명 이상 등록하면 층마다 전반 · 후반 추천 파티가 나옵니다. <a href="#/tools/roster">보유 캐릭터 등록</a></p>`}
       <h3 class="ws-zone">재생 해역 - 해곡 <small>5층 · 시즌마다 초기화</small></h3><div class="tower-grid">${lvs.filter(l => !l.end).map(lvHTML).join('')}</div>
       <h3 class="ws-zone">재생 해역 - 급류 <small>끝 없는 심연 · 시즌마다 초기화</small></h3><div class="tower-grid">${lvs.filter(l => l.end).map(lvHTML).join('')}</div>
       <details class="nt" style="margin-top:20px"><summary><span class="tag">상시</span><b>금기의 해역</b><time>한 번만 클리어 · 초기화 없음</time></summary><div class="body"><div class="tower-grid" style="margin-top:10px">${W.perm.map(l => `<article class="tower"><h3>${l.o}층 · ${esc(l.n)}</h3><div class="ws-h">${l.h.map((h, i) => `<div><div class="lbl">${l.h.length > 1 ? (i ? '후반' : '전반') : '적'}</div><div class="mons">${esc(h.m.map(m => m[0]).join(', '))}</div></div>`).join('')}</div></article>`).join('')}</div></div></details>`}
@@ -2823,6 +2920,7 @@ function renderCharacter(id) {
       </div>
       <aside>
         <div class="box"><h3>추천 무기</h3>${wpHTML(c.w, c.q === 5 ? '전용 · 5성' : '5성')}${c.w4 && c.w4 !== c.w ? wpHTML(c.w4, '4성') : ''}</div>
+        <div class="box" id="ch-echo"><h3>추천 메인 에코</h3><p class="note" style="margin:0">불러오는 중…</p></div>
         ${c.set ? `<div class="box"><h3>추천 에코 세트</h3>${setHTML(c.set, '5세트')}${(c.set2 || []).map(s => setHTML(s, '2세트')).join('')}</div>` : ''}
         ${mats.length ? `<div class="box"><h3>육성 재료</h3><div class="mats">${mats.map(([k, n]) => `<div class="mat">${itemIcon(k, 36)}<div><div style="font-size:11px;color:var(--muted)">${n}</div>${esc(itemName(k))}</div></div>`).join('')}</div></div>` : ''}
       </aside>
@@ -2831,7 +2929,24 @@ function renderCharacter(id) {
   if ($('#ch-grow')) $('#ch-grow').addEventListener('click', () => { state.grow = growDefault(c.id); save(); navigate('tools/grow'); });
   $('#ch-cfg').addEventListener('click', () => openCharCfg(c.id));
   $$('[data-tlgo]', el).forEach(b => b.addEventListener('click', () => { state.tlSel = b.dataset.tlgo; navigate('tools/timeline'); window.scrollTo(0, 0); }));
+  loadEchoes().then(d => { const box = $('#ch-echo'); if (box && curView === 'character' && CH[id] === c) box.innerHTML = mainEchoHTML(c, d); });
   loadSkills(rid).then(rows => { const box = $('#ch-skills'); if (rows && box && curView === 'character' && CH[id] && CH[id].rid === rid) box.innerHTML = skillsHTML(rows); });
+}
+// 추천 메인 에코: public/echoes.json (tools/build_echoes.py — 공략 사이트 추천 + 게임 데이터)
+let ECHOES_P = null;
+const loadEchoes = () => ECHOES_P || (ECHOES_P = fetch(`${BASE}echoes.json?h=${Math.floor(Date.now() / 864e5)}`).then(r => r.ok ? r.json() : null).catch(() => null));
+function mainEchoHTML(c, d) {
+  const x = d && d.chars && d.chars[c.id];
+  if (!x || !x.m.length) return '<h3>추천 메인 에코</h3><p class="note" style="margin:0">이 공명자의 메인 에코 정보가 아직 없습니다.</p>';
+  const row = (eid, i) => {
+    const e = d.echoes[eid]; if (!e) return '';
+    const img = `${BASE}assets/echo/${eid}.webp`; // 아이콘은 echoes.json과 함께 만들어짐
+    const sets = (e.sets || []).map(sid => `<span class="tag ${sid === c.set ? 'gold' : ''}" title="${sid === c.set ? '이 공명자의 추천 세트' : ''}">${esc((RAW_SETS[sid] || {}).n || `세트 ${sid}`)}</span>`).join(' ');
+    return `<div class="wp me-row"><img src="${img}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div><div><span class="tag ${i ? '' : 'gold'}">${i ? '대안' : '1순위'}</span> <b>${esc(e.n)}</b> <span class="note">4코스트${e.cd ? ` · 쿨타임 ${e.cd}초` : ''}</span></div>
+      <div class="me-sets">${sets}</div><div class="d">${esc(e.d).replace(/\n/g, '<br>')}</div></div></div>`;
+  };
+  return `<h3>추천 메인 에코 <small>${x.src === 'guide' ? '공략 사이트 추천' : '게임 데이터로 추정'}</small></h3>${x.m.map((eid, i) => row(String(eid), i)).join('')}
+    <p class="note" style="margin:8px 0 0">${x.src === 'guide' ? '출처: wuwabuild.com 공명자 빌드(3.7) · ldshop.gg 에코 가이드. 이름 · 효과는 게임 데이터 기준입니다.' : '공략 정보가 아직 없어, 추천 세트에 속하고 속성 · 주력 공격 유형과 맞는 4코스트 에코를 골랐습니다.'} 금색 세트 표시는 이 공명자의 추천 세트와 같은 세트입니다.</p>`;
 }
 // 스킬 설명: public/skills/<rid>.json (tools/build_skills.py가 게임 데이터로 만듦) — 이 화면을 열 때만 받아 옴
 const SKILL_CACHE = {};
