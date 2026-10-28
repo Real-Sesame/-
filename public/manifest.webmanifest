@@ -1,0 +1,23 @@
+{
+  "name": "띵조 AUTO TEAM MAKER",
+  "short_name": "띵조 ATM",
+  "description": "명조: 워더링 웨이브 공명자 가이드 · 역경의 탑 자동 편성 · 에코 계산기 · 튜닝 시뮬레이터",
+  "lang": "ko",
+  "start_url": "/-/?src=app",
+  "scope": "/-/",
+  "id": "/-/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#141413",
+  "theme_color": "#141413",
+  "icons": [
+    { "src": "/-/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/-/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/-/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "파티 편성", "url": "/-/tools/tower-build", "icons": [{ "src": "/-/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "시즌 콘텐츠", "url": "/-/season", "icons": [{ "src": "/-/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "공명자 가이드", "url": "/-/characters", "icons": [{ "src": "/-/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

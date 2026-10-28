@@ -22,6 +22,7 @@ public/                 그대로 올라가는 파일
   chars-extra.json      새 공명자 (자동 갱신)
   Index.html            예전 주소(Index.html#/…)를 새 주소로 넘겨 주는 페이지
 server/                 로그인 · 설정 동기화 서버 (Cloudflare Workers + D1)
+android/                안드로이드 앱(사이트를 여는 WebView 앱) 소스
 tools/                  자동 갱신 스크립트
 .github/workflows/      deploy.yml(배포) · update-chars.yml · update-events.yml
 ```
@@ -62,6 +63,13 @@ tools/                  자동 갱신 스크립트
 - 계정에 저장되는 것: 보유 캐릭터 · 파티 · 캐릭터 설정 · 계산 설정 · 육성 계산 · 에코 계산기(localStorage `ddingjo-atm-v2`, `ddingjo-atm-echo-calc`). 계정당 최대 256KB.
 - 서버 코드를 고친 뒤 다시 올리기: `cd server && npx wrangler login && npx wrangler deploy` (표 구조는 `schema.sql`).
 - 사이트 배포(deploy.yml) 때마다 로그인 서버가 응답하는지 확인합니다.
+
+## 안드로이드 앱 · 홈 화면 앱 (Ver. 1.0.23~)
+
+- `android/`를 고치거나 `src/data/app-version.json`의 버전을 올리면 `.github/workflows/android.yml`이 APK를 만들어 GitHub Releases(`app-v<버전>`)에 올립니다. 사이트의 앱 설치 페이지(`/-/app`)는 항상 최신 릴리스의 `ddingjo-atm.apk`로 연결됩니다.
+- 앱 껍데기를 바꿨을 때는 `app-version.json`의 `versionCode`(1씩 올림)와 `versionName`, `notes`를 고칩니다. 앱 안에서 사이트가 더 새 versionCode를 보면 업데이트 안내를 띄웁니다. 화면 · 기능은 사이트에서 오므로 대부분의 업데이트는 앱을 다시 만들 필요가 없습니다.
+- 서명: 저장소 Secrets에 `ANDROID_KEYSTORE_B64`(키 파일 base64) · `ANDROID_KEYSTORE_PASSWORD` · `ANDROID_KEY_ALIAS`가 있으면 그 키로, 없으면 `android/keys/ddingjo-public.jks`(공개 키, 비밀번호 `ddingjo-public`)로 서명합니다. 서명 키가 바뀌면 기존 앱 위에 업데이트 설치가 안 되고 지웠다가 다시 설치해야 합니다.
+- 홈 화면에 추가(PWA): `public/manifest.webmanifest`, `public/sw.js`(페이지 · 데이터는 항상 인터넷 우선, 버전 붙은 코드 · 그림만 저장), 아이콘 `public/icons/`.
 
 ## 참고
 

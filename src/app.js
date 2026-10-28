@@ -18,6 +18,14 @@ import IMG_KEYS from './data/img-index.json';
 import D_PATCH_NOTES from './data/patch-notes.json';
 const BASE = import.meta.env.BASE_URL;
 const DEBUG = /[?&]debug\b/.test(location.search); // 주소를 정리하기 전에 읽어 둠(점검용)
+import D_APP_VER from './data/app-version.json';
+// 안드로이드 앱(WebView) 안에서 열렸는지: 앱이 브라우저 정보 끝에 'DdingjoApp/버전 (코드)'를 붙임
+const IN_APP = (() => { const m = navigator.userAgent.match(/DdingjoApp\/([\d.]+) \((\d+)\)/); return m ? { v: m[1], code: +m[2] } : null; })();
+const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
+const APK_URL = 'https://github.com/Real-Sesame/-/releases/latest/download/ddingjo-atm.apk';
+let INSTALL_EVT = null; // 브라우저의 '앱 설치' 요청(안드로이드 · PC 크롬/엣지)
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; if (typeof curView !== 'undefined' && curView === 'app') renderApp(); });
+if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
 const RAW_SETS = D_RAW_SETS;
@@ -2125,6 +2133,7 @@ async function exportData() {
     return;
   }
   const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  if (await appSave(blob, fname, 'application/json')) { $('#data-msg').textContent = '휴대폰 다운로드 폴더에 저장했습니다.'; return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = fname;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -2667,6 +2676,7 @@ function renderHome() {
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${['tower-build:역경의 탑 편성:시즌 버프 반영 자동 편성', 'timeline:딜 사이클:누가 언제 무엇을 하는지 순서대로', 'grow:육성 계산:돌파 · 스킬 재료와 필요한 파밍 횟수'].map(s => { const [k, n, d] = s.split(':'); return `<a class="mini-feat" href="#/tools/${k}"><b>${n}</b><span>${d}</span></a>`; }).join('')}</div></div></div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">튜닝 시뮬레이터</p><h3>별의 소리를 쓰기 전에,<br><em>미리 돌려 보기</em></h3><p>공개된 확률 규칙(5성 0.8% · 80회 확정 · 캐릭터 픽업 50%)으로 진행 중인 픽업을 돌려 보고, 천장 · 평균 · 쓴 별의 소리를 기록합니다.</p><a class="btn solid-gold" href="#/sim">튜닝 시뮬 열기</a></div>
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${cb.concat(wb).slice(0, 4).map(x => { const nm = x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || ''); return `<button class="mini-feat" data-simstart="${esc(`${x.k}:${x.f5[0]}:${x.E}`)}" style="text-align:left;font:inherit;cursor:pointer"><span class="k">${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝</span><b>${esc(nm)}로 시작</b><span>~ ${mdhm(x.E)} · ${x.k === 'char' ? '픽업 50% · 놓치면 다음 확정' : '5성은 픽업 무기 확정'}</span></button>`; }).join('') || '<a class="mini-feat" href="#/sim"><b>튜닝 시뮬 열기</b><span>진행 중인 픽업을 불러오면 여기에 나옵니다.</span></a>'}</div></div></div></section>
+    ${IN_APP || STANDALONE ? '' : `<section class="sec"><a class="app-promo" href="#/app"><img src="${BASE}icons/icon-192.png" alt="" width="48" height="48"><div><b>휴대폰 앱으로 쓰기</b><span>안드로이드 APK · 아이폰은 홈 화면에 추가 — 주소창 없이 전체 화면으로</span></div><span class="more">앱 설치</span></a></section>`}
     <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
     <section class="data-info" id="home-data" aria-label="데이터 기준"></section>
   </div>`;
@@ -2811,6 +2821,46 @@ function renderSeason() {
   $$('[data-ws]', el).forEach(b => b.addEventListener('click', () => { state.wsSel = b.dataset.ws; renderSeason(); }));
   const go = $('.ss-card[href="#ws"]', el); if (go) go.addEventListener('click', e => { e.preventDefault(); $('#ws').scrollIntoView({ behavior: 'smooth' }); });
   if (!W) loadWastes().then(d => { if (d && curView === 'season') renderSeason(); });
+}
+
+/* ---------- 앱 설치 ----------
+   안드로이드: GitHub Releases의 최신 APK(android/ 폴더를 .github/workflows/android.yml이 빌드)
+   그 밖에: 브라우저의 '홈 화면에 추가'(manifest.webmanifest + sw.js) */
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(navigator.userAgent);
+const appOutdated = () => IN_APP && IN_APP.code < D_APP_VER.versionCode;
+function renderApp() {
+  const el = $('[data-view="app"]'); const V = D_APP_VER;
+  const pageUrl = 'https://real-sesame.github.io' + BASE + 'app';
+  const steps = [['APK 받기', '아래 버튼으로 ddingjo-atm.apk를 내려받습니다(약 70KB).'], ['파일 열기', '알림이나 \'다운로드\' 폴더에서 파일을 누릅니다. 처음이면 "이 출처의 앱 설치 허용"을 켜 달라는 화면이 나옵니다.'],
+    ['설치', 'Play 프로텍트가 "인식할 수 없는 앱"이라고 하면 "자세히 → 무시하고 설치"를 누릅니다. Play 스토어에 올린 앱이 아니라서 뜨는 안내입니다.'], ['로그인(선택)', '앱과 휴대폰 브라우저는 저장 공간이 따로라, 같은 아이디로 로그인하면 보유 캐릭터 · 파티 설정이 그대로 이어집니다.']];
+  el.innerHTML = `<div class="container page"><p class="eyebrow">앱 설치</p><h1 class="ph-t">휴대폰에서 더 편하게,<br><em>띵조 ATM 앱</em></h1>
+    <p class="ph-d">앱은 이 사이트를 전체 화면으로 여는 가벼운 앱이라, 사이트가 업데이트되면 앱도 바로 최신이 됩니다. 편성 이미지 · 설정 백업은 휴대폰 '다운로드/띵조' 폴더에 저장됩니다.</p>
+    ${IN_APP ? `<div class="box app-now ${appOutdated() ? 'warn' : ''}"><b>${appOutdated() ? `새 앱 버전 ${esc(V.versionName)}이 있어요` : '지금 앱으로 보고 있어요'}</b><span class="note">설치된 앱 ${esc(IN_APP.v)}${appOutdated() ? ` → 최신 ${esc(V.versionName)}` : ' · 최신 버전'}</span>${appOutdated() ? `<a class="btn solid-gold" href="${APK_URL}">새 버전 받기</a>` : ''}</div>` : ''}
+    <div class="app-grid">
+      <section class="box app-card"><div class="app-head"><img src="${BASE}icons/icon-192.png" alt="" width="64" height="64"><div><h2>안드로이드 앱 (APK)</h2><p class="note">버전 ${esc(V.versionName)} · ${esc(V.date)} · Android ${esc(V.minAndroid)} 이상</p></div></div>
+        <a class="btn solid-gold lg app-dl" href="${APK_URL}" rel="noopener">APK 내려받기</a>
+        <ol class="app-steps">${steps.map(([h, d]) => `<li><b>${h}</b><span>${d}</span></li>`).join('')}</ol>
+        ${(V.notes || []).length ? `<p class="note" style="margin:10px 0 0"><b>이번 버전:</b> ${V.notes.map(esc).join(' · ')}</p>` : ''}
+        <p class="note" style="margin:6px 0 0">파일은 이 저장소의 <a href="https://github.com/Real-Sesame/-/releases" target="_blank" rel="noopener">GitHub 릴리스</a>에 올라가며, 소스(android 폴더)도 공개되어 있습니다.</p></section>
+      <section class="box app-card"><h2>설치 없이 홈 화면에 추가</h2><p class="note">아이폰이나 PC, APK 설치가 꺼려질 때. 브라우저 기능으로 아이콘을 만들어 앱처럼 전체 화면으로 엽니다.</p>
+        ${STANDALONE ? '<p><span class="tag gold">이미 홈 화면 앱으로 열려 있어요</span></p>' : INSTALL_EVT ? '<button class="btn solid-gold" id="pwa-install">홈 화면에 추가</button>' : ''}
+        <div class="app-how"><div><b>아이폰 · 아이패드 (Safari)</b><span>아래쪽 공유 버튼(□↑) → "홈 화면에 추가"</span></div><div><b>안드로이드 (Chrome · 삼성 인터넷)</b><span>오른쪽 위 ⋮ 메뉴 → "홈 화면에 추가" 또는 "앱 설치"</span></div><div><b>PC (Chrome · Edge)</b><span>주소창 오른쪽의 설치 아이콘(⊕) → "설치"</span></div></div></section>
+      ${!isAndroid && !isIOS ? `<section class="box app-card app-qr"><h2>휴대폰으로 이 페이지 열기</h2><div id="app-qr" aria-label="이 페이지 주소 QR 코드"></div><p class="note">휴대폰 카메라로 찍으면 이 앱 설치 페이지가 열립니다.<br><span class="num">${esc(pageUrl)}</span></p></section>` : ''}
+    </div>
+    <section class="sec">${secHead('자주 묻는 질문', '', '')}<div class="box"><ul class="prose" style="margin:0">
+      <li><b>앱과 사이트는 뭐가 달라요?</b> 기능은 같습니다. 앱은 주소창 없이 전체 화면으로 열리고, 파일 저장이 휴대폰 다운로드 폴더로 됩니다.</li>
+      <li><b>업데이트는요?</b> 화면 · 데이터는 앱을 열 때마다 최신입니다. 앱 자체(껍데기)가 바뀌면 앱 안 이 페이지에 "새 앱 버전" 안내가 나옵니다.</li>
+      <li><b>인터넷이 없으면?</b> 최신 픽업 · 시즌 정보를 받아야 해서 인터넷이 필요합니다. 연결이 끊기면 다시 시도 화면이 나옵니다.</li>
+      <li><b>안전한가요?</b> 앱은 인터넷 권한만 쓰며, 이 사이트 밖의 주소는 휴대폰 브라우저로 엽니다. 개인 정보를 따로 모으지 않습니다.</li></ul></div></section></div>`;
+  const ib = $('#pwa-install'); if (ib) ib.addEventListener('click', async () => { const e = INSTALL_EVT; if (!e) return; e.prompt(); const r = await e.userChoice.catch(() => null); INSTALL_EVT = null; toast(r && r.outcome === 'accepted' ? '홈 화면에 추가했습니다.' : '설치를 취소했습니다.'); renderApp(); });
+  const qr = $('#app-qr'); if (qr) import('qrcode-generator').then(m => { const q = (m.default || m)(0, 'M'); q.addData(pageUrl); q.make(); qr.innerHTML = q.createSvgTag({ cellSize: 5, margin: 2, scalable: true }); }).catch(() => { });
+}
+// 앱 안에서 앱 자체가 오래된 버전이면 한 번 알려 줌
+function appUpdateNotice() {
+  if (!appOutdated()) return;
+  try { if (sessionStorage.getItem('atm-app-upd') === String(D_APP_VER.versionCode)) return; sessionStorage.setItem('atm-app-upd', String(D_APP_VER.versionCode)); } catch (e) { }
+  setTimeout(() => toast(`새 앱 버전 ${D_APP_VER.versionName}이 있어요. 메뉴 → 앱 설치에서 받을 수 있습니다.`), 1500);
 }
 
 /* ---------- 공지사항 ---------- */
@@ -3118,8 +3168,8 @@ function renderSim() {
 }
 
 /* ---------- 화면 전환 ---------- */
-const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'sim', 'links', 'notice'];
-const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항' };
+const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'sim', 'links', 'notice', 'app'];
+const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항', app: '앱 설치' };
 let curView = null;
 // 주소: /-/ (홈), /-/characters, /-/character/<id>, /-/tools/<탭> … 예전 #/주소도 받아서 새 주소로 바꿈
 function parseRoute() {
@@ -3154,7 +3204,7 @@ function showView(r, keepScroll) {
   closeDrawer();
   if (v === 'tools' && (r.a === 'help' || r.a === 'patch')) { navigate(r.a === 'help' ? 'intro' : 'notice', true); if (r.a === 'help') setTimeout(scrollHelp, 60); return; }
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
-  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice }[v])(r.a);
+  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
   document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
@@ -3280,6 +3330,14 @@ async function makePartyImage() {
   g.fillStyle = '#75808f'; g.font = F(500, 18); g.fillText('예상 피해는 비교용 추정치입니다 · 띵조 AUTO TEAM MAKER', PAD, H - 30);
   return cv;
 }
+// 앱 안에서는 브라우저 다운로드 대신 앱의 저장 기능(휴대폰 '다운로드/띵조' 폴더)을 씀
+async function appSave(blob, fname, mime) {
+  if (!(window.DdingjoApp && window.DdingjoApp.saveFile)) return false;
+  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
+  const where = window.DdingjoApp.saveFile(b64, fname, mime || blob.type || 'application/octet-stream');
+  toast(where ? `휴대폰 ${where}에 저장했습니다.` : '저장하지 못했습니다.');
+  return true;
+}
 async function savePartyImage() {
   toast('이미지를 만드는 중…');
   const cv = await makePartyImage();
@@ -3289,6 +3347,7 @@ async function savePartyImage() {
     const dl = await window.claude.use('downloads').catch(() => null);
     if (dl) { try { await dl.save({ filename: fname, data: blob }); toast('이미지를 저장했습니다.'); } catch (e) { toast(e && e.code === 'declined' ? '저장을 취소했습니다.' : '이미지를 저장하지 못했습니다.'); } return; }
   }
+  if (await appSave(blob, fname, 'image/png')) return;
   const file = new File([blob], fname, { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
     try { await navigator.share({ files: [file], title: '띵조 AUTO TEAM MAKER 편성' }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
@@ -3626,6 +3685,8 @@ function initAcct() {
 
 init();
 initAcct();
+appUpdateNotice();
+if (IN_APP) document.documentElement.classList.add('in-app');
 refreshExtra();
 
 // 점검 · 테스트용(읽기 전용): 주소 끝에 ?debug를 붙여 열었을 때만 브라우저 콘솔에서 ATM_DEBUG()로 현재 상태를 볼 수 있음

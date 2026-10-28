@@ -6,6 +6,11 @@
 <title>띵조 AUTO TEAM MAKER</title>
 <meta name="description" content="명조(Wuthering Waves) 역경의 탑·필드 파티 자동 편성과 1사이클 예상 피해 계산기">
 <meta name="theme-color" content="#141413">
+<link rel="manifest" href="/-/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/-/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="띵조 ATM">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta property="og:title" content="띵조 AUTO TEAM MAKER">
 <meta property="og:description" content="명조 파티 자동 편성 · 1사이클 예상 피해 · 딜 사이클 타임라인">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305060b'/%3E%3Cpath d='M32 8l6 18 18 6-18 6-6 18-6-18-18-6 18-6z' fill='%23ffcd3c'/%3E%3C/svg%3E">
@@ -25,7 +30,7 @@
       <button class="icon-btn menu-btn" id="btn-menu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
     </div>
   </div>
-  <nav class="drawer" id="drawer" aria-label="모바일 메뉴" hidden><a href="#/" data-nav="home">홈</a><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/season" data-nav="season">시즌 콘텐츠</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a></nav>
+  <nav class="drawer" id="drawer" aria-label="모바일 메뉴" hidden><a href="#/" data-nav="home">홈</a><a href="#/intro" data-nav="intro">소개</a><a href="#/characters" data-nav="characters">공명자 가이드</a><a href="#/tools" data-nav="tools">파티 편성</a><a href="#/season" data-nav="season">시즌 콘텐츠</a><a href="#/echo" data-nav="echo">에코 계산기</a><a href="#/sim" data-nav="sim">튜닝 시뮬</a><a href="#/links" data-nav="links">자료실</a><a href="#/notice" data-nav="notice">공지사항</a><a href="#/app" data-nav="app">앱 설치</a></nav>
 </header>
 
 <main id="main">
@@ -38,6 +43,7 @@
   <section class="view" data-view="sim" hidden></section>
   <section class="view" data-view="links" hidden></section>
   <section class="view" data-view="notice" hidden></section>
+  <section class="view" data-view="app" hidden></section>
   <div class="wrap view" data-view="tools" hidden>
   <div class="tools-head">
     <div><p class="eyebrow">파티 편성</p><h1 class="ph-t">내 캐릭터로 짜는 <em>최적의 파티</em></h1><p class="ph-d">역경의 탑 · 필드 파티 자동 편성, 1사이클 예상 피해, 딜 사이클, 육성 계산을 한곳에서.</p></div>
@@ -314,7 +320,7 @@ HP 비례     = HP × 환산 비율   (HP = 기본 HP × (1 + HP% 합) + 고정 
 <footer class="site-foot">
   <div class="container foot-in">
     <div class="foot-brand"><span class="logo-mark" aria-hidden="true">✦</span> 띵조 AUTO TEAM MAKER <span class="chip num" id="ver-chip">Ver. 1.0.15</span></div>
-    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/intro">사용 설명</a><a href="#/notice">업데이트 내역</a></nav>
+    <nav class="foot-nav" aria-label="바닥 메뉴"><a href="#/intro">소개</a><a href="#/notice">공지사항</a><a href="#/links">자료실</a><a href="#/app">앱 설치</a><a href="#/intro">사용 설명</a><a href="#/notice">업데이트 내역</a></nav>
     <p class="foot-note">팬이 만든 비공식 사이트입니다. 명조: 워더링 웨이브의 이미지 · 이름 · 게임 데이터의 권리는 KURO GAMES에 있습니다. 예상 피해와 확률은 비교용 추정치입니다.</p>
   </div>
 </footer>
