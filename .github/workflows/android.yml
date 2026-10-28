@@ -1,0 +1,86 @@
+# 띵조 AUTO TEAM MAKER — 안드로이드 앱(APK) 만들기
+# android/ 폴더나 src/data/app-version.json을 바꾸면 APK를 새로 만들어 GitHub Releases에 올립니다.
+# 사이트의 앱 페이지는 항상 최신 릴리스의 ddingjo-atm.apk를 내려받게 연결되어 있습니다.
+# (Actions 탭 → "안드로이드 앱 만들기" → Run workflow 로 바로 돌릴 수도 있습니다)
+#
+# 서명 키: 저장소 Settings → Secrets and variables → Actions에
+#   ANDROID_KEYSTORE_B64(키 파일을 base64로), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS 가 있으면 그 키로 서명하고,
+#   없으면 저장소의 android/keys/ddingjo-public.jks로 서명합니다.
+name: 안드로이드 앱 만들기
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - android/**
+      - src/data/app-version.json
+      - .github/workflows/android.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 릴리스 만들기 · APK 올리기
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: 서명 키 준비
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PW" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "::add-mask::$KS_PW"; echo "KEYSTORE_PASSWORD=$KS_PW" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=${KS_ALIAS:-ddingjo}" >> "$GITHUB_ENV"
+            echo "저장소 Secrets의 서명 키를 씁니다"
+          else
+            echo "저장소의 공개 서명 키(android/keys/ddingjo-public.jks)를 씁니다"
+          fi
+
+      - name: APK 만들기
+        run: |
+          set -o pipefail
+          gradle -p android --no-daemon assembleRelease 2>&1 | tee "$RUNNER_TEMP/build.log"
+          ls -la android/app/build/outputs/apk/release/
+
+      - name: 실패하면 마지막 로그를 남김
+        if: failure()
+        run: |
+          [ -f "$RUNNER_TEMP/build.log" ] || exit 0
+          msg=$(grep -E "error|Error|FAILURE|What went wrong|>" "$RUNNER_TEMP/build.log" | tail -n 25 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=APK 빌드 실패::${msg}"
+
+      - name: 릴리스에 올리기
+        run: |
+          VN=$(python3 -c "import json;print(json.load(open('src/data/app-version.json'))['versionName'])")
+          NOTES=$(python3 -c "import json;d=json.load(open('src/data/app-version.json'));print('\n'.join('- '+n for n in d.get('notes',[])))")
+          cp android/app/build/outputs/apk/release/app-release.apk ddingjo-atm.apk
+          sha256sum ddingjo-atm.apk | tee ddingjo-atm.apk.sha256
+          TAG="app-v$VN"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" ddingjo-atm.apk ddingjo-atm.apk.sha256 --clobber
+          else
+            gh release create "$TAG" ddingjo-atm.apk ddingjo-atm.apk.sha256 --title "띵조 ATM 앱 $VN" --notes "$(printf '안드로이드 앱 %s\n\n%s\n\n설치: 사이트의 앱 페이지(https://real-sesame.github.io/-/app)를 참고하세요.' "$VN" "$NOTES")" --latest
+          fi
+          echo "올림: $TAG / $(stat -c %s ddingjo-atm.apk) bytes"

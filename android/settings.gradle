@@ -1,0 +1,10 @@
+// 띵조 AUTO TEAM MAKER 안드로이드 앱 (사이트를 앱 화면으로 여는 가벼운 WebView 앱)
+pluginManagement {
+    repositories { google(); mavenCentral(); gradlePluginPortal() }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories { google(); mavenCentral() }
+}
+rootProject.name = 'ddingjo-atm'
+include ':app'

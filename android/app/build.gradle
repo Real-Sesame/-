@@ -1,0 +1,40 @@
+import groovy.json.JsonSlurper
+
+plugins { id 'com.android.application' }
+
+// 앱 버전은 src/data/app-version.json 하나로 관리(사이트의 앱 페이지도 같은 파일을 읽음)
+def ver = new JsonSlurper().parse(rootProject.file('../src/data/app-version.json'))
+
+android {
+    namespace 'io.github.realsesame.ddingjo'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'io.github.realsesame.ddingjo'
+        minSdk 24
+        targetSdk 35
+        versionCode ver.versionCode as int
+        versionName ver.versionName as String
+    }
+
+    signingConfigs {
+        release {
+            // GitHub 저장소 Secrets에 ANDROID_KEYSTORE_B64 · ANDROID_KEYSTORE_PASSWORD · ANDROID_KEY_ALIAS가 있으면 그 키로,
+            // 없으면 저장소에 들어 있는 공개 키(keys/ddingjo-public.jks)로 서명합니다.
+            storeFile file(System.getenv('KEYSTORE_FILE') ?: rootProject.file('keys/ddingjo-public.jks').path)
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'ddingjo-public'
+            keyAlias System.getenv('KEY_ALIAS') ?: 'ddingjo'
+            keyPassword System.getenv('KEYSTORE_PASSWORD') ?: 'ddingjo-public'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
