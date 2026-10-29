@@ -851,3 +851,18 @@ h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflo
 /* 앱 설치: 서명 지문 */
 .app-fp{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:4px 0}
 .app-fp code{font-size:12px;word-break:break-all;overflow-wrap:anywhere;background:rgba(127,127,127,.1);padding:4px 6px;border-radius:6px;flex:1 1 260px;min-width:0}
+
+/* 종말 매트릭스 */
+.mx-round { margin-top: 12px; display: grid; gap: 8px; }
+.mx-round .lbl, .mx-teams .lbl { font-size: 12px; color: var(--muted); font-weight: 600; }
+.mx-en { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; }
+.mx-en-h { display: flex; gap: 6px 8px; align-items: center; flex-wrap: wrap; }
+.mx-en .bufftxt { font-size: 12.5px; line-height: 1.55; }
+.mx-tip { color: var(--accent-ink); }
+.mx-enh { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 10px; }
+.mx-enh .mini { color: inherit; text-decoration: none; }
+.mx-teams { display: grid; gap: 8px; }
+.mx-team { display: grid; grid-template-columns: 26px auto 1fr; gap: 6px 12px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); }
+.mx-no { font-weight: 700; color: var(--gold); text-align: center; font-variant-numeric: tabular-nums; }
+.mx-tn { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; min-width: 0; }
+@media (max-width: 560px) { .mx-team { grid-template-columns: 22px 1fr; } .mx-tn { grid-column: 2; } }

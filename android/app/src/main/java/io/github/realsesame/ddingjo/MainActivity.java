@@ -125,6 +125,12 @@ public class MainActivity extends Activity {
         });
         web.setDownloadListener((url, ua, cd, mime, len) -> openOutside(Uri.parse(url)));
 
+        // 뒤로 가기: Android 13+는 새 방식(OnBackInvokedCallback) — Android 16(대상 SDK 36)부터는 onBackPressed가 불리지 않음
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
+        }
+
         if (saved != null) web.restoreState(saved);
         else web.loadUrl(startUrl(getIntent()));
     }
@@ -170,12 +176,15 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (offline) { super.onBackPressed(); return; }
-        if (web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+    /** 사이트 안에서 이전 화면으로, 더 갈 곳이 없으면(또는 오프라인 화면이면) 앱 닫기 */
+    void goBack() {
+        if (!offline && web.canGoBack()) web.goBack();
+        else finish();
     }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() { goBack(); } // Android 12 이하
 
     @Override
     protected void onSaveInstanceState(Bundle out) {

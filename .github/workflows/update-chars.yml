@@ -1,7 +1,7 @@
 # 띵조 AUTO TEAM MAKER — 신규 공명자 자동 갱신
 # 매일 한 번 명조 게임 데이터(Arikatsu/WutheringWaves_Data)를 확인해
 # 앱에 없는 공명자가 생기면 public/chars-extra.json과 일러스트(public/assets)를 갱신하고 커밋합니다.
-# 공명자 스킬 설명(public/skills)도 게임 데이터가 바뀌면 함께 갱신합니다.
+# 공명자 스킬 설명(public/skills) · 시즌 콘텐츠(역경의 탑 · 폐허 · 종말 매트릭스) · 메인 에코도 게임 데이터가 바뀌면 함께 갱신합니다.
 # 앱 코드(src/)나 스크립트를 새로 올렸을 때도 바로 한 번 돌아 목록을 맞춥니다.
 # (Actions 탭 → "신규 공명자 자동 갱신" → Run workflow 로 바로 돌릴 수도 있습니다)
 # ※ 이 파일은 반드시 저장소의 .github/workflows/ 폴더 안에 있어야 GitHub가 실행합니다.
@@ -22,6 +22,7 @@ on:
       - tools/build_wastes.py
       - tools/build_tower.py
       - tools/build_echoes.py
+      - tools/build_matrix.py
       - .github/workflows/update-chars.yml
   workflow_dispatch:
 
@@ -61,7 +62,7 @@ jobs:
             /BinData/resonate_chain/resonantchain.json /BinData/weapon/weaponconf.json \
             /BinData/property/rolepropertygrowth.json /BinData/property/baseproperty.json \
             /BinData/gacha/gachaviewinfo.json \
-            /BinData/ShipTower/ /BinData/tower/ /BinData/monster_Info/monsterinfo.json \
+            /BinData/ShipTower/ /BinData/tower/ /BinData/NewTower/ /BinData/monster_Info/monsterinfo.json \
             /BinData/phantom/phantomitem.json /BinData/phantom/phantomskill.json /BinData/VisionRecommend/ \
             /Textmaps/en/multi_text/MultiText.json \
             /Textmaps/ko/multi_text/MultiText.json
@@ -87,6 +88,10 @@ jobs:
         continue-on-error: true
         run: python tools/build_tower.py gamedata public/tower.json
 
+      - name: 종말 매트릭스 단계 정보 만들기 (public/matrix.json)
+        continue-on-error: true
+        run: python tools/build_matrix.py gamedata .
+
       - name: 추천 메인 에코 만들기 (public/echoes.json)
         continue-on-error: true
         run: python tools/build_echoes.py gamedata .
@@ -98,8 +103,8 @@ jobs:
       - name: 바뀐 내용이 있으면 커밋
         id: commit
         run: |
-          git add -A public/assets public/skills public/wastes.json public/tower.json public/echoes.json 2>/dev/null || true
-          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json public/tower.json public/echoes.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
+          git add -A public/assets public/skills public/wastes.json public/tower.json public/echoes.json public/matrix.json 2>/dev/null || true
+          if git diff --quiet -- public/chars-extra.json && git diff --cached --quiet -- public/assets public/skills public/wastes.json public/tower.json public/echoes.json public/matrix.json && git ls-files --error-unmatch public/chars-extra.json >/dev/null 2>&1; then
             echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"

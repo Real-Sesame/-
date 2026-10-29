@@ -2750,7 +2750,7 @@ function renderLinks() {
   $$('[data-lc]', el).forEach(b => b.addEventListener('click', () => { state.linkCat = b.dataset.lc; renderLinks(); }));
 }
 
-/* ---------- 시즌 콘텐츠 (역경의 탑 · 죽음의 노래와 바닷속 폐허) ----------
+/* ---------- 시즌 콘텐츠 (역경의 탑 · 죽음의 노래와 바닷속 폐허 · 종말 매트릭스) ----------
    폐허 데이터: public/wastes.json (tools/build_wastes.py가 게임 데이터 BinData/ShipTower로 만듦)
    시즌: 28일마다 월요일 04:00(한국 시간) 초기화, 역경의 탑과 2주 엇갈림. 23시즌 = 2026-10-26 시작(인벤 공략 글로 확인) */
 const WASTES_BASE = { n: 23, t: Date.UTC(2026, 9, 25, 19, 0, 0) };
@@ -2781,6 +2781,97 @@ function wastesTeams(cands, half) {
   const pick = pickDisjoint(lists, false, 120);
   return half.map((h, i) => pick[i] ? pick[i].r : null);
 }
+/* 종말 매트릭스: public/matrix.json (tools/build_matrix.py가 게임 데이터 BinData/NewTower로 만듦)
+   도전 단계는 버전마다 바뀜(단계 기간 = 버전 기간, public/events.json의 버전 일정) */
+let MX = null, MX_P = null, SEASON_RANKED = null; const WS_TEAMS = new Map(); // SEASON_RANKED: 시즌 화면 추천 파티 계산 결과(보유 캐릭터 · 설정이 같으면 다시 쓰기)
+function loadMatrix() {
+  if (!MX_P) MX_P = fetch(`${BASE}matrix.json?h=${Math.floor(Date.now() / 36e5)}`).then(r => r.ok ? r.json() : null).then(d => { MX = d; return d; }).catch(() => null);
+  return MX_P;
+}
+function mxStageAt(d, now) {
+  if (!d || !d.stages.length) return null;
+  const t = x => x ? Date.parse(x) : NaN;
+  return d.stages.find(x => t(x.s) <= now && now < t(x.e)) || [...d.stages].reverse().find(x => t(x.s) <= now) || d.stages[d.stages.length - 1];
+}
+const MX_RANK = ['B', 'A', 'S', 'SS', 'SSS', '최상위 Ⅰ', '최상위 Ⅱ'];
+// 강화 공명자: 「캐릭터의 최종 피해가 25% 증가」 → 그 캐릭터가 파티 피해에서 차지하는 몫만큼 파티 점수를 올림
+function mxEnh(st) { const m = {}; (st.enh || []).forEach(([rid, d]) => { const c = charByRid(rid); const p = +((d.match(/최종 피해가 (\d+)%/) || [])[1] || 0); if (c) m[c.id] = p / 100; }); return m; }
+// 보유 캐릭터로 종말 매트릭스 파티를 짬: 피로도 1(위기 특수 요원은 2)이라 캐릭터는 한 번씩만(요원은 두 번까지),
+// 예상 피해(파티 편성과 같은 계산 + 추천 조합 · 커뮤니티 평가 + 이번 단계 강화 공명자) 순으로 겹치지 않게 고름
+function mxTeams(ranked, st, n = 9) {
+  const enh = mxEnh(st); const crisis = new Set((st.crisis || []).map(r => (charByRid(r) || {}).id).filter(Boolean));
+  const sc = ranked.map(t => {
+    const tot = (t.out || []).reduce((a, o) => a + (o.total || 0), 0) || 1;
+    const share = id => { const o = (t.out || []).find(o => o.m && o.m.id === id); return o ? (o.total || 0) / tot : 0; };
+    const eb = 1 + t.ids.reduce((a, id) => a + share(id) * (enh[id] || 0), 0);
+    const elShare = {}; t.ids.forEach(id => { const e = CH[id] && CH[id].el; if (e) elShare[e] = (elShare[e] || 0) + share(id); });
+    return { t, eb, elShare, enhIds: t.ids.filter(id => enh[id]), raw: t.score * teamPenalty(t) * presetBias(t.ids) * tierBias(t.ids) * eb };
+  }).sort((a, b) => b.raw - a.raw);
+  const used = {}; const pick = [];
+  for (const x of sc) {
+    if (pick.length >= n) break;
+    if (x.t.ids.some(id => (used[gk(id)] || 0) >= (crisis.has(id) ? 2 : 1))) continue;
+    x.t.ids.forEach(id => { used[gk(id)] = (used[gk(id)] || 0) + 1; });
+    pick.push(x);
+  }
+  return pick;
+}
+function matrixHTML(d, ranked, now) {
+  if (!d) return '<div class="empty-note">종말 매트릭스 데이터를 불러오는 중입니다…</div>';
+  if (!d.stages.length) return '<div class="empty-note">이번 도전 주기 정보가 아직 공개 데이터에 없습니다.</div>';
+  const cur = mxStageAt(d, now);
+  const st = d.stages.find(x => String(x.c) === String(state.mxSel)) || cur;
+  const chip = x => `<button class="fchip" data-mx="${x.c}" aria-pressed="${x === st}">${esc(x.n)} · ${esc(x.v)}${x === cur ? ' · 진행 중' : ''}</button>`;
+  const charChip = (rid, extra) => { const c = charByRid(rid); return c ? `<a class="mini" href="#/character/${c.id}" title="${esc(c.name)}">${portraitHTML(c)}<div>${esc(c.name)}${extra || ''}</div></a>` : ''; };
+  const resTxt = e => e.res.length ? `${e.res.map(elIdTag).join(' ')} 저항` : '모든 속성 저항 같음';
+  const enemyRow = (e, prev) => {
+    const seen = new Set((prev || []).map(b => b[0]));
+    const bs = e.b.filter(b => !seen.has(b[0]) && !/연승 추격/.test(b[0]));
+    if (prev && !bs.length) return '';
+    return `<div class="mx-en"><div class="mx-en-h"><b>${esc(e.n)}</b><span class="note">${resTxt(e)}</span>${e.k ? `<span class="tag gold">격파 +${fmt(e.k)}pt</span>` : ''}</div>
+      ${bs.map(b => `<div class="bufftxt"><b>${esc(b[0])}</b> ${esc(b[1])}</div>`).join('')}${!prev && e.f ? `<div class="bufftxt mx-tip">${esc(e.f).replace(/\n/g, '<br>')}</div>` : ''}</div>`;
+  };
+  // base: 비교할 앞 구성(안정 프로토콜 → 특이점 확장 1라운드, 앞 라운드 → 다음 라운드). 같은 효과는 빼고 새로 붙는 효과만 보여 줌
+  const roundsHTML = (rs, title, base) => rs.map((r, i) => {
+    const prev = i ? rs[i - 1].e : base;
+    const body = r.e.map(e => { const pe = prev && prev.find(x => x.n === e.n); return enemyRow(e, prev ? (pe ? pe.b : []) : null); }).join('');
+    return `<div class="mx-round"><div class="lbl">${title ? esc(title) : `라운드 ${i + 1}`}${r.m && r.m !== 1 ? ` · <b>득점 ×${r.m.toFixed(2)}</b>` : rs.length > 1 ? ' · 득점 ×1.00' : ''}${prev ? (i ? ' · 새로 붙는 효과만' : ' · 안정 프로토콜과 다른 점만') : ''}</div>
+      ${body || `<div class="note">${esc(r.e.map(e => e.n).join(' → '))} · 새 효과 없음(적 HP만 늘어남)</div>`}</div>`;
+  }).join('');
+  const sc = (arr) => `<div class="ws-sc">${arr.map((v, i) => `<span><small>${MX_RANK[i] || ''}</small> ${fmt(v)}</span>`).join('')}</div>`;
+  // 추천 파티
+  let teams = '';
+  if (ranked) {
+    const pick = mxTeams(ranked, st, 9);
+    const ens = (st.sing || st.stab).rounds[0].e.filter(e => e.res.length);
+    const row = (x, i) => {
+      const warn = ens.filter(e => e.res.some(r => (x.elShare[EL_BY_ID[r]] || 0) >= .5)).map(e => e.n);
+      return `<div class="mx-team"><span class="mx-no">${i + 1}</span><div class="mini-team">${x.t.ids.map(id => `<div class="mini">${portraitHTML(CH[id])}<div>${esc(CH[id].name)}</div></div>`).join('')}</div>
+        <div class="mx-tn">${x.enhIds.length ? `<span class="tag gold">강화 ${x.enhIds.map(id => esc(CH[id].name)).join(' · ')}</span>` : ''}${warn.length ? `<span class="note">저항 주의: ${esc(warn.join(', '))}</span>` : ''}</div></div>`;
+    };
+    teams = pick.length ? `<div class="mx-teams"><div class="lbl">안정 프로토콜 (파티 ${st.stab.teams}개)</div>${pick.slice(0, st.stab.teams).map(row).join('')}
+      ${st.sing && pick.length > st.stab.teams ? `<div class="lbl" style="margin-top:10px">특이점 확장 (이어서 출전 · 피로도 따로 계산이라 위 파티도 다시 씀)</div>${pick.slice(st.stab.teams).map((x, i) => row(x, i + st.stab.teams)).join('')}` : ''}</div>
+      <p class="note" style="margin:10px 0 0">예상 피해 순으로 캐릭터가 겹치지 않게 골랐습니다(위기 특수 요원은 피로도가 1 더 있어 두 파티까지). 이번 단계 강화 공명자의 최종 피해 증가를 넣어 계산했고, 주력 딜러 속성이 적의 저항 속성과 같으면 「저항 주의」로 표시합니다.</p>`
+      : '<p class="note">겹치지 않는 파티를 만들 캐릭터가 부족합니다.</p>';
+  }
+  return `<div class="fbar"><div class="grp">${d.stages.map(chip).join('')}</div></div>
+    ${st !== cur ? '<p class="note">지난 · 다음 단계 구성입니다.</p>' : ''}
+    <div class="two ws-top"><div class="box"><h3>규칙</h3><ul class="prose" style="margin:0">
+      <li><b>안정 프로토콜</b>: 파티 ${st.stab.teams}개로 한 라운드의 적을 모두 쓰러뜨리면 클리어. 일정 점수를 넘기면 특이점 확장이 열립니다.</li>
+      ${st.sing ? `<li><b>특이점 확장</b>: 파티 수 제한 없음. 한 라운드를 다 쓰러뜨리면 다음 라운드가 시작되고, 라운드가 오를수록 적 HP가 늘고 더 강한 효과가 붙습니다. 득점 배율 ${st.sing.rounds.map(r => '×' + (r.m || 1).toFixed(2)).join(' → ')}.</li>` : ''}
+      <li><b>피로도</b>: 출전할 때마다 1 소모, 0이면 출전 불가(안정 프로토콜 · 특이점 확장은 따로 계산). 점수는 적에게 준 피해로 정해집니다.</li>
+      <li>적을 쓰러뜨리면 15초 동안 파티 전체가 모든 피해에 면역되고 공격이 끊기지 않습니다(위기 대응 · 연승 추격).</li>
+      <li>파티마다 공명자 3명 + 증폭 회로 1개를 골라 시작합니다. 같은 무기 · 에코를 두 공명자가 동시에 쓸 수 없습니다.</li>
+      <li>보유한 캐릭터는 템플릿(Lv.90 · Lv.90 무기 · Lv.25 에코 세트)으로도 쓸 수 있고, 공명 체인은 내 것을 이어받습니다.</li>
+      ${d.cond ? `<li class="note">참여 조건: ${esc(d.cond)}</li>` : ''}</ul></div>
+      <div class="box"><h3>증폭 회로 <small>파티마다 1개 선택</small></h3><div class="stack" style="gap:8px">${st.buffs.map(([n, t]) => `<div class="ws-tok"><b>${esc(n)}</b><span>${esc(t).replace(/\n/g, '<br>')}</span></div>`).join('')}</div></div></div>
+    <div class="box" style="margin-top:14px"><h3>강화 공명자 <small>이번 단계 · 「위기 특수 요원」은 피로도 +1</small></h3>
+      <div class="mx-enh">${(st.crisis || []).map(r => charChip(r, ' <span class="tag gold">위기 특수 요원</span>')).join('')}${st.enh.filter(([r]) => !(st.crisis || []).includes(r)).map(([r]) => charChip(r)).join('')}</div>
+      ${[...new Set(st.enh.map(x => x[1]).filter(Boolean))].map(t => `<div class="bufftxt"><b>${esc(st.enh.filter(x => x[1] === t).map(x => (charByRid(x[0]) || { name: '' }).name).filter(Boolean).join(' · '))}</b> ${esc(t)}</div>`).join('')}</div>
+    <div class="two" style="margin-top:14px"><div class="box"><h3>안정 프로토콜</h3>${sc(st.stab.sc)}${roundsHTML(st.stab.rounds, '적 구성')}</div>
+      ${st.sing ? `<div class="box"><h3>특이점 확장</h3>${sc(st.sing.sc)}<div class="note" style="margin-top:8px">적 순서: ${esc(st.sing.rounds[0].e.map(e => e.n).join(' → '))} (쓰러뜨리면 다음 적이 이어서 나옴)</div>${roundsHTML(st.sing.rounds, '', st.stab.rounds[0].e)}</div>` : ''}</div>
+    <div class="box" style="margin-top:14px"><h3>내 캐릭터로 짠 추천 파티</h3>${ranked ? teams : `<p class="note" style="margin:0">보유 캐릭터를 6명 이상 등록하면 이번 단계 추천 파티가 나옵니다. <a href="#/tools/roster">보유 캐릭터 등록</a></p>`}</div>`;
+}
 function renderSeason() {
   const el = $('[data-view="season"]'); const now = Date.now();
   const ts = curSeason(); const ws = wastesSeasonAt(now);
@@ -2788,13 +2879,18 @@ function renderSeason() {
   const S = W && sel ? W.seasons[sel] : null;
   const pool = availableIds(state);
   let ranked = null;
-  if (S && pool.length >= 6) {
+  const rk = pool.join() + '|' + JSON.stringify([state.settings, state.ov, state.forced]);
+  if (SEASON_RANKED && SEASON_RANKED.k === rk) ranked = SEASON_RANKED.v;
+  else if (pool.length >= 6) {
     const ctx = { settings: state.settings, ov: state.ov, forcedModes: state.forced, zone: null, season: null };
     const cs = candidateTeams(pool, ctx, { k: 7 }).slice(0, 160);
     const ps = new Set(pool); presetTeams().forEach(x => { if (x.m.every(id => ps.has(id)) && new Set(x.m.map(gk)).size === 3 && !cs.some(t => sameTeam(t.ids, x.m))) cs.push(bestTeam(x.m, ctx)); });
     ranked = cs.map(t => t.out ? t : bestTeam(t.ids, ctx));
+    SEASON_RANKED = { k: rk, v: ranked };
   }
   const teamHTML = t => t ? `<div class="mini-team">${t.ids.filter(Boolean).map(id => `<div class="mini">${portraitHTML(CH[id])}<div>${esc(CH[id].name)}</div></div>`).join('')}</div>` : '<span class="note">겹치지 않는 파티가 부족합니다</span>';
+  const mxSt = mxStageAt(MX, now);
+  const mxCard = mxSt ? `<a class="ss-card" href="#mx"><span class="k">${esc(MX.season.n)} · ${esc(MX.season.tag)}</span><b>종말 매트릭스 <span class="tag gold">${esc(mxSt.n)}</span></b><span>${mxSt.s ? `${ymd(Date.parse(mxSt.s))} ~ ${ymd(Date.parse(mxSt.e))} · ${mxSt.e && Date.parse(mxSt.e) > now ? `다음 단계까지 <b class="num">${leftTxt(Date.parse(mxSt.e))}</b>` : '다음 단계 대기 중'}` : `${esc(mxSt.v)} 버전`}</span><span class="note">버전마다 단계 갱신 · 여러 파티 · 피로도 · 강화 공명자</span><span class="more">이번 단계 구성 보기</span></a>` : '';
   const card = (k, n, s, sub, href, btn) => `<a class="ss-card" href="${href}"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · 초기화까지 <b class="num">${leftTxt(s.end)}</b></span><span class="note">${sub}</span><span class="more">${btn}</span></a>`;
   // 역경의 탑 요약
   const tower = ['L', 'C12', 'C34', 'R'].map(z => {
@@ -2805,16 +2901,18 @@ function renderSeason() {
   }).join('');
   // 폐허
   const lvHTML = l => {
-    const tm = ranked ? wastesTeams(ranked, l.h) : null;
+    const wk = rk + '|' + sel + '|' + l.o + '|' + l.n;
+    const tm = ranked ? (WS_TEAMS.get(wk) || (WS_TEAMS.size > 60 && WS_TEAMS.clear(), WS_TEAMS.set(wk, wastesTeams(ranked, l.h)).get(wk))) : null;
     return `<article class="tower ws-lv"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap"><h3>${l.end ? '' : `${l.o - 6}층 · `}${esc(l.n)}</h3><span class="tag ${l.end ? 'gold' : ''}">${esc(l.z)}${l.end ? ' · 끝없는 도전' : ''}</span></div>
       <div class="ws-sc">${l.sc.map((v, i) => `<span><small>${['B', 'A', 'S', 'SS', 'SSS'][i] || ''}</small>${fmt(v)}</span>`).join('')}<span class="note">목표 점수</span></div>
       <div class="ws-h">${l.h.map((h, i) => `<div><div class="lbl">${i ? '후반' : '전반'} 파티${h.r.length ? ` · <span class="res">${h.r.map(elIdTag).join(' ')} 저항 +20%</span>` : ''}</div><div class="mons">${esc(h.m.map(m => m[0]).join(', '))}</div>${tm ? `<div style="margin-top:8px">${teamHTML(tm[i])}</div>` : ''}</div>`).join('')}</div></article>`;
   };
   const lvs = S ? S.lv : [];
-  el.innerHTML = `<div class="container page"><p class="eyebrow">시즌 콘텐츠</p><h1 class="ph-t">이번 시즌 <em>엔드 콘텐츠</em></h1><p class="ph-d">역경의 탑과 죽음의 노래와 바닷속 폐허는 28일마다 바뀝니다(서로 2주 엇갈림). 이번 시즌의 적 · 버프 · 증표와 남은 시간을 한곳에서 확인하세요.</p>
-    <div class="ss-grid">${card('역경의 탑 · 심경 구역', '역경의 탑', ts, '층별 버프 · 적 속성 · 추천 속성', '#/tools/tower-info', '탑 정보 · 자동 편성')}${card('재생 해역 · 해곡 · 급류', '죽음의 노래와 바닷속 폐허', ws, '전반 · 후반 2파티 · 연소 · 타오르는 조수', '#ws', '이번 시즌 구성 보기')}</div>
+  el.innerHTML = `<div class="container page"><p class="eyebrow">시즌 콘텐츠</p><h1 class="ph-t">이번 시즌 <em>엔드 콘텐츠</em></h1><p class="ph-d">역경의 탑과 죽음의 노래와 바닷속 폐허는 28일마다(서로 2주 엇갈림), 종말 매트릭스는 버전마다 바뀝니다. 이번 시즌의 적 · 버프 · 증표와 남은 시간을 한곳에서 확인하세요.</p>
+    <div class="ss-grid">${card('역경의 탑 · 심경 구역', '역경의 탑', ts, '층별 버프 · 적 속성 · 추천 속성', '#/tools/tower-info', '탑 정보 · 자동 편성')}${card('재생 해역 · 해곡 · 급류', '죽음의 노래와 바닷속 폐허', ws, '전반 · 후반 2파티 · 연소 · 타오르는 조수', '#ws', '이번 시즌 구성 보기')}${mxCard}</div>
     <section class="sec">${secHead('역경의 탑', `심경 구역 시즌 ${ts.n} · ${ymd(ts.start)} ~ ${ymd(ts.end)}`, '')}${tower ? `<div class="tower-grid">${tower}</div>` : '<div class="empty-note">이 시즌의 탑 구성이 아직 공개 데이터에 없습니다.</div>'}
       <p style="margin-top:12px"><a class="btn sm solid-gold" href="#/tools/tower-build">내 캐릭터로 역경의 탑 자동 편성</a></p></section>
+    <section class="sec" id="mx">${secHead('종말 매트릭스', MX ? `${esc(MX.season.n)}(${esc(MX.season.tag)}) · ${esc(MX.season.from)}~${esc(MX.season.to)} 버전` : '', '')}${matrixHTML(MX, ranked, now)}</section>
     <section class="sec" id="ws">${secHead('죽음의 노래와 바닷속 폐허', S ? `재생 해역 시즌 ${sel}${+sel === ws.n ? ' · 진행 중' : +sel < ws.n ? ' · 지난 시즌' : ' · 다음 시즌'}` : '', '')}
       ${!W ? '<div class="empty-note">폐허 데이터를 불러오는 중입니다…</div>' : !S ? '<div class="empty-note">이 시즌 구성이 아직 공개 데이터에 없습니다.</div>' : `
       <div class="fbar"><div class="grp">${Object.keys(W.seasons).map(n => `<button class="fchip" data-ws="${n}" aria-pressed="${n === sel}">시즌 ${n}${+n === ws.n ? ' · 진행 중' : +n < ws.n ? ' · 지난' : ' · 다음'}</button>`).join('')}</div></div>
@@ -2827,8 +2925,10 @@ function renderSeason() {
       <details class="nt" style="margin-top:20px"><summary><span class="tag">상시</span><b>금기의 해역</b><time>한 번만 클리어 · 초기화 없음</time></summary><div class="body"><div class="tower-grid" style="margin-top:10px">${W.perm.map(l => `<article class="tower"><h3>${l.o}층 · ${esc(l.n)}</h3><div class="ws-h">${l.h.map((h, i) => `<div><div class="lbl">${l.h.length > 1 ? (i ? '후반' : '전반') : '적'}</div><div class="mons">${esc(h.m.map(m => m[0]).join(', '))}</div></div>`).join('')}</div></article>`).join('')}</div></div></details>`}
     </section></div>`;
   $$('[data-ws]', el).forEach(b => b.addEventListener('click', () => { state.wsSel = b.dataset.ws; renderSeason(); }));
-  const go = $('.ss-card[href="#ws"]', el); if (go) go.addEventListener('click', e => { e.preventDefault(); $('#ws').scrollIntoView({ behavior: 'smooth' }); });
+  $$('[data-mx]', el).forEach(b => b.addEventListener('click', () => { state.mxSel = b.dataset.mx; renderSeason(); }));
+  ['ws', 'mx'].forEach(k => { const go = $(`.ss-card[href="#${k}"]`, el); if (go) go.addEventListener('click', e => { e.preventDefault(); $('#' + k).scrollIntoView({ behavior: 'smooth' }); }); });
   if (!W) loadWastes().then(d => { if (d && curView === 'season') renderSeason(); });
+  if (!MX) loadMatrix().then(d => { if (d && curView === 'season') renderSeason(); });
 }
 
 /* ---------- 앱 설치 ----------

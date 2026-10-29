@@ -16,6 +16,7 @@ public/                 그대로 올라가는 파일
   assets/               캐릭터 카드 · 전신 · 픽업 배너 · 링크 미리보기(og) 그림 (자동 생성)
   skills/<rid>.json     공명자 스킬 설명 (자동 생성 · 그 공명자 화면을 열 때만 받아 옴)
   wastes.json           죽음의 노래와 바닷속 폐허 시즌 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
+  matrix.json           종말 매트릭스 도전 단계 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
   tower.json            역경의 탑 시즌 구성 · 한국어 텍스트 (자동 생성)
   echoes.json           공명자별 추천 메인 에코 (자동 생성, 아이콘은 assets/echo/)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
@@ -44,7 +45,7 @@ tools/                  자동 갱신 스크립트
 ## 신규 공명자 자동 추가 (Ver. 1.0.09~)
 
 - `.github/workflows/update-chars.yml`과 `tools/update_chars.py`가 저장소에 있으면, GitHub Actions가 매일 한 번 명조 게임 데이터를 확인해 앱에 없는 공명자가 생겼을 때 `public/chars-extra.json`과 캐릭터 그림(`public/assets`)을 자동으로 갱신 · 커밋하고 사이트를 다시 배포합니다.
-- 같은 작업이 `tools/build_skills.py`로 공명자 스킬 설명(`public/skills/`)을, `tools/build_wastes.py`로 죽음의 노래와 바닷속 폐허 시즌 구성(`public/wastes.json`)을 게임 데이터에 맞춰 다시 만듭니다.
+- 같은 작업이 `tools/build_skills.py`로 공명자 스킬 설명(`public/skills/`)을, `tools/build_wastes.py`로 죽음의 노래와 바닷속 폐허 시즌 구성(`public/wastes.json`)을, `tools/build_matrix.py`로 종말 매트릭스 단계 구성(`public/matrix.json`, 단계 기간은 `public/events.json`의 버전 일정)을 게임 데이터에 맞춰 다시 만듭니다.
 - 폐허 시즌 번호 · 기간은 `src/app.js`의 `WASTES_BASE`(23시즌 = 2026-10-26 월요일 04:00 시작, 28일 주기)로 계산합니다.
 - 사이트는 열릴 때 `chars-extra.json`을 읽어 새 공명자를 보유 캐릭터 · 육성 계산 · 도감에 추가합니다(역할 · 버프는 추정치, "자동 추가 · 추정" 표시).
 - 바로 돌려 보려면 **Actions → 신규 공명자 자동 갱신 → Run workflow**.

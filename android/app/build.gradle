@@ -7,12 +7,12 @@ def ver = new JsonSlurper().parse(rootProject.file('../src/data/app-version.json
 
 android {
     namespace 'io.github.realsesame.ddingjo'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'io.github.realsesame.ddingjo'
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode ver.versionCode as int
         versionName ver.versionName as String
     }
