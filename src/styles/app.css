@@ -415,7 +415,8 @@ a.btn { text-decoration: none; }
 .drawer a { font-size: 15px; padding: 11px 12px; }
 .drawer a[aria-current="page"] { color: var(--gold); background: var(--surface); }
 @media (max-width: 1080px) { .gnb a { padding: 8px 8px; font-size: 13.5px; } .site-in { gap: 16px; } }
-@media (max-width: 940px) { .gnb { display: none; } .menu-btn { display: inline-grid; } }
+@media (max-width: 1080px) and (min-width: 820px) { .logo-long { display: none; } .gnb a { padding: 8px 7px; font-size: 13px; } .site-in { gap: 12px; } } /* 폴드 안쪽 화면: 로고를 줄이고 메뉴는 펼친 채로 */
+@media (max-width: 819px) { .gnb { display: none; } .menu-btn { display: inline-grid; } }
 @media (max-width: 420px) { .logo-t { font-size: 14px; } #btn-theme { padding: 4px 8px; font-size: 11px; } }
 
 /* 공통 페이지 머리말 · 섹션 */
@@ -582,7 +583,8 @@ a.btn { text-decoration: none; }
 .ch-outro { max-width: 560px; color: #cfcbbf; font-size: 14px; }
 @media (max-width: 720px) { .ch-hero .art { max-width: 100%; right: -18%; opacity: .5; } }
 .ch-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; padding-top: 28px; padding-bottom: 64px; }
-@media (max-width: 960px) { .ch-body { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .ch-body { grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; } }
+@media (max-width: 759px) { .ch-body { grid-template-columns: 1fr; } }
 .box { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 20px; }
 .box + .box { margin-top: 16px; }
 .box h3 { margin: 0 0 14px; font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
@@ -626,7 +628,7 @@ a.btn { text-decoration: none; }
 
 /* 에코 계산기 · 튜닝 시뮬 */
 .two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 920px) { .two { grid-template-columns: 1fr; } }
+@media (max-width: 759px) { .two { grid-template-columns: 1fr; } }
 .ec-pick { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
 .ec-pick select { padding: 8px 12px; border-radius: 10px; min-width: 200px; }
 .score { display: grid; place-items: center; text-align: center; padding: 18px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 18%, var(--surface-2)), var(--surface-2)); border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line)); margin-bottom: 14px; }
@@ -793,3 +795,55 @@ dialog.dlg-sm { width: min(440px, calc(100vw - 32px)); }
 h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflow-wrap: anywhere; }
 .ch-body > * { min-width: 0; }
 @media (max-width: 340px) { .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ===== 폴더블(갤럭시 Z 폴드 · 플립) =====
+   폴드 바깥 화면 · 플립 메인(폭 약 412) = 일반 휴대폰 배치, 폴드 안쪽(폭 약 880 · 가로 약 1000) = 2단 배치(위 760~1080 구간),
+   플립 커버 화면 · 휴대폰 가로(높이 520 이하) = 머리말 · 여백을 줄인 압축 배치,
+   반쯤 접은 플렉스 모드(화면이 위 · 아래로 나뉨) = 창 · 안내 바를 접힌 선에 걸치지 않게 */
+@media (max-height: 520px) {
+  :root { --head-h: 46px; }
+  .logo { font-size: 14px; }
+  .icon-btn { height: 30px; width: 34px; }
+  .page { padding-top: 16px; padding-bottom: 36px; }
+  .ph-t { font-size: 22px; }
+  .ph-d { font-size: 13px; margin-top: 6px; }
+  .hero { min-height: 0; }
+  .hero-in { padding: 24px 16px 22px; }
+  .hero h1 { font-size: 24px; }
+  .hero-meta { margin-top: 14px; }
+  .sec { margin-top: 28px; }
+  .ch-hero-in { padding-top: 16px; padding-bottom: 16px; min-height: 0; }
+  .ch-hero h1 { font-size: 26px; }
+  dialog { max-height: 92vh; }
+  #upd-bar { bottom: 8px; padding: 6px 6px 6px 12px; font-size: 13px; }
+}
+@media (max-height: 420px) and (max-width: 480px) { /* 플립 커버 화면 */
+  .hero-art, .ch-hero .art { opacity: .35; }
+  .hero .cta .btn, .cta .btn.lg { padding: 8px 14px; font-size: 14px; }
+  .tools-tabs { top: var(--head-h); }
+}
+@media (vertical-viewport-segments: 2) { /* 플렉스 모드: 위 화면에 창, 아래 화면에 안내 */
+  dialog { max-height: calc(env(viewport-segment-height 0 0, 50vh) - 24px); margin-top: 12px; }
+  #upd-bar, .toast { bottom: 12px; }
+}
+
+/* 터치 화면: 손가락으로 누르기 쉬운 크기(최소 36px) */
+@media (pointer: coarse) {
+  .fbtn, .fchip, .btn.sm, .lock, .seg button, .tab, .hs-btn, .acct-btn, #btn-theme, .icon-btn { min-height: 36px; }
+  .gear-sum { min-height: 34px; }
+  .fbtn, .fchip { padding: 6px 13px; font-size: 13px; }
+  .btn.sm { padding: 6px 11px; font-size: 12.5px; }
+  .seg button { padding: 8px 12px; }
+  select, input[type="text"], input[type="search"], input[type="number"], input[type="password"] { min-height: 38px; }
+  .chk { min-height: 36px; }
+}
+/* 휴대폰 공명자 화면: 그림 위 반주 설명은 어두운 배경에 4줄까지(눌러서 펼침) */
+@media (max-width: 759px), (max-height: 520px) {
+  .ch-outro { background: rgba(10,10,9,.66); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); padding: 10px 12px 0; border-bottom: 10px solid transparent; border-radius: 12px; cursor: pointer;
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .ch-outro.open { display: block; -webkit-line-clamp: unset; }
+}
+/* 파티 편성 사용 순서 접기 */
+.guide-wrap.folded .guide { display: none; }
+
+#parties[aria-busy="true"] { opacity: .55; transition: opacity .2s; pointer-events: none; }

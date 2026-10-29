@@ -19,6 +19,7 @@ import D_PATCH_NOTES from './data/patch-notes.json';
 const BASE = import.meta.env.BASE_URL;
 const DEBUG = /[?&]debug\b/.test(location.search); // 주소를 정리하기 전에 읽어 둠(점검용)
 import D_APP_VER from './data/app-version.json';
+import D_COMMUNITY from './data/community.json'; // 커뮤니티 추천 파티 · 티어(src/data/community.json)
 // 안드로이드 앱(WebView) 안에서 열렸는지: 앱이 브라우저 정보 끝에 'DdingjoApp/버전 (코드)'를 붙임
 const IN_APP = (() => { const m = navigator.userAgent.match(/DdingjoApp\/([\d.]+) \((\d+)\)/); return m ? { v: m[1], code: +m[2] } : null; })();
 const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
@@ -491,43 +492,13 @@ const PRESETS = [
   { id: 'f_newbie', t: '필드 · 무료 캐릭터만', tag: '필드', m: ['rover_havoc', 'sanhua', 'baizhi'], d: '배포 캐릭터만으로 짠 기본 필드 파티.' }
 ];
 // 자동 편성 가중치용: 추천 조합(정석·대체·입문) 목록
-/* ---------- 커뮤니티 정보 (자동 편성 보정용) ----------
+/* ---------- 커뮤니티 정보 (자동 편성 보정용, 데이터는 src/data/community.json) ----------
    COMMUNITY_TEAMS: 공략 사이트(wuwabuild.com 공명자 빌드, 3.7 기준 — Prydwen 역경의 탑 순위를 따름)에 올라온 추천 파티.
                     [종류, 이름, 캐릭터…] 종류 best = 대표 조합, mid = 대체, f2p = 입문
    CHAR_TIER      : 같은 사이트의 3.7 역경의 탑 티어(0 = T0 … 6 = T4). 계산 모델이 놓치는 손맛 · 메커니즘 차이를 조금 보정합니다. */
-const COMMUNITY_TEAMS = [
-  ['best', '전자', 'hsin', 'rover_electro', 'suisui'], ['f2p', '전자 입문', 'hsin', 'rover_electro', 'buling'], ['best', '합일', 'hsin', 'suoming', 'shorekeeper'], ['mid', '금희 합일', 'hsin', 'jinhsi', 'shorekeeper'],
-  ['best', '서리', 'hiyuki', 'sanhua', 'shorekeeper'], ['mid', '서리', 'hiyuki', 'carlotta', 'zhezhi'], ['best', '서리 하이퍼캐리', 'hiyuki', 'lucilla', 'chisa'],
-  ['best', '용융', 'jingran', 'iuno', 'shorekeeper'], ['mid', '모노 용융', 'jingran', 'lupa', 'mornye'], ['mid', '모노 용융', 'jingran', 'brant', 'lupa'], ['mid', '하이퍼캐리', 'jingran', 'rebecca', 'shorekeeper'], ['mid', '용융', 'jingran', 'denia', 'lupa'], ['f2p', '입문', 'jingran', 'mortefi', 'verina'],
-  ['best', '조화 밀집', 'qingxiao', 'denia', 'mornye'], ['mid', '린네', 'qingxiao', 'lynae', 'mornye'],
-  ['best', '암흑', 'xuanling', 'lynae', 'chisa'], ['mid', '암흑', 'xuanling', 'lynae', 'mornye'], ['best', '암흑', 'xuanling', 'suisui', 'chisa'], ['best', '암흑', 'xuanling', 'rebecca', 'chisa'],
-  ['best', '불꽃 순환', 'denia', 'lupa', 'brant'], ['mid', '데니아', 'denia', 'changli', 'shorekeeper'],
-  ['mid', '루실라', 'sigrika', 'lucilla', 'shorekeeper'],
-  ['best', '회절 컬러 버스트', 'phoebe', 'lynae', 'shorekeeper'], ['mid', '린네', 'lynae', 'verina', 'shorekeeper'],
-  ['best', '체인소', 'cantarella', 'chisa', 'shorekeeper'], ['mid', '치사', 'roccia', 'chisa', 'verina'],
-  ['best', '용융 증폭', 'lupa', 'changli', 'mornye'], ['mid', '모니에', 'galbrena', 'brant', 'mornye'],
-  ['best', '조화 파동', 'aemeath', 'lynae', 'mornye'], ['mid', '루파', 'aemeath', 'lupa', 'mornye'],
-  ['best', '회절 아우레올', 'luuk', 'shorekeeper', 'verina'], ['mid', '페비', 'luuk', 'phoebe', 'shorekeeper'],
-  ['best', '에코 스킬', 'sigrika', 'qiuyuan', 'shorekeeper'], ['mid', '기류', 'sigrika', 'cartethyia', 'iuno'], ['mid', '기류', 'qiuyuan', 'cartethyia', 'iuno'],
-  ['best', '엣지러너', 'lucy', 'rebecca', 'mornye'], ['mid', '레베카', 'phoebe', 'rebecca', 'rover_spectro'], ['mid', '강공격', 'augusta', 'rebecca', 'shorekeeper'],
-  ['mid', '금희 합일', 'jinhsi', 'suoming', 'shorekeeper'], ['mid', '방랑자·전도', 'hiyuki', 'rover_electro', 'shorekeeper'],
-  ['mid', '공명 스킬', 'xiangli_yao', 'buling', 'yuanwu'], ['mid', '복링', 'calcharo', 'buling', 'shorekeeper'],
-  ['best', '전도 강공격', 'augusta', 'yinlin', 'shorekeeper'], ['mid', '아우구스타', 'augusta', 'yuanwu', 'verina'],
-  ['best', '용융 에코', 'galbrena', 'brant', 'shorekeeper'], ['mid', '갈브레나', 'galbrena', 'changli', 'verina'],
-  ['best', '인멸 강공격', 'phrolova', 'cantarella', 'shorekeeper'], ['mid', '플로로', 'phrolova', 'roccia', 'verina'],
-  ['best', '풍식', 'cartethyia', 'ciaccona', 'shorekeeper'], ['mid', '풍식', 'cartethyia', 'ciaccona', 'rover_aero'], ['mid', '유노', 'cartethyia', 'iuno', 'shorekeeper'],
-  ['best', '울부짖는 늑대', 'lupa', 'changli', 'brant'], ['mid', '루파', 'encore', 'lupa', 'mortefi']
-];
+const COMMUNITY_TEAMS = D_COMMUNITY.teams;
 const TIER_N = ['T0', 'T0.5', 'T1', 'T1.5', 'T2', 'T3', 'T4'];
-const CHAR_TIER = Object.fromEntries([
-  [0, 'hiyuki jingran qingxiao xuanling denia iuno lucilla lynae chisa mornye suisui shorekeeper'],
-  [1, 'aemeath hsin luuk sigrika lupa qiuyuan rebecca verina suoming'],
-  [2, 'augusta cartethyia galbrena lucy phrolova ciaccona mortefi rover_electro lily'],
-  [3, 'carlotta buling rover_aero'],
-  [4, 'brant jiyan zani cantarella changli phoebe sanhua rover_spectro'],
-  [5, 'camellya encore jinhsi lingyang xiangli_yao danjin roccia yinlin zhezhi baizhi'],
-  [6, 'calcharo chixia rover_havoc aalto jianxin lumi taoqi yangyang youhu yuanwu']
-].flatMap(([t, ids]) => ids.split(' ').map(id => [id, t])));
+const CHAR_TIER = Object.fromEntries(Object.entries(D_COMMUNITY.tiers).flatMap(([t, ids]) => ids.map(id => [id, TIER_N.indexOf(t)])));
 const tierOf = id => CHAR_TIER[id] ?? 4;
 const TIER_TARGET = [1, .93, .86, .8, .74, .66, .58]; // 티어별로 기대하는 상대 화력(T0 = 1)
 /* 커뮤니티 평가 보정
@@ -1194,13 +1165,16 @@ function availableIds(state) {
   return CHARS.filter(c => state.owned.has(c.id) && (!isUpcoming(c) || state.settings.upcoming)).map(c => c.id);
 }
 
-function candidateTeams(pool, ctx, opts = {}) {
+// 같은 계산을 '조금씩'(화면이 멈추지 않게) 또는 '한 번에' 돌릴 수 있도록 제너레이터로 씀
+const drain = it => { for (;;) { const n = it.next(); if (n.done) return n.value; } };
+function candidateTeams(pool, ctx, opts = {}) { return drain(candidateTeamsGen(pool, ctx, opts)); }
+function* candidateTeamsGen(pool, ctx, opts = {}) {
   const canMain = id => CH[id].role === 'main' || (CH[id].modes && Object.values(CH[id].modes).some(m => m.role === 'main'));
   const mains = pool.filter(id => canMain(id) || (opts.flexMain && CH[id].role === 'sub'));
   const results = [];
   const seen = new Set();
   const mainList = mains.length ? mains : pool.slice();
-  mainList.forEach(m => {
+  for (const m of mainList) {
     const others = pool.filter(x => gk(x) !== gk(m));
     // 2인 사전 평가로 파트너 후보 추리기 (opts.duo가 있으면 앞서 구한 목록을 다시 씀)
     const cand = (opts.duo && opts.duo[m]) ? opts.duo[m].slice(0, opts.k || 9) : others.map(x => {
@@ -1210,7 +1184,9 @@ function candidateTeams(pool, ctx, opts = {}) {
     }).sort((a, b) => b.v - a.v).slice(0, Math.max(opts.k || 9, opts.keepDuo || 0)).map(d => d.x);
     if (opts.saveDuo) opts.saveDuo[m] = cand;
     cand.splice(opts.k || 9);
-    for (let i = 0; i < cand.length; i++) for (let j = 0; j < cand.length; j++) {
+    const pm = (opts.p0 || 0) + ((opts.p1 || 1) - (opts.p0 || 0)) * mainList.indexOf(m) / mainList.length;
+    yield pm;
+    for (let i = 0; i < cand.length; i++) { if (i % 3 === 2) yield pm; for (let j = 0; j < cand.length; j++) {
       if (i === j) continue;
       const s = cand[i], p = cand[j];
       if (gk(s) === gk(p)) continue;
@@ -1223,9 +1199,10 @@ function candidateTeams(pool, ctx, opts = {}) {
       }
       seen.add(key);
       results.push({ ...r, key });
-    }
+    } }
     if (others.length < 2) results.push({ ...bestTeam([m, others[0] || null, null], ctx), key: m + '|solo' });
-  });
+    yield (opts.p0 || 0) + ((opts.p1 || 1) - (opts.p0 || 0)) * (mainList.indexOf(m) + 1) / mainList.length;
+  }
   return results.filter(r => r.score > 0).sort((a, b) => b.score - a.score);
 }
 
@@ -1493,8 +1470,9 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return 
 const lsSet = (k, v) => {
   const sk = SYNC_KEYS.includes(k); const prev = sk ? lsGet(k) : null;
   try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 */ }
-  if (sk) { if (prev !== null && noTab(prev) !== noTab(v)) markTouched(); syncDirty(); }
+  if (sk) { if (prev !== null && noTab(prev) !== noTab(v) && !touchQuiet) markTouched(); syncDirty(); }
 };
+let touchQuiet = false;
 const SYNC_KEYS = ['ddingjo-atm-v2', 'ddingjo-atm-echo-calc']; // 로그인하면 계정에 저장되는 설정(보유 캐릭터 · 파티 · 캐릭터 설정 · 육성 · 에코 계산기)
 // 이 기기에서 설정을 직접 바꾼 적이 있는지(처음 로그인할 때 계정 설정을 바로 불러올지, 물어볼지 정함)
 const LS_TOUCHED = 'ddingjo-atm-touched';
@@ -1696,27 +1674,35 @@ function presetBias(ids) { const w = (state.settings.presetBias ?? 8) / 100; if 
 
 /* ---------- 자동 편성 ---------- */
 // 주어진 후보 풀과 현재 파티(고정 포함)로 새 편성을 계산해 돌려줌 (화면·상태는 건드리지 않음)
-function planParties(pool, parties) {
+function planParties(pool, parties) { return drain(planPartiesGen(pool, parties)); }
+function* planPartiesGen(pool, parties) {
   const plan = slotPlan();
   const baseCtx = { ...ctxFor(null), zone: null };
   const k = pool.length > 30 ? 8 : 10;
   const duo = {};
-  const cands = candidateTeams(pool, baseCtx, { k, saveDuo: duo, keepDuo: k + 2 }).slice(0, 240);
+  const cands = (yield* candidateTeamsGen(pool, baseCtx, { k, saveDuo: duo, keepDuo: k + 2, p0: 0, p1: .45 })).slice(0, 240);
   // 구역(탑 버프 · 적 저항)마다 강한 파티가 다르므로, 구역별로도 후보를 뽑아 합침
   const seenK = new Set(cands.map(t => t.ids.map(gk).sort().join('|')));
-  [...new Set(plan.flatMap(key => SLOT[key].type === 'team' ? SLOT[key].zones : []))].forEach(z => {
-    candidateTeams(pool, { ...ctxFor(z), zone: z }, { k: k - 1, duo }).slice(0, 60).forEach(t => { const key = t.ids.map(gk).sort().join('|'); if (!seenK.has(key)) { seenK.add(key); cands.push(t); } });
-  });
+  const zoneList = [...new Set(plan.flatMap(key => SLOT[key].type === 'team' ? SLOT[key].zones : []))];
+  for (const [zi, z] of zoneList.entries()) {
+    const zc = yield* candidateTeamsGen(pool, { ...ctxFor(z), zone: z }, { k: k - 1, duo, p0: .45 + .3 * zi / zoneList.length, p1: .45 + .3 * (zi + 1) / zoneList.length });
+    zc.slice(0, 60).forEach(t => { const key = t.ids.map(gk).sort().join('|'); if (!seenK.has(key)) { seenK.add(key); cands.push(t); } });
+  }
   // 추천 조합(정석·대체·입문) 중 보유 캐릭터로 짤 수 있는 것도 후보에 넣고, 점수에 가중치를 줍니다
   const poolSet = new Set(pool);
   presetTeams().forEach(x => { if (x.m.every(id => poolSet.has(id)) && new Set(x.m.map(gk)).size === 3 && !cands.some(t => sameTeam(t.ids, x.m))) cands.push({ ids: x.m.slice() }); });
   // 같은 세 명이라도 메인 · 서브 · 서포터 배치를 바꿔 가장 좋은 쪽으로
-  cands.forEach(t => { if (t.ids.filter(Boolean).length === 3 && !t._perm) { const alt = [[t.ids[1], t.ids[0], t.ids[2]], [t.ids[2], t.ids[1], t.ids[0]]].filter(a => CH[a[0]].role !== 'sup'); const z = { ...ctxFor(null), zone: null }; let b = bestTeam(t.ids, z).score; alt.forEach(a => { const r = bestTeam(a, z); if (r.score > b * 1.02) { b = r.score; t.ids = a; } }); t._perm = 1; } });
+  for (const [ci, t] of cands.entries()) { if (ci % 20 === 19) yield .77; if (t.ids.filter(Boolean).length === 3 && !t._perm) { const alt = [[t.ids[1], t.ids[0], t.ids[2]], [t.ids[2], t.ids[1], t.ids[0]]].filter(a => CH[a[0]].role !== 'sup'); const z = { ...ctxFor(null), zone: null }; let b = bestTeam(t.ids, z).score; alt.forEach(a => { const r = bestTeam(a, z); if (r.score > b * 1.02) { b = r.score; t.ids = a; } }); t._perm = 1; } }
   const tf = v => Math.log(Math.max(v, 1e-4)); // 파티 간 균형을 맞추는 방향으로 편성
   const memo = new Map(); const zctx = {}; // 같은 파티 · 같은 구역 계산은 한 번만
   const zoneScore = (ids, z) => { const k = ids.join('|') + '@' + z; if (!memo.has(k)) memo.set(k, bestTeam(ids, zctx[z] || (zctx[z] = ctxFor(z)))); return memo.get(k); };
   const sn = curSeason().data;
-  const lists = plan.map((key, i) => {
+  // 점수 계산을 미리 조금씩(구역별 계산은 memo에 저장돼 아래에서 다시 씀)
+  const zAll = [...new Set(plan.flatMap(key => SLOT[key].type === 'team' ? SLOT[key].zones : []))];
+  for (const [ci, t] of cands.entries()) { if (ci % 12 === 11) yield .78 + .02 * ci / cands.length; zAll.forEach(z => zoneScore(t.ids, z)); }
+  tierBias(cands[0] ? cands[0].ids : []); yield .8;
+  const lists = [];
+  for (const [i, key] of plan.entries()) { yield .8 + .18 * i / plan.length; lists.push((() => {
     const p = parties[i];
     if (p && p.locked) return [{ ids: p.ids.slice(), _s: 0, locked: true }];
     const sl = SLOT[key];
@@ -1736,7 +1722,7 @@ function planParties(pool, parties) {
     });
     const best = Math.max(...sc.map(x => x.raw), 1);
     return sc.map(x => ({ ...x, _s: tf(x.raw / best) }));
-  });
+  })()); }
   // 파티 슬롯을 먼저 탐색하면 가지치기가 잘 됨
   const order = plan.map((k, i) => i).sort((a, b) => (SLOT[plan[a]].type === 'solo') - (SLOT[plan[b]].type === 'solo'));
   const picked = pickDisjoint(order.map(i => lists[i]), false);
@@ -1748,13 +1734,24 @@ function planParties(pool, parties) {
     return { slot: key, ids: c ? c.ids.slice() : [null, null, null], locked: false };
   });
 }
-function optimize(silent) {
+let optRun = 0;
+// 자동 편성: 16ms마다 잠깐 쉬면서 계산(화면이 멈추지 않음). 다시 누르면 이전 계산은 버림
+async function optimize(silent, opt = {}) {
   ensureParties();
   const lockedIds = new Set(state.parties.filter(p => p.locked).flatMap(p => p.ids.filter(Boolean).map(gk)));
   const pool = availableIds(state).filter(id => !lockedIds.has(gk(id)));
   if (pool.length < 3 && !state.parties.some(p => p.locked)) { if (!silent) toast('보유 캐릭터를 3명 이상 선택해 주세요.'); renderBuild(); return; }
-  state.parties = planParties(pool, state.parties);
-  save(); renderBuild();
+  const my = ++optRun; const btn = $('#btn-optimize'); const box = $('#parties');
+  if (box) box.setAttribute('aria-busy', 'true');
+  const it = planPartiesGen(pool, state.parties); let t = performance.now(), res;
+  try {
+    for (;;) {
+      const n = it.next(); if (n.done) { res = n.value; break; }
+      if (performance.now() - t > 16) { if (btn) btn.textContent = `계산 중… ${Math.round(n.value * 100)}%`; await new Promise(r => setTimeout(r, 0)); if (my !== optRun) return; t = performance.now(); }
+    }
+  } finally { if (my === optRun) { if (btn) btn.textContent = '자동 편성'; if (box) box.removeAttribute('aria-busy'); } }
+  state.parties = res;
+  touchQuiet = !!opt.quiet; try { save(); } finally { touchQuiet = false; } renderBuild();
   if (!silent) toast(`${state.parties.length}파티를 자동 편성했습니다.`);
 }
 function ensureParties() {
@@ -1780,9 +1777,20 @@ function seasonStripHTML(prefix) {
 }
 
 /* ---------- 탑 편성 렌더 ---------- */
+const GUIDE_SEEN = (() => { try { return localStorage.getItem('ddingjo-atm-guide-seen') === '1'; } catch (e) { return false; } })();
 function renderBuild() {
   ensureParties();
   $('#guide-wrap').hidden = state.guideHidden;
+  // 휴대폰에서는 사용 순서를 한 번 보여 준 뒤부터 접어 둠(펼치기 버튼으로 다시 볼 수 있음)
+  if (!state.guideHidden) {
+    const small = matchMedia('(max-width: 759px), (max-height: 520px)').matches;
+    const seen = GUIDE_SEEN; // 이 방문을 열었을 때 이미 본 적이 있었는지
+    if (curView === 'tools' && state.tab === 'tower-build') { try { localStorage.setItem('ddingjo-atm-guide-seen', '1'); } catch (e) { } }
+    const fold = small && seen && !$('#guide-wrap').dataset.open;
+    $('#guide-wrap').classList.toggle('folded', fold);
+    $('#guide-toggle').hidden = !(small && seen);
+    $('#guide-toggle').textContent = fold ? '펼치기' : '접기';
+  }
   const segP = $('#seg-parties');
   segP.innerHTML = partyOptions().map(n => `<button data-v="${n}" aria-pressed="${n === state.settings.parties}">${n}파티</button>`).join('');
   $$('button', segP).forEach(b => b.addEventListener('click', () => { state.settings.parties = +b.dataset.v; ensureParties(); optimize(true); }));
@@ -2694,6 +2702,7 @@ function paintDataInfo() {
     ${row('게임 데이터', DATA_META.gameVer ? `${esc(DATA_META.gameVer)} 버전` : `${CHARS.filter(c => !isUpcoming(c)).length}명 수록`, '새 공명자 · 무기 · 재료를 매일 확인')}
     ${row('역경의 탑', `시즌 ${sn.n}`, `${mdhm(sn.end)} 초기화 · 층별 버프 · 적 속성`)}
     ${row('죽음의 노래와 바닷속 폐허', `시즌 ${wastesSeasonAt(Date.now()).n}`, `${mdhm(wastesSeasonAt(Date.now()).end)} 초기화 · 게임 데이터로 매일 확인`)}
+    ${row('추천 파티 · 티어', `${esc(D_COMMUNITY.patch)} 패치 기준`, `${esc(D_COMMUNITY.updated)} 갱신 · 공략 사이트 커뮤니티 정보`)}
     ${row('사이트', `Ver. ${esc(APP_VERSION)}`, `${esc(patchNotes()[0].d)} 업데이트 · <a href="#/notice">업데이트 내역</a>`)}</div>`;
   fixLinks(el);
 }
@@ -3010,7 +3019,7 @@ function renderCharacter(id) {
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">${pk ? pickTag(pk) + '<span class="tag gold">지금 픽업</span>' : ''}${isUpcoming(c) ? `<span class="tag next">${esc(releaseLabel(c))}</span>` : ''}${c.auto ? '<span class="tag">자동 추가 · 추정</span>' : ''}<span class="stars ${c.q === 4 ? 'r4' : ''}" style="font-size:15px">${'★'.repeat(c.q)}</span></div>
         <h1 style="margin:0">${esc(c.name)}</h1>
         <div class="ch-attr"><span><i class="el-i"></i>${EL[c.el] ? EL[c.el].n : ''}</span><span>${WT[c.wt] || ''}</span><span>${ROLE_N[c.role] || ''}</span>${(c.tags || []).slice(0, 3).map(t => `<span>${esc(t)}</span>`).join('')}</div>
-        ${c.outro ? `<p class="ch-outro"><b style="color:var(--gold)">반주 · ${esc(c.outro.n)}</b> ${esc(c.outro.d)}</p>` : ''}
+        ${c.outro ? `<p class="ch-outro" id="ch-outro" title="눌러서 펼치기 · 접기"><b style="color:var(--gold)">반주 · ${esc(c.outro.n)}</b> ${esc(c.outro.d)}</p>` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm ${state.owned.has(c.id) ? 'glass' : 'solid-gold'}" id="ch-own">${state.owned.has(c.id) ? '보유 중 · 빼기' : '보유 캐릭터에 추가'}</button>${G ? '<button class="btn sm glass" id="ch-grow">육성 재료 계산</button>' : ''}<button class="btn sm glass" id="ch-cfg">무기 · 체인 설정</button></div>
       </div></section>
     <div class="container ch-body">
@@ -3031,6 +3040,7 @@ function renderCharacter(id) {
   $('#ch-own').addEventListener('click', () => { if (state.owned.has(c.id)) state.owned.delete(c.id); else state.owned.add(c.id); save(); paintOwnedChip(); toast(state.owned.has(c.id) ? `${c.name}을(를) 보유 캐릭터에 넣었습니다.` : `${c.name}을(를) 보유 캐릭터에서 뺐습니다.`); renderCharacter(id); });
   if ($('#ch-grow')) $('#ch-grow').addEventListener('click', () => { state.grow = growDefault(c.id); save(); navigate('tools/grow'); });
   $('#ch-cfg').addEventListener('click', () => openCharCfg(c.id));
+  const oc = $('#ch-outro'); if (oc) oc.addEventListener('click', () => oc.classList.toggle('open'));
   $$('[data-tlgo]', el).forEach(b => b.addEventListener('click', () => { state.tlSel = b.dataset.tlgo; navigate('tools/timeline'); window.scrollTo(0, 0); }));
   loadEchoes().then(d => { const box = $('#ch-echo'); if (box && curView === 'character' && CH[id] === c) box.innerHTML = mainEchoHTML(c, d); });
   if (rid) loadSkills(rid).then(rows => { const box = $('#ch-skills'); if (rows && box && curView === 'character' && CH[id] && CH[id].rid === rid) box.innerHTML = skillsHTML(rows); });
@@ -3228,7 +3238,7 @@ function init() {
   // 저장된 탑 캐시를 먼저 반영
   try { const c = JSON.parse(lsGet(LS_TOWER) || 'null'); if (c && c.db) setTowerDB({ ...RAW_TOWER, ...c.db }); } catch (e) { }
   $$('#tabs .tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-  $('#btn-optimize').addEventListener('click', () => { $('#btn-optimize').textContent = '계산 중…'; setTimeout(() => { optimize(); $('#btn-optimize').textContent = '자동 편성'; switchTab('tower-build'); }, 30); });
+  $('#btn-optimize').addEventListener('click', () => { switchTab('tower-build'); optimize(); });
   bindShare();
   bindGrow();
   $('#btn-img').addEventListener('click', savePartyImage);
@@ -3249,6 +3259,7 @@ function init() {
   $('#guide-more').addEventListener('click', () => showHelp());
   $$('.help-toc a').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   $('#guide-close').addEventListener('click', () => { state.guideHidden = true; save(); renderBuild(); });
+  $('#guide-toggle').addEventListener('click', () => { const w = $('#guide-wrap'); if (w.classList.contains('folded')) w.dataset.open = '1'; else delete w.dataset.open; renderBuild(); });
   $('#own-all').addEventListener('click', () => { CHARS.forEach(c => state.owned.add(c.id)); save(); renderRoster(); toast('전체 보유로 바꿨습니다. 자동 편성을 다시 눌러 주세요.'); });
   $('#own-none').addEventListener('click', () => { state.owned.clear(); save(); renderRoster(); });
   $('#own-free').addEventListener('click', () => { state.owned = new Set(FREE_IDS); save(); renderRoster(); toast('배포 캐릭터만 남겼습니다.'); });
@@ -3261,7 +3272,7 @@ function init() {
   $$('#seg-db button').forEach(b => b.addEventListener('click', () => { state.dbView = b.dataset.v; renderDB(); }));
   bindSettings();
   ensureParties();
-  if (!had || !state.parties.some(p => p.ids.some(Boolean))) optimize(true);
+  if (!had || !state.parties.some(p => p.ids.some(Boolean))) optimize(true, { quiet: true }); // 처음 자동으로 짜는 편성은 '직접 바꾼 설정'으로 치지 않음
   switchTab(state.tab || 'tower-build');
   refreshTower(false);
   initSite();

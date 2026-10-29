@@ -37,7 +37,7 @@ tools/                  자동 갱신 스크립트
 - 내 컴퓨터에서 미리 보려면 Node.js 설치 후 `npm install` → `npm run dev` (빌드 확인은 `npm run build` → `npm run preview`).
 - 패치 노트: 저장소의 `src/data/patch-notes.json`을 고칩니다. 맨 위 버전이 사이트 버전이 됩니다.
 - 자료실 목록은 `src/app.js`의 `LINKS`, 사이트 공지는 `NOTICES`를 고치면 됩니다.
-- 자동 편성 보정: 공략 사이트 추천 파티는 `src/app.js`의 `COMMUNITY_TEAMS`, 티어는 `CHAR_TIER`(패치마다 갱신 권장). 추천 메인 에코는 `src/data/main-echo-picks.json`(게임 영어 이름)을 고치면 다음 자동 갱신 때 반영됩니다.
+- 자동 편성 보정: 공략 사이트 추천 파티 · 티어는 `src/data/community.json`(패치마다 갱신). 게임 버전이 바뀌었는데 이 파일의 `patch`가 예전이면 이벤트 갱신 작업이 저장소에 알림 이슈를 만듭니다. 추천 메인 에코는 `src/data/main-echo-picks.json`(게임 영어 이름)을 고치면 다음 자동 갱신 때 반영됩니다.
 - 빌드하면 사이트 코드와 게임 데이터(`src/data`)가 따로 나뉘어, 코드만 바뀐 업데이트에서는 방문자 브라우저에 저장된 데이터 파일을 다시 받지 않습니다.
 - 점검용: 주소 끝에 `?debug`를 붙여 열면 브라우저 콘솔에서 `ATM_DEBUG()`로 현재 상태를 볼 수 있습니다.
 
@@ -71,6 +71,13 @@ tools/                  자동 갱신 스크립트
 - 서명: 저장소 Secrets에 `ANDROID_KEYSTORE_B64`(키 파일 base64) · `ANDROID_KEYSTORE_PASSWORD` · `ANDROID_KEY_ALIAS`가 있으면 그 키로, 없으면 `android/keys/ddingjo-public.jks`(공개 키, 비밀번호 `ddingjo-public`)로 서명합니다. 서명 키가 바뀌면 기존 앱 위에 업데이트 설치가 안 되고 지웠다가 다시 설치해야 합니다.
 - 사이트 업데이트 반영: 빌드할 때 `version.json`(앱 코드 파일 이름 · 버전)을 만들고, 사이트가 열릴 때 · 앱이 다시 앞으로 올 때 이 파일을 확인해 새 배포가 있으면 새로 고칩니다. 그래서 APK를 다시 설치하지 않아도 앱에 새 기능 · 업데이트 내역이 바로 나옵니다.
 - 홈 화면에 추가(PWA): `public/manifest.webmanifest`, `public/sw.js`(페이지 · 데이터는 항상 인터넷 우선, 버전 붙은 코드 · 그림만 저장), 아이콘 `public/icons/`.
+
+## 폴더블(갤럭시 Z 폴드 · 플립)
+
+- 폭 760~1080(폴드 안쪽 화면): 위쪽 메뉴를 펼치고(로고는 "띵조 AUTO") 공명자 · 에코 · 시즌 화면을 2단으로.
+- 높이 520 이하(플립 커버 화면 · 가로 화면): 머리말 · 제목 · 여백을 줄인 압축 배치.
+- 플렉스 모드(`vertical-viewport-segments: 2`): 창 높이를 위쪽 화면에 맞춤.
+- 안드로이드 앱은 접기 · 펼치기 · 회전 · 글자 크기 변경 때 다시 시작하지 않고(configChanges) 화면만 다시 맞춤.
 
 ## 참고
 

@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write   # events.json 커밋
+  issues: write     # 커뮤니티 데이터 갱신 알림
   actions: write    # 60일 비활성 방지 · 커밋 뒤 사이트 배포 작업 실행
 
 concurrency:
@@ -68,6 +69,21 @@ jobs:
       - name: 사이트 다시 배포
         if: steps.commit.outputs.pushed == '1'
         run: gh workflow run deploy.yml --ref "${GITHUB_REF_NAME}" && echo "배포 요청 완료"
+
+      - name: 커뮤니티 데이터가 지난 패치 기준이면 알림(이슈)
+        continue-on-error: true
+        run: |
+          read CUR COM <<< $(python3 -c "
+          import json,datetime as d
+          ev=json.load(open('public/events.json')); now=d.datetime.now(d.timezone.utc).isoformat()
+          vs=[v for v,x in ev.get('vinfo',{}).items() if (x.get('s') or '9')<=now]
+          cur=max(vs,key=lambda v:tuple(map(int,v.split('.')))) if vs else ''
+          print(cur, json.load(open('src/data/community.json')).get('patch',''))")
+          echo "게임 $CUR · 커뮤니티 데이터 $COM"
+          [ -n "$CUR" ] && [ "$CUR" != "$COM" ] || exit 0
+          T="커뮤니티 데이터 갱신 필요 ($COM → $CUR)"
+          gh issue list --state open --search "$T in:title" --json number -q 'length' | grep -qv '^0$' && { echo "이미 알림 있음"; exit 0; }
+          gh issue create --title "$T" --body "게임이 $CUR 버전이 되었는데 자동 편성 보정용 커뮤니티 데이터(src/data/community.json · 추천 파티 · 티어)와 추천 메인 에코(src/data/main-echo-picks.json)는 $COM 기준입니다. 공략 사이트(wuwabuild.com 티어 · 공명자 빌드)를 확인해 갱신해 주세요. Claude에게 \"커뮤니티 데이터 갱신해줘\"라고 요청하면 됩니다."
 
       - name: 예약 실행 유지 (60일 비활성 자동 중지 방지)
         if: always()

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -53,7 +54,8 @@ public class MainActivity extends Activity {
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             int l, t, r, b;
             if (Build.VERSION.SDK_INT >= 30) {
-                android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime());
+                // 카메라 구멍(폴드 바깥 · 안쪽 화면) · 키보드도 피함
+                android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
                 l = i.left; t = i.top; r = i.right; b = i.bottom;
             } else {
                 l = insets.getSystemWindowInsetLeft(); t = insets.getSystemWindowInsetTop(); r = insets.getSystemWindowInsetRight(); b = insets.getSystemWindowInsetBottom();
@@ -70,6 +72,7 @@ public class MainActivity extends Activity {
         s.setUseWideViewPort(true);
         s.setSupportZoom(false);
         s.setMediaPlaybackRequiresUserGesture(true);
+        applyTextZoom();
         s.setUserAgentString(s.getUserAgentString() + " DdingjoApp/" + BuildConfigCompat.versionName(this) + " (" + BuildConfigCompat.versionCode(this) + ")");
         web.addJavascriptInterface(new Bridge(), "DdingjoApp");
         web.setWebChromeClient(new WebChromeClient());
@@ -99,6 +102,20 @@ public class MainActivity extends Activity {
 
         if (saved != null) web.restoreState(saved);
         else web.loadUrl(startUrl(getIntent()));
+    }
+
+    /** 휴대폰 글자 크기 설정을 따르되 85~115%로 제한(폴드 바깥 화면처럼 좁은 화면에서 배치가 깨지지 않게) */
+    void applyTextZoom() {
+        float fs = getResources().getConfiguration().fontScale;
+        web.getSettings().setTextZoom(Math.round(Math.max(85f, Math.min(115f, fs * 100f))));
+    }
+
+    /** 접기 · 펼치기 · 화면 회전 · 글자 크기 변경: 앱을 다시 만들지 않고 화면만 다시 맞춤(보던 화면 · 입력 그대로) */
+    @Override
+    public void onConfigurationChanged(Configuration c) {
+        super.onConfigurationChanged(c);
+        applyTextZoom();
+        web.requestApplyInsets();
     }
 
     String startUrl(Intent it) {
