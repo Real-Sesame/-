@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 암호화된 연결(https)만 허용하고, 휴대폰에 사용자가 따로 넣은 인증서는 믿지 않음(가로채기 방지) -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

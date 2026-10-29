@@ -33,6 +33,17 @@ function characters() {
   return out;
 }
 
+// 보안 정책(CSP): 이 사이트 · 폰트 · 게임 데이터 · 로그인 서버 외의 스크립트 · 연결을 막음
+// (누군가 화면에 스크립트를 끼워 넣어도 실행되지 않고, 로그인 정보를 다른 곳으로 보낼 수 없음)
+const CSP = `<meta http-equiv="Content-Security-Policy" content="${[
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+  "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://raw.githubusercontent.com https://ddingjo-sync.ddingjo-atm.workers.dev",
+  "manifest-src 'self'", "worker-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'"
+].join('; ')}">`;
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 // <head>의 제목 · 설명 · 미리보기(OG) 태그를 페이지마다 바꿔 끼움
 function withMeta(html, { path, title, desc, image }) {
@@ -53,6 +64,7 @@ function withMeta(html, { path, title, desc, image }) {
     `<meta name="twitter:card" content="summary_large_image">`
   ].join('\n');
   return html
+    .replace('<meta charset="UTF-8">', '<meta charset="UTF-8">\n' + CSP)
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(full)}</title>`)
     .replace(/\n?<meta name="description"[^>]*>/g, '')
     .replace(/\n?<link rel="canonical"[^>]*>/g, '')

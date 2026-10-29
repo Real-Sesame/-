@@ -64,6 +64,21 @@ jobs:
           gradle -p android --no-daemon assembleRelease 2>&1 | tee "$RUNNER_TEMP/build.log"
           ls -la android/app/build/outputs/apk/release/
 
+      - name: 서명 확인
+        # 만든 APK의 서명 지문이 src/data/app-version.json의 signer와 같아야 올림
+        # (다른 키로 서명된 APK가 실수로 배포되어 기존 설치가 업데이트 안 되는 일을 막음)
+        run: |
+          AS=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n1)apksigner
+          "$AS" verify --print-certs android/app/build/outputs/apk/release/app-release.apk | tee "$RUNNER_TEMP/certs.txt"
+          GOT=$(grep -m1 "SHA-256 digest" "$RUNNER_TEMP/certs.txt" | awk '{print $NF}' | tr 'a-f' 'A-F' | sed 's/../&:/g;s/:$//')
+          WANT=$(python3 -c "import json;print(json.load(open('src/data/app-version.json')).get('signer',''))")
+          echo "SIGNER=$GOT" >> "$GITHUB_ENV"
+          echo "서명 지문: $GOT"
+          if [ "$GOT" != "$WANT" ]; then
+            echo "::error title=서명 키가 다릅니다::만든 APK 서명($GOT)이 app-version.json의 signer($WANT)와 다릅니다. 서명 키를 바꿨다면 signer를 새 지문으로 바꾸고 versionCode를 올려 주세요(기존 설치는 한 번 지우고 다시 설치해야 함)."
+            exit 1
+          fi
+
       - name: 실패하면 마지막 로그를 남김
         if: failure()
         run: |
@@ -81,6 +96,6 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" ddingjo-atm.apk ddingjo-atm.apk.sha256 --clobber
           else
-            gh release create "$TAG" ddingjo-atm.apk ddingjo-atm.apk.sha256 --title "띵조 ATM 앱 $VN" --notes "$(printf '안드로이드 앱 %s\n\n%s\n\n설치: 사이트의 앱 페이지(https://real-sesame.github.io/-/app)를 참고하세요.' "$VN" "$NOTES")" --latest
+            gh release create "$TAG" ddingjo-atm.apk ddingjo-atm.apk.sha256 --title "띵조 ATM 앱 $VN" --notes "$(printf '안드로이드 앱 %s\n\n%s\n\n설치: 사이트의 앱 페이지(https://real-sesame.github.io/-/app)를 참고하세요.\n\n서명 인증서 SHA-256: %s\nAPK SHA-256: %s' "$VN" "$NOTES" "$SIGNER" "$(cut -d' ' -f1 ddingjo-atm.apk.sha256)")" --latest
           fi
           echo "올림: $TAG / $(stat -c %s ddingjo-atm.apk) bytes"

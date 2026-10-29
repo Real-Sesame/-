@@ -847,3 +847,7 @@ h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflo
 .guide-wrap.folded .guide { display: none; }
 
 #parties[aria-busy="true"] { opacity: .55; transition: opacity .2s; pointer-events: none; }
+
+/* 앱 설치: 서명 지문 */
+.app-fp{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:4px 0}
+.app-fp code{font-size:12px;word-break:break-all;overflow-wrap:anywhere;background:rgba(127,127,127,.1);padding:4px 6px;border-radius:6px;flex:1 1 260px;min-width:0}
