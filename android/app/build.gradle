@@ -19,18 +19,20 @@ android {
 
     signingConfigs {
         release {
-            // GitHub 저장소 Secrets에 ANDROID_KEYSTORE_B64 · ANDROID_KEYSTORE_PASSWORD · ANDROID_KEY_ALIAS가 있으면 그 키로,
-            // 없으면 저장소에 들어 있는 공개 키(keys/ddingjo-public.jks)로 서명합니다.
-            storeFile file(System.getenv('KEYSTORE_FILE') ?: rootProject.file('keys/ddingjo-public.jks').path)
-            storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'ddingjo-public'
-            keyAlias System.getenv('KEY_ALIAS') ?: 'ddingjo'
-            keyPassword System.getenv('KEYSTORE_PASSWORD') ?: 'ddingjo-public'
+            // 서명은 GitHub 저장소 Secrets(ANDROID_KEYSTORE_B64 · ANDROID_KEYSTORE_PASSWORD · ANDROID_KEY_ALIAS)의 개인 키로만 합니다.
+            // (예전 공개 키 keys/ddingjo-public.jks는 1.2.0부터 쓰지 않고 지웠습니다. 키가 없으면 서명 안 된 APK가 나오고 배포되지 않습니다.)
+            if (System.getenv('KEYSTORE_FILE')) {
+                storeFile file(System.getenv('KEYSTORE_FILE'))
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS') ?: 'ddingjo'
+                keyPassword System.getenv('KEYSTORE_PASSWORD')
+            }
         }
     }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
+            if (System.getenv('KEYSTORE_FILE')) signingConfig signingConfigs.release
         }
     }
     compileOptions {

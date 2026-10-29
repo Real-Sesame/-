@@ -2839,6 +2839,8 @@ const isAndroid = /Android/i.test(navigator.userAgent);
 const appOutdated = () => IN_APP && IN_APP.code < D_APP_VER.versionCode;
 // 설치된 앱의 서명 지문(1.1.1부터). 공식 배포 서명(app-version.json의 signer)과 다르면 다른 키로 만든 앱
 const APP_SIGNER = (() => { try { return IN_APP && window.DdingjoApp && window.DdingjoApp.signer ? String(window.DdingjoApp.signer() || '') : ''; } catch (e) { return ''; } })();
+// 서명 키를 바꾼 버전(reinstallBelow)보다 오래된 앱은 덮어 설치가 안 되므로 지우고 새로 설치해야 함
+const appNeedsReinstall = () => !!(IN_APP && D_APP_VER.reinstallBelow && IN_APP.code < D_APP_VER.reinstallBelow);
 const appSigBad = () => !!(APP_SIGNER && D_APP_VER.signer && APP_SIGNER !== D_APP_VER.signer);
 function renderApp() {
   const el = $('[data-view="app"]'); const V = D_APP_VER;
@@ -2847,8 +2849,8 @@ function renderApp() {
     ['설치', 'Play 프로텍트가 "인식할 수 없는 앱"이라고 하면 "자세히 → 무시하고 설치"를 누릅니다. Play 스토어에 올린 앱이 아니라서 뜨는 안내입니다.'], ['로그인(선택)', '앱과 휴대폰 브라우저는 저장 공간이 따로라, 같은 아이디로 로그인하면 보유 캐릭터 · 파티 설정이 그대로 이어집니다.']];
   el.innerHTML = `<div class="container page"><p class="eyebrow">앱 설치</p><h1 class="ph-t">휴대폰에서 더 편하게,<br><em>띵조 ATM 앱</em></h1>
     <p class="ph-d">앱은 이 사이트를 전체 화면으로 여는 가벼운 앱이라, 사이트가 업데이트되면 앱도 바로 최신이 됩니다. 편성 이미지 · 설정 백업은 휴대폰 '다운로드/띵조' 폴더에 저장됩니다.</p>
-    ${appSigBad() ? `<div class="box app-now warn"><b>이 앱의 서명이 공식 앱과 달라요</b><span class="note">지금 배포 중인 공식 앱과 다른 키로 서명된 앱입니다. 앱을 지우고 아래 버튼으로 다시 설치해 주세요(로그인하면 설정은 그대로 이어집니다).</span><a class="btn solid-gold" href="${APK_URL}">공식 앱 받기</a></div>` : ''}
-    ${IN_APP ? `<div class="box app-now ${appOutdated() ? 'warn' : ''}"><b>${appOutdated() ? `새 앱 버전 ${esc(V.versionName)}이 있어요` : '지금 앱으로 보고 있어요'}</b><span class="note">설치된 앱 ${esc(IN_APP.v)}${appOutdated() ? ` → 최신 ${esc(V.versionName)}` : ' · 최신 버전'}</span>${appOutdated() ? `<a class="btn solid-gold" href="${APK_URL}">새 버전 받기</a>` : ''}</div>` : ''}
+    ${appSigBad() && !appNeedsReinstall() ? `<div class="box app-now warn"><b>이 앱의 서명이 공식 앱과 달라요</b><span class="note">지금 배포 중인 공식 앱과 다른 키로 서명된 앱입니다. 앱을 지우고 아래 버튼으로 다시 설치해 주세요(로그인하면 설정은 그대로 이어집니다).</span><a class="btn solid-gold" href="${APK_URL}">공식 앱 받기</a></div>` : ''}
+    ${IN_APP ? `<div class="box app-now ${appOutdated() ? 'warn' : ''}"><b>${appOutdated() ? `새 앱 버전 ${esc(V.versionName)}이 있어요` : '지금 앱으로 보고 있어요'}</b><span class="note">설치된 앱 ${esc(IN_APP.v)}${appOutdated() ? ` → 최신 ${esc(V.versionName)}` : ' · 최신 버전'}</span>${appNeedsReinstall() ? '<span class="note"><b>서명 키가 바뀌어 덮어 설치가 안 됩니다.</b> 지금 앱을 지운 뒤(휴대폰 설정 → 애플리케이션 → 띵조 ATM → 삭제) 새 버전을 설치해 주세요. 로그인해 두면 보유 캐릭터 · 파티 설정은 그대로 이어집니다.</span>' : ''}${appOutdated() ? `<a class="btn solid-gold" href="${APK_URL}">새 버전 받기</a>` : ''}</div>` : ''}
     <div class="app-grid">
       <section class="box app-card"><div class="app-head"><img src="${BASE}icons/icon-192.png" alt="" width="64" height="64"><div><h2>안드로이드 앱 (APK)</h2><p class="note">버전 ${esc(V.versionName)} · ${esc(V.date)} · Android ${esc(V.minAndroid)} 이상</p></div></div>
         <a class="btn solid-gold lg app-dl" href="${APK_URL}" rel="noopener">APK 내려받기</a>
@@ -2875,6 +2877,7 @@ function renderApp() {
 }
 // 앱 안에서 앱 자체가 오래된 버전이면 한 번 알려 줌
 function appUpdateNotice() {
+  if (appNeedsReinstall()) { try { if (sessionStorage.getItem('atm-app-upd') === 'r' + D_APP_VER.versionCode) return; sessionStorage.setItem('atm-app-upd', 'r' + D_APP_VER.versionCode); } catch (e) { } setTimeout(() => toast(`새 앱 ${D_APP_VER.versionName}이 나왔어요. 서명 키가 바뀌어 지금 앱을 지우고 새로 설치해야 합니다. 메뉴 → 앱 설치`), 1500); return; }
   if (appSigBad()) { setTimeout(() => toast('이 앱의 서명이 공식 앱과 달라요. 메뉴 → 앱 설치에서 확인해 주세요.'), 1500); return; }
   if (!appOutdated()) return;
   try { if (sessionStorage.getItem('atm-app-upd') === String(D_APP_VER.versionCode)) return; sessionStorage.setItem('atm-app-upd', String(D_APP_VER.versionCode)); } catch (e) { }

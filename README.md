@@ -68,7 +68,7 @@ tools/                  자동 갱신 스크립트
 
 - `android/`를 고치거나 `src/data/app-version.json`의 버전을 올리면 `.github/workflows/android.yml`이 APK를 만들어 GitHub Releases(`app-v<버전>`)에 올립니다. 사이트의 앱 설치 페이지(`/-/app`)는 항상 최신 릴리스의 `ddingjo-atm.apk`로 연결됩니다.
 - 앱 껍데기를 바꿨을 때는 `app-version.json`의 `versionCode`(1씩 올림)와 `versionName`, `notes`를 고칩니다. 앱 안에서 사이트가 더 새 versionCode를 보면 업데이트 안내를 띄웁니다. 화면 · 기능은 사이트에서 오므로 대부분의 업데이트는 앱을 다시 만들 필요가 없습니다.
-- 서명: 저장소 Secrets에 `ANDROID_KEYSTORE_B64`(키 파일 base64) · `ANDROID_KEYSTORE_PASSWORD` · `ANDROID_KEY_ALIAS`가 있으면 그 키로, 없으면 `android/keys/ddingjo-public.jks`(공개 키, 비밀번호 `ddingjo-public`)로 서명합니다. 서명 키가 바뀌면 기존 앱 위에 업데이트 설치가 안 되고 지웠다가 다시 설치해야 합니다.
+- 서명: 저장소 Secrets의 `ANDROID_KEYSTORE_B64`(키 파일 base64) · `ANDROID_KEYSTORE_PASSWORD` · `ANDROID_KEY_ALIAS`(개인 키)로만 서명합니다. 키가 없거나, 만든 APK의 서명 지문이 `src/data/app-version.json`의 `signer`와 다르면 배포하지 않습니다. 서명 키를 바꾸면 기존 앱 위에 업데이트 설치가 안 되므로 `signer`와 `reinstallBelow`(이 versionCode보다 낮은 앱에 재설치 안내)를 함께 바꿉니다. 개인 키 파일은 저장소에 넣지 말고 따로 보관하세요(잃어버리면 같은 앱으로 업데이트할 수 없음).
 - 사이트 업데이트 반영: 빌드할 때 `version.json`(앱 코드 파일 이름 · 버전)을 만들고, 사이트가 열릴 때 · 앱이 다시 앞으로 올 때 이 파일을 확인해 새 배포가 있으면 새로 고칩니다. 그래서 APK를 다시 설치하지 않아도 앱에 새 기능 · 업데이트 내역이 바로 나옵니다.
 - 홈 화면에 추가(PWA): `public/manifest.webmanifest`, `public/sw.js`(페이지 · 데이터는 항상 인터넷 우선, 버전 붙은 코드 · 그림만 저장), 아이콘 `public/icons/`.
 
