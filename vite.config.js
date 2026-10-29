@@ -104,6 +104,10 @@ export default defineConfig({
         write(`character/${c.id}.html`, { path: `character/${c.id}`, title: `${c.name} 가이드`, desc: `${c.name} · ${c.el} · ${c.wt} — 기본 스탯, 스킬 · 공명 체인, 추천 무기와 에코 세트, 추천 조합, 육성 재료`, image: og });
         n++;
       }
+      // 배포 확인용: 지금 배포된 앱 코드 파일 이름(내용이 바뀌면 이름의 해시도 바뀜)과 사이트 버전
+      const entry = (html.match(/static\/(index-[\w-]+\.js)/) || [])[1] || '';
+      const pv = JSON.parse(readFileSync(resolve('src/data/patch-notes.json'), 'utf8'))[0].v;
+      writeFileSync(resolve(dist, 'version.json'), JSON.stringify({ v: pv, build: entry }));
       console.log(`페이지 파일 ${pages.length + Object.keys(TOOLS).length + n + 2}개 만듦 (공명자 ${n}명)`);
     }
   }]

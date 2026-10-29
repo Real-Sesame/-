@@ -801,3 +801,8 @@ dialog.dlg-sm { width: min(440px, calc(100vw - 32px)); }
 .app-promo div { display: grid; gap: 2px; flex: 1; min-width: 0; }
 .app-promo span { font-size: 13px; color: var(--muted); }
 .app-promo .more { color: var(--gold); font-weight: 600; white-space: nowrap; }
+
+/* 새 버전 안내 */
+#upd-bar { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 90; display: flex; gap: 8px; align-items: center; padding: 10px 10px 10px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--gold); box-shadow: 0 12px 32px rgba(0,0,0,.35); font-size: 14px; max-width: calc(100vw - 24px); }
+#upd-bar span { flex: 1; min-width: 0; }
+#upd-bar .ghost { padding: 4px 8px; }

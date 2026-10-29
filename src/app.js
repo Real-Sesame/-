@@ -25,7 +25,7 @@ const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)'
 const APK_URL = 'https://github.com/Real-Sesame/-/releases/latest/download/ddingjo-atm.apk';
 let INSTALL_EVT = null; // 브라우저의 '앱 설치' 요청(안드로이드 · PC 크롬/엣지)
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; if (typeof curView !== 'undefined' && curView === 'app') renderApp(); });
-if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
+if ('serviceWorker' in navigator && window.isSecureContext && !import.meta.env.DEV) window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
 const RAW_SETS = D_RAW_SETS;
@@ -2863,6 +2863,63 @@ function appUpdateNotice() {
   setTimeout(() => toast(`새 앱 버전 ${D_APP_VER.versionName}이 있어요. 메뉴 → 앱 설치에서 받을 수 있습니다.`), 1500);
 }
 
+/* ---------- 사이트 새 버전 자동 반영 ----------
+   앱(WebView) · 홈 화면 앱 · 오래 열어 둔 탭은 사이트가 업데이트돼도 예전 화면을 계속 쓸 수 있음
+   (GitHub Pages가 페이지를 10분간 캐시 + 백그라운드에서 돌아오면 다시 불러오지 않음).
+   version.json(빌드 때 만듦, 캐시 안 함)의 코드 파일 이름이 지금 실행 중인 것과 다르면:
+   - 처음 열 때 · 앱으로 돌아올 때 → 바로 새로 고침(설정은 이 기기 · 계정에 저장돼 있어 그대로)
+   - 화면을 보고 있는 중(30분마다 확인) → 아래쪽에 "새 버전" 안내만 띄움 */
+const MY_BUILD = (() => { const s = document.querySelector('script[type="module"][src*="/static/index-"]'); return s ? s.getAttribute('src').split('/').pop() : ''; })();
+const LS_SEEN_VER = 'ddingjo-atm-seen-ver';
+let hiddenAt = 0, updBusy = false;
+async function checkSiteUpdate(reason) {
+  if (!MY_BUILD || updBusy) return; updBusy = true;
+  try {
+    const r = await fetch(`${BASE}version.json?t=${Date.now()}`, { cache: 'no-store' }); if (!r.ok) return;
+    const d = await r.json(); if (!d.build || d.build === MY_BUILD) return;
+    const key = 'atm-upd-' + d.build; let tried = false;
+    try { tried = sessionStorage.getItem(key) === '1'; } catch (e) { }
+    if ((reason === 'load' || reason === 'resume') && !tried) {
+      try { sessionStorage.setItem(key, '1'); } catch (e) { }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) { const reg = await navigator.serviceWorker.getRegistration().catch(() => null); if (reg) await reg.update().catch(() => { }); }
+      location.reload(); return;
+    }
+    showUpdateBar(d);
+  } catch (e) { /* 오프라인 */ } finally { updBusy = false; }
+}
+function showUpdateBar(d) {
+  if ($('#upd-bar')) return;
+  const bar = document.createElement('div'); bar.id = 'upd-bar'; bar.setAttribute('role', 'status');
+  bar.innerHTML = `<span>사이트가 업데이트됐어요${d.v ? ` (Ver. ${esc(d.v)})` : ''}</span><button class="btn sm solid-gold" id="upd-go">새로 고침</button><button class="btn sm ghost" id="upd-x" aria-label="닫기">✕</button>`;
+  document.body.appendChild(bar);
+  $('#upd-go').addEventListener('click', () => location.reload());
+  $('#upd-x').addEventListener('click', () => bar.remove());
+}
+function initSiteUpdate() {
+  // 새 버전으로 바뀐 뒤 처음 열었을 때: 무엇이 바뀌었는지 알려 줌
+  const seen = lsGet(LS_SEEN_VER);
+  if (seen && seen !== APP_VERSION) {
+    const n = patchNotes()[0];
+    setTimeout(() => { toast(`Ver. ${APP_VERSION}로 업데이트됐어요 · ${n.s}`); showWhatsNew(n); }, 900);
+  }
+  try { localStorage.setItem(LS_SEEN_VER, APP_VERSION); } catch (e) { }
+  checkSiteUpdate('load');
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+    else if (hiddenAt) checkSiteUpdate('resume');
+  });
+  setInterval(() => { if (document.visibilityState === 'visible') checkSiteUpdate('poll'); }, 30 * 60 * 1000);
+}
+function showWhatsNew(n) {
+  if ($('#upd-bar')) return;
+  const bar = document.createElement('div'); bar.id = 'upd-bar'; bar.className = 'new'; bar.setAttribute('role', 'status');
+  bar.innerHTML = `<span><b>Ver. ${esc(n.v)}</b> 업데이트 내역이 있어요</span><a class="btn sm solid-gold" href="${BASE}notice#updates" id="upd-see">내역 보기</a><button class="btn sm ghost" id="upd-x" aria-label="닫기">✕</button>`;
+  document.body.appendChild(bar);
+  $('#upd-see').addEventListener('click', e => { e.preventDefault(); bar.remove(); navigate('notice'); setTimeout(() => { const u = $('#updates'); if (u) u.scrollIntoView({ behavior: 'smooth' }); }, 80); });
+  $('#upd-x').addEventListener('click', () => bar.remove());
+  setTimeout(() => bar.remove(), 15000);
+}
+
 /* ---------- 공지사항 ---------- */
 const NOTICES = [
   { d: '2026-10-26', t: '사이트 주소가 화면별로 바뀌었습니다', b: ['이제 화면마다 주소가 있습니다(예: /-/characters, /-/tools/grow). 예전 주소로 들어와도 자동으로 새 주소로 넘어가니 즐겨찾기는 그대로 쓰셔도 됩니다.', '사이트를 가볍게 나눠서 첫 화면이 더 빨리 열립니다.'] },
@@ -3686,6 +3743,7 @@ function initAcct() {
 init();
 initAcct();
 appUpdateNotice();
+initSiteUpdate();
 if (IN_APP) document.documentElement.classList.add('in-app');
 refreshExtra();
 
