@@ -82,14 +82,13 @@ export default defineConfig({
       const dist = resolve('dist');
       const html = readFileSync(resolve(dist, 'index.html'), 'utf8');
       const write = (file, meta) => { const f = resolve(dist, file); mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, withMeta(html, meta)); };
-      const HOME = { path: '', title: '', desc: '명조: 워더링 웨이브 공명자 가이드 · 역경의 탑 자동 편성 · 예상 딜 계산 · 에코 계산기 · 튜닝 시뮬레이터' };
+      const HOME = { path: '', title: '', desc: '명조: 워더링 웨이브 공명자 가이드 · 역경의 탑 자동 편성 · 예상 딜 계산 · 에코 계산기' };
       write('index.html', HOME); write('404.html', HOME);
       const pages = [
         ['intro', '소개', '띵조 AUTO TEAM MAKER가 할 수 있는 일과 데이터가 갱신되는 방식을 소개합니다.'],
         ['characters', '공명자 가이드', '공명자별 기본 스탯 · 스킬 · 공명 체인 · 추천 무기 · 에코 세트 · 추천 조합 · 육성 재료'],
         ['season', '시즌 콘텐츠', '역경의 탑 · 죽음의 노래와 바닷속 폐허의 이번 시즌 적 · 버프 · 증표와 초기화까지 남은 시간'],
         ['echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
-        ['sim', '튜닝 시뮬레이터', '캐릭터 · 무기 이벤트 튜닝을 공개된 확률 규칙으로 미리 돌려 봅니다.'],
         ['links', '자료실', '명조 공식 공지 · 커뮤니티 · 지도 · 데이터베이스 · 공략 사이트 모음'],
         ['notice', '공지사항', '사이트 안내와 업데이트 내역'],
         ['app', '앱 설치', '띵조 ATM 안드로이드 앱(APK) 내려받기 · 홈 화면에 추가하는 방법'],
@@ -104,6 +103,9 @@ export default defineConfig({
         write(`character/${c.id}.html`, { path: `character/${c.id}`, title: `${c.name} 가이드`, desc: `${c.name} · ${c.el} · ${c.wt} — 기본 스탯, 스킬 · 공명 체인, 추천 무기와 에코 세트, 추천 조합, 육성 재료`, image: og });
         n++;
       }
+      // 검색 엔진용 사이트 지도(구글 서치 콘솔 등에 등록)
+      const urls = ['', ...pages.map(x => x[0]), ...Object.keys(TOOLS).filter(k => k !== 'help' && k !== 'patch').map(k => `tools/${k}`), ...characters().map(c => `character/${c.id}`)];
+      writeFileSync(resolve(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${SITE}${u}</loc></url>`).join('\n')}\n</urlset>\n`);
       // 배포 확인용: 지금 배포된 앱 코드 파일 이름(내용이 바뀌면 이름의 해시도 바뀜)과 사이트 버전
       const entry = (html.match(/static\/(index-[\w-]+\.js)/) || [])[1] || '';
       const pv = JSON.parse(readFileSync(resolve('src/data/patch-notes.json'), 'utf8'))[0].v;

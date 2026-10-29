@@ -1,7 +1,7 @@
 {
   "name": "띵조 AUTO TEAM MAKER",
   "short_name": "띵조 ATM",
-  "description": "명조: 워더링 웨이브 공명자 가이드 · 역경의 탑 자동 편성 · 에코 계산기 · 튜닝 시뮬레이터",
+  "description": "명조: 워더링 웨이브 공명자 가이드 · 역경의 탑 자동 편성 · 에코 계산기",
   "lang": "ko",
   "start_url": "/-/?src=app",
   "scope": "/-/",

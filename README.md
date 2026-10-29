@@ -27,7 +27,7 @@ tools/                  자동 갱신 스크립트
 .github/workflows/      deploy.yml(배포) · update-chars.yml · update-events.yml
 ```
 
-- 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 시즌 콘텐츠 `/-/season`, 에코 계산기 `/-/echo`, 튜닝 시뮬 `/-/sim`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
+- 주소: 홈 `/-/`, 공명자 가이드 `/-/characters` · `/-/character/<id>`, 파티 편성 `/-/tools/<탭>`, 시즌 콘텐츠 `/-/season`, 에코 계산기 `/-/echo`, 자료실 `/-/links`, 공지사항 `/-/notice`. 예전 `Index.html#/…` · `#/…` 주소도 새 주소로 넘어갑니다.
 - **Settings → Pages → Source**는 **GitHub Actions**여야 합니다(브랜치 배포가 아님). Custom domain은 비워 둡니다.
 - 빌드할 때 화면 주소마다 페이지 파일(`characters.html`, `character/<id>.html`, `tools/<탭>.html` …)을 만들어 제목 · 설명 · 미리보기 그림(`public/assets/og/`)을 넣습니다. 하위 주소로 바로 들어와도 정상 페이지로 열리고, 카톡 등 링크 미리보기가 나옵니다.
 

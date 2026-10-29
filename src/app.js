@@ -2552,7 +2552,7 @@ function copyStr(txt, msg) {
 }
 
 /* =====================================================================
-   사이트 셸: 화면 전환(#/주소) · 홈 · 소개 · 공명자 가이드 · 에코 계산기 · 튜닝 시뮬 · 자료실 · 공지사항
+   사이트 셸: 화면 전환(#/주소) · 홈 · 소개 · 공명자 가이드 · 에코 계산기 · 자료실 · 공지사항
    파티 편성은 #/tools/<탭> 으로 씁니다.
    ===================================================================== */
 
@@ -2582,7 +2582,7 @@ async function refreshEvents() {
       const txt = await res.text(); const d = JSON.parse(txt);
       if (!d || d.schema !== 1 || !Array.isArray(d.items)) continue;
       EVENTS = d; if (lsGet(LS_EVENTS) !== txt) lsSet(LS_EVENTS, txt);
-      if (curView === 'home' || curView === 'sim') route(true);
+      if (curView === 'home') route(true);
       return;
     } catch (e) { /* 오프라인 */ }
   }
@@ -2674,15 +2674,12 @@ function renderHome() {
       <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">파티 편성 열기</a></div>
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${['tower-build:역경의 탑 편성:시즌 버프 반영 자동 편성', 'timeline:딜 사이클:누가 언제 무엇을 하는지 순서대로', 'grow:육성 계산:돌파 · 스킬 재료와 필요한 파밍 횟수'].map(s => { const [k, n, d] = s.split(':'); return `<a class="mini-feat" href="#/tools/${k}"><b>${n}</b><span>${d}</span></a>`; }).join('')}</div></div></div></section>
-    <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">튜닝 시뮬레이터</p><h3>별의 소리를 쓰기 전에,<br><em>미리 돌려 보기</em></h3><p>공개된 확률 규칙(5성 0.8% · 80회 확정 · 캐릭터 픽업 50%)으로 진행 중인 픽업을 돌려 보고, 천장 · 평균 · 쓴 별의 소리를 기록합니다.</p><a class="btn solid-gold" href="#/sim">튜닝 시뮬 열기</a></div>
-      <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${cb.concat(wb).slice(0, 4).map(x => { const nm = x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || ''); return `<button class="mini-feat" data-simstart="${esc(`${x.k}:${x.f5[0]}:${x.E}`)}" style="text-align:left;font:inherit;cursor:pointer"><span class="k">${x.k === 'char' ? '캐릭터' : '무기'} 이벤트 튜닝</span><b>${esc(nm)}로 시작</b><span>~ ${mdhm(x.E)} · ${x.k === 'char' ? '픽업 50% · 놓치면 다음 확정' : '5성은 픽업 무기 확정'}</span></button>`; }).join('') || '<a class="mini-feat" href="#/sim"><b>튜닝 시뮬 열기</b><span>진행 중인 픽업을 불러오면 여기에 나옵니다.</span></a>'}</div></div></div></section>
     ${IN_APP || STANDALONE ? '' : `<section class="sec"><a class="app-promo" href="#/app"><img src="${BASE}icons/icon-192.png" alt="" width="48" height="48"><div><b>휴대폰 앱으로 쓰기</b><span>안드로이드 APK · 아이폰은 홈 화면에 추가 — 주소창 없이 전체 화면으로</span></div><span class="more">앱 설치</span></a></section>`}
     <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
     <section class="data-info" id="home-data" aria-label="데이터 기준"></section>
   </div>`;
   paintDataInfo();
   $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
-  $$('[data-simstart]', el).forEach(b => b.addEventListener('click', () => { state.sim = { key: b.dataset.simstart, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] }; navigate('sim'); }));
   bindHscroll(el);
   clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
 }
@@ -2945,7 +2942,6 @@ function renderIntro() {
     ['#/tools/timeline', '딜 사이클', '추천 조합이나 내 파티가 한 바퀴 도는 동안 누가 언제 무엇을 하는지 순서대로 보여 줍니다.'],
     ['#/echo', '에코 계산기', '에코 5개의 주옵션 · 부옵션으로 속성 화면 스탯과 크리티컬 점수를 계산합니다.'],
     ['#/season', '시즌 콘텐츠', '역경의 탑과 죽음의 노래와 바닷속 폐허의 이번 시즌 적 · 버프 · 증표, 초기화까지 남은 시간, 폐허 전반 · 후반 추천 파티.'],
-    ['#/sim', '튜닝 시뮬레이터', '공개된 확률 규칙으로 캐릭터 · 무기 이벤트 튜닝을 미리 돌려 봅니다.'],
     ['#/tools/grow', '육성 계산', '돌파 · 스킬 · 공명 노드에 필요한 재료와 파밍 횟수, 결정 웨이브 플레이트를 계산합니다.']];
   el.innerHTML = `<div class="container page"><p class="eyebrow">소개</p><h1 class="ph-t">명조를 더 똑똑하게,<br><em>띵조 AUTO TEAM MAKER</em></h1>
     <p class="ph-d">명조: 워더링 웨이브를 즐기는 사람들을 위한 팬 사이트입니다. 게임 데이터로 공명자 정보를 정리하고, 보유 캐릭터로 짤 수 있는 최적의 파티를 계산합니다. 로그인 없이도 쓸 수 있고(설정은 이 브라우저에 저장), 위쪽 로그인 버튼으로 계정을 만들면 휴대폰과 컴퓨터에서 같은 설정을 씁니다.</p>
@@ -3037,7 +3033,7 @@ function renderCharacter(id) {
   $('#ch-cfg').addEventListener('click', () => openCharCfg(c.id));
   $$('[data-tlgo]', el).forEach(b => b.addEventListener('click', () => { state.tlSel = b.dataset.tlgo; navigate('tools/timeline'); window.scrollTo(0, 0); }));
   loadEchoes().then(d => { const box = $('#ch-echo'); if (box && curView === 'character' && CH[id] === c) box.innerHTML = mainEchoHTML(c, d); });
-  loadSkills(rid).then(rows => { const box = $('#ch-skills'); if (rows && box && curView === 'character' && CH[id] && CH[id].rid === rid) box.innerHTML = skillsHTML(rows); });
+  if (rid) loadSkills(rid).then(rows => { const box = $('#ch-skills'); if (rows && box && curView === 'character' && CH[id] && CH[id].rid === rid) box.innerHTML = skillsHTML(rows); });
 }
 // 추천 메인 에코: public/echoes.json (tools/build_echoes.py — 공략 사이트 추천 + 게임 데이터)
 let ECHOES_P = null;
@@ -3154,79 +3150,9 @@ function renderEcho() {
   paint();
 }
 
-/* ---------- 튜닝 시뮬레이터 ----------
-   공개 규칙: 5성 기본 0.8% · 4성 6% · 80회 안에 5성 확정 · 10회마다 4성 이상 확정
-   캐릭터 이벤트: 5성 픽업 50%, 놓치면 다음 5성은 픽업 확정 / 4성은 픽업 50%
-   무기 이벤트: 5성은 픽업 무기 확정
-   66회째부터 확률이 오르는 정도(1회당 +3%p)는 공식 발표가 없어, 종합 확률 1.8%에 맞춘 추정치입니다. */
-const SIM_STD5 = ['verina', 'encore', 'calcharo', 'lingyang', 'jianxin'];
-const SIM_SOFT = 66, SIM_STEP = 0.03;
-function simBanners() {
-  const out = []; const now = Date.now();
-  evItems().filter(x => (x.k === 'char' || x.k === 'weapon') && x.E > now).forEach(x => out.push({ key: `${x.k}:${x.f5[0]}:${x.E}`, type: x.k, f5: x.f5[0], f4: x.f4 || [], label: `${x.k === 'char' ? '캐릭터' : '무기'} · ${x.k === 'char' ? ((charByRid(x.f5[0]) || {}).name || '') : ((RAW_WEAPONS[x.f5[0]] || {}).n || '')}${x.S > now ? ' (예정)' : ''}` }));
-  if (!out.some(b => b.type === 'char')) { const c = CHARS.find(c => c.q === 5 && !isUpcoming(c) && !SIM_STD5.includes(c.id)); if (c) out.push({ key: `char:${c.rid}`, type: 'char', f5: c.rid, f4: [], label: `캐릭터 · ${c.name}` }); }
-  if (!out.some(b => b.type === 'weapon')) { const c = CHARS.find(c => c.q === 5 && !isUpcoming(c) && RAW_WEAPONS[c.w]); if (c) out.push({ key: `weapon:${c.w}`, type: 'weapon', f5: c.w, f4: [], label: `무기 · ${RAW_WEAPONS[c.w].n}` }); }
-  return out;
-}
-function simState() {
-  const bs = simBanners();
-  if (!state.sim || !bs.some(b => b.key === state.sim.key)) state.sim = { key: bs[0] && bs[0].key, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] };
-  return { S: state.sim, B: bs.find(b => b.key === state.sim.key) || bs[0], bs };
-}
-function simPull(B, S) {
-  S.n++; S.p5++; S.p4++;
-  const p5 = S.p5 >= 80 ? 1 : S.p5 >= SIM_SOFT ? Math.min(1, 0.008 + (S.p5 - SIM_SOFT + 1) * SIM_STEP) : 0.008;
-  const r = Math.random(); let res;
-  if (r < p5) {
-    let feat = B.type === 'weapon' || S.g5 || Math.random() < 0.5;
-    if (B.type === 'char') S.g5 = !feat;
-    if (feat) res = B.type === 'char' ? { q: 5, k: 'char', id: (charByRid(B.f5) || {}).id, rid: B.f5, feat: true } : { q: 5, k: 'weapon', wid: B.f5, feat: true };
-    else { const id = SIM_STD5[Math.floor(Math.random() * SIM_STD5.length)]; res = { q: 5, k: 'char', id, rid: (CH[id] || {}).rid, feat: false }; }
-    S.n5++; S.pity5s.push(S.p5); S.p5 = 0; S.p4 = 0;
-  } else if (S.p4 >= 10 || r < p5 + 0.06) {
-    const f4 = (B.f4 || []).filter(x => B.type === 'char' ? charByRid(x) : RAW_WEAPONS[x]);
-    const feat = f4.length && (S.g4 || Math.random() < 0.5); S.g4 = !feat && f4.length > 0;
-    if (feat) { const x = f4[Math.floor(Math.random() * f4.length)]; res = B.type === 'char' ? { q: 4, k: 'char', id: charByRid(x).id, feat: true } : { q: 4, k: 'weapon', wid: x, feat: true }; }
-    else {
-      const pool = CHARS.filter(c => c.q === 4 && !isUpcoming(c) && !c.id.startsWith('rover_')).map(c => ({ k: 'char', id: c.id })).concat(Object.entries(RAW_WEAPONS).filter(([, w]) => w.q === 4).map(([id]) => ({ k: 'weapon', wid: +id })));
-      res = { q: 4, ...pool[Math.floor(Math.random() * pool.length)], feat: false };
-    }
-    S.n4++; S.p4 = 0;
-  } else {
-    const p3 = Object.entries(RAW_WEAPONS).filter(([, w]) => w.q === 3); const [wid] = p3[Math.floor(Math.random() * p3.length)] || [0];
-    res = { q: 3, k: 'weapon', wid: +wid };
-  }
-  res.at = S.n; if (res.q >= 4) S.hist.unshift({ ...res, pity: res.q === 5 ? S.pity5s[S.pity5s.length - 1] : null }); if (S.hist.length > 200) S.hist.length = 200;
-  return res;
-}
-const simName = x => x.k === 'char' ? ((CH[x.id] || {}).name || '?') : ((RAW_WEAPONS[x.wid] || {}).n || '3성 무기');
-function simCard(x) {
-  const img = x.k === 'char' ? (artUrl('card', (CH[x.id] || {}).rid) || IMG_CHAR[x.id] || '') : (IMG_WEAPON[x.wid] || '');
-  return `<div class="pull r${x.q}">${img ? `<img class="${x.k === 'weapon' ? 'w' : ''}" src="${img}" alt="">` : ''}<span class="n">${x.q === 5 && !x.feat ? '⚑ ' : ''}${esc(simName(x))}</span></div>`;
-}
-function renderSim() {
-  const el = $('[data-view="sim"]'); const { S, B, bs } = simState();
-  if (!B) { el.innerHTML = '<div class="container page"><div class="empty-note">시뮬레이션할 배너가 없습니다.</div></div>'; return; }
-  const avg = S.pity5s.length ? (S.pity5s.reduce((a, b) => a + b, 0) / S.pity5s.length).toFixed(1) : '-';
-  el.innerHTML = `<div class="container page"><p class="eyebrow">튜닝 시뮬레이터</p><h1 class="ph-t">별의 소리를 쓰기 전에,<em> 미리 돌려 보기</em></h1><p class="ph-d">공개된 확률 규칙(5성 0.8% · 4성 6% · 80회 확정 · 10회마다 4성 이상)으로 계산합니다. 66회부터 확률이 오르는 정도는 공식 발표가 없어 종합 확률 1.8%에 맞춘 추정치입니다. 실제 게임과는 아무 관련이 없습니다.</p>
-    <div class="two" style="margin-top:24px">
-      <div class="box"><div class="sim-ctrl"><select id="sim-b" aria-label="배너">${bs.map(b => `<option value="${esc(b.key)}" ${b.key === S.key ? 'selected' : ''}>${esc(b.label)}</option>`).join('')}</select>
-        <button class="btn solid-gold" data-pull="1">1회 튜닝</button><button class="btn solid-gold" data-pull="10">10회 튜닝</button><button class="btn sm" data-pull="80">80회</button><button class="btn sm ghost" id="sim-reset">처음부터</button></div>
-        <div class="sim-pity"><div><span>5성 천장까지</span><b>${80 - S.p5}</b></div><div><span>4성 확정까지</span><b>${10 - S.p4}</b></div><div><span>${B.type === 'char' ? '다음 5성' : '5성'}</span><b style="font-size:16px">${B.type === 'weapon' ? '픽업 무기 확정' : S.g5 ? '픽업 확정' : '픽업 50%'}</b></div></div>
-        ${S.last.length ? `<div class="pulls">${S.last.map(simCard).join('')}</div>` : '<div class="empty-note">튜닝 버튼을 눌러 보세요.</div>'}
-      </div>
-      <div class="box"><h3>기록</h3><div class="kv" style="margin-bottom:12px"><div><span>전체 튜닝</span><b>${fmt(S.n)}회</b></div><div><span>5성</span><b>${S.n5}개</b></div><div><span>4성</span><b>${S.n4}개</b></div><div><span>5성 평균</span><b>${avg}회</b></div><div><span>쓴 별의 소리</span><b>${fmt(S.n * 160)}</b></div></div>
-        <div class="hist">${S.hist.length ? S.hist.map(h => `<div class="r${h.q}"><span>${h.q === 5 ? '★5' : '★4'} ${esc(simName(h))}${h.q === 5 && !h.feat ? ' <span class="muted">(픽업 놓침)</span>' : ''}</span><span class="num muted">${h.at}회째${h.pity ? ` · ${h.pity}뽑` : ''}</span></div>`).join('') : '<p class="note">4성 이상이 나오면 여기에 기록됩니다.</p>'}</div>
-        <p class="note" style="margin:10px 0 0">⚑ 표시는 픽업이 아닌 상설 5성입니다. 튜닝 1회 = 별의 소리 160.</p></div>
-    </div></div>`;
-  $('#sim-b').addEventListener('change', e => { state.sim = { key: e.target.value, p5: 0, p4: 0, g5: false, g4: false, n: 0, n5: 0, n4: 0, last: [], hist: [], pity5s: [] }; renderSim(); });
-  $$('[data-pull]', el).forEach(b => b.addEventListener('click', () => { const n = +b.dataset.pull; const res = []; for (let i = 0; i < n; i++) res.push(simPull(B, S)); S.last = n > 10 ? res.filter(x => x.q >= 4).slice(-10) : res; renderSim(); }));
-  $('#sim-reset').addEventListener('click', () => { state.sim = null; renderSim(); });
-}
-
 /* ---------- 화면 전환 ---------- */
-const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'sim', 'links', 'notice', 'app'];
-const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', sim: '튜닝 시뮬레이터', links: '자료실', notice: '공지사항', app: '앱 설치' };
+const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'links', 'notice', 'app'];
+const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', links: '자료실', notice: '공지사항', app: '앱 설치' };
 let curView = null;
 // 주소: /-/ (홈), /-/characters, /-/character/<id>, /-/tools/<탭> … 예전 #/주소도 받아서 새 주소로 바꿈
 function parseRoute() {
@@ -3252,6 +3178,7 @@ function route(keepScroll) {
   showView(parseRoute(), keepScroll);
 }
 function showView(r, keepScroll) {
+  if (r.v !== 'home' && !VIEWS.includes(r.v)) { navigate('', true); setTimeout(() => toast('없는 페이지라 홈으로 이동했어요.'), 300); return; }
   let v = VIEWS.includes(r.v) ? r.v : 'home';
   if (v === 'character' && !CH[r.a]) v = 'characters';
   const prev = curView; curView = v;
@@ -3259,9 +3186,10 @@ function showView(r, keepScroll) {
   const navKey = v === 'character' ? 'characters' : v;
   $$('#gnb a, #drawer a').forEach(a => { if (a.dataset.nav === navKey) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   closeDrawer();
+  if (r.v === 'sim') { navigate('', true); return; } // 튜닝 시뮬레이터는 1.0.25에서 삭제
   if (v === 'tools' && (r.a === 'help' || r.a === 'patch')) { navigate(r.a === 'help' ? 'intro' : 'notice', true); if (r.a === 'help') setTimeout(scrollHelp, 60); return; }
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
-  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, sim: renderSim, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
+  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
   document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
