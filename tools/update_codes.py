@@ -103,7 +103,11 @@ def parse(page):
     for t in lines[a0 + 1:x0]:
         m = re.match(r'^\s*\|?\s*([A-Z0-9]{6,24})\s*(?:\||[-–—:(]|$)\s*(.*)$', t)
         if m and is_code(m.group(1), p.em_txt):
-            act[m.group(1)] = re.sub(r'^\|\s*|\s*\|\s*$', '', m.group(2)).strip(' )|') or act.get(m.group(1), '')
+            rest = m.group(2)
+            if '|' in t:  # 표: 코드 바로 다음 칸만 보상으로(종류 · 상태 칸은 버림)
+                cells = [c.strip() for c in t.split('|') if c.strip()]
+                rest = cells[cells.index(m.group(1)) + 1] if m.group(1) in cells and cells.index(m.group(1)) + 1 < len(cells) else ''
+            act[m.group(1)] = rest.strip(' )|') or act.get(m.group(1), '')
     for t in lines[x0 + 1:x0 + 400]:
         if re.search(r'\bhow (to|do)\b|\bredeem\b.*\bcodes?\b', t, re.I) and len(t) < 100 and exp:
             break
@@ -114,7 +118,33 @@ def parse(page):
 
 
 ITEMS = json.load(open(os.path.join(R, 'tools/item-names-ko.json'), encoding='utf-8'))
-ITEMS_L = {k.lower(): v for k, v in ITEMS.items()}
+ITEMS_L = {k.lower(): re.sub(r'\s+', ' ', v) for k, v in ITEMS.items()}
+NUMW = {w: i for i, w in enumerate('zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split())}
+NUMW.update({'a': 1, 'an': 1, 'thirty': 30, 'forty': 40, 'fifty': 50})
+
+
+def item_ko(name):
+    n = re.sub(r'\s+', ' ', name.strip(' .')).lower()
+    def sing(w):
+        if w.endswith('ies'):
+            return w[:-3] + 'y'
+        if re.search(r'(ch|sh|ss|x)es$', w):
+            return w[:-2]
+        return w[:-1] if w.endswith('s') and not w.endswith('ss') else w
+    for c in (n, ' '.join(sing(w) for w in n.split()), re.sub(r's$', '', n)):
+        if c in ITEMS_L:
+            return ITEMS_L[c]
+    if re.match(r'shell credits?$', n):
+        return ITEMS.get('Shell Credit')
+    return None
+
+
+def num(t):
+    t = t.lower().replace(',', '')
+    if t in NUMW:
+        return NUMW[t]
+    m = re.match(r'^(\d+(?:\.\d+)?)(k?)$', t)
+    return int(float(m.group(1)) * (1000 if m.group(2) else 1)) if m else None
 
 
 def ko_reward(s):
@@ -122,19 +152,19 @@ def ko_reward(s):
     if not s:
         return ''
     out = []
-    for part in re.split(r'(?<!\d),(?!\d{3})|\band\b|;|\+', re.sub(r'\([^)]*\)?', '', html.unescape(s))):
+    for part in re.split(r',(?!\d{3}\b)|\band\b|;|\+', re.sub(r'\([^)]*\)?', '', html.unescape(s))):
         part = part.strip(' .')
-        m = re.match(r'^(?:x\s*)?([\d,]+)\s*x?\s+(.+)$', part, re.I) or re.match(r'^(.+?)\s*[x×]\s*([\d,]+)$', part, re.I)
-        if not m:
-            if part:
-                out.append(ITEMS_L.get(part.lower(), part))
+        if not part:
             continue
-        n, name = (m.group(1), m.group(2)) if m.group(1)[0].isdigit() else (m.group(2), m.group(1))
-        name = name.strip()
-        ko = ITEMS_L.get(name.lower()) or ITEMS_L.get(re.sub(r'e?s$', '', name).lower()) or ITEMS_L.get(re.sub(r's$', '', name).lower())
-        if not ko and re.match(r'shell credits?$', name, re.I):
-            ko = ITEMS.get('Shell Credit')
-        out.append(f"{ko or name} ×{n}")
+        m = re.match(r'^(?:x\s*)?([\d,.]+k?|[a-z]+)\s*x?\s+(.+)$', part, re.I)
+        n = num(m.group(1)) if m else None
+        name = m.group(2) if m and n is not None else part
+        if n is None:
+            m2 = re.match(r'^(.+?)\s*[x×]\s*([\d,]+)$', part, re.I)
+            if m2:
+                name, n = m2.group(1), num(m2.group(2))
+        ko = item_ko(name)
+        out.append(f"{ko or name.strip()}{f' ×{n:,}' if n else ''}")
     return ' · '.join(out)[:200]
 
 
