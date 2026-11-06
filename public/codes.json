@@ -1,200 +1,44 @@
 {
- "updated": "2026-11-06T22:40+09:00",
+ "updated": "2026-11-06T22:24+09:00",
  "sources": [
   "Pocket Tactics",
-  "GIGA"
+  "Mobile Matters",
+  "Timesaver",
+  "All Things How"
  ],
  "active": [
   {
    "c": "WUTHERINGGIFT",
-   "r": "별의 소리 ×50 · 특급 공명 촉진제 ×2 · 중급 흡입식 소생제 ×2 · 중급 에너지 주머니 ×2 · 클램 코인",
-   "a": "2026-11-06",
-   "n": "상시 코드(계정당 1회)"
+   "r": "별의 소리 ×50 · 특급 공명 촉진제 ×2 · 중급 흡입식 소생제 ×2 · 중급 에너지 주머니 ×2 · Shell Credits | Standing code | Active ×10,000",
+   "a": "2026-11-06"
+  },
+  {
+   "c": "TRAINOFSOULS",
+   "r": "별의 소리 ×100 · three premium resonance potions · two advanced revival inhalers",
+   "a": "2026-11-06"
+  },
+  {
+   "c": "SCHOOLLIFE",
+   "r": "별의 소리 ×100 · 특급 튜너 ×20 · five advanced sealed tubes",
+   "a": "2026-11-06"
+  },
+  {
+   "c": "BLOOMINGFLOWERS",
+   "r": "별의 소리 ×100 · two premium enclosure tanks III · 40k shell credits",
+   "a": "2026-11-06"
   }
  ],
  "expired": [
   {
-   "c": "FALLINGSANCTUM",
+   "c": "WUWA4PC",
    "x": ""
   },
   {
-   "c": "FINDSENTINEL",
+   "c": "WUTHERINGWAVESGIFT",
    "x": ""
   },
   {
-   "c": "WAKINGMOON",
-   "x": ""
-  },
-  {
-   "c": "HEARTOFSWORD",
-   "x": ""
-  },
-  {
-   "c": "ETERNALFLAME",
-   "x": ""
-  },
-  {
-   "c": "THEANSWER",
-   "x": ""
-  },
-  {
-   "c": "F5F4D3B2A2",
-   "x": ""
-  },
-  {
-   "c": "MECHANISMCITY",
-   "x": ""
-  },
-  {
-   "c": "INTOTHEFOG",
-   "x": ""
-  },
-  {
-   "c": "REUNION",
-   "x": ""
-  },
-  {
-   "c": "STRANGEVISITORS",
-   "x": ""
-  },
-  {
-   "c": "BEYONDTHEDOOR",
-   "x": ""
-  },
-  {
-   "c": "SAYCHEESE",
-   "x": ""
-  },
-  {
-   "c": "FACEALEPH1",
-   "x": ""
-  },
-  {
-   "c": "2NDANNIVERSARY",
-   "x": ""
-  },
-  {
-   "c": "EVERSHINE",
-   "x": ""
-  },
-  {
-   "c": "DARKSIDE",
-   "x": ""
-  },
-  {
-   "c": "RABBITHOLE",
-   "x": ""
-  },
-  {
-   "c": "RUNEREADE",
-   "x": ""
-  },
-  {
-   "c": "PAPERPLANE",
-   "x": ""
-  },
-  {
-   "c": "WARMSUNLIGHT",
-   "x": ""
-  },
-  {
-   "c": "JOURNEYWELL",
-   "x": ""
-  },
-  {
-   "c": "SOLARISSUPERCUP",
-   "x": ""
-  },
-  {
-   "c": "FASTERHIGHERSTRONGER",
-   "x": ""
-  },
-  {
-   "c": "BACKTOSCHOOL",
-   "x": ""
-  },
-  {
-   "c": "HITTHEROAD",
-   "x": ""
-  },
-  {
-   "c": "STARCHASER",
-   "x": ""
-  },
-  {
-   "c": "ENDLESSSUMMER",
-   "x": ""
-  },
-  {
-   "c": "CRUMBLEDCITY",
-   "x": ""
-  },
-  {
-   "c": "SLICEDSPACE",
-   "x": ""
-  },
-  {
-   "c": "RISKEVERYTHING",
-   "x": ""
-  },
-  {
-   "c": "NOMATTERTHECOST",
-   "x": ""
-  },
-  {
-   "c": "FIGHTFORHOPE",
-   "x": ""
-  },
-  {
-   "c": "FACETHEFATE",
-   "x": ""
-  },
-  {
-   "c": "MOONLIGHT",
-   "x": ""
-  },
-  {
-   "c": "BURNINGSUN",
-   "x": ""
-  },
-  {
-   "c": "ILLUSIONHAUNTS",
-   "x": ""
-  },
-  {
-   "c": "DREAMSPERSIST",
-   "x": ""
-  },
-  {
-   "c": "THISISFINALE",
-   "x": ""
-  },
-  {
-   "c": "SOLARISSEASIDESTORY",
-   "x": ""
-  },
-  {
-   "c": "SUMMERSHALLNOTFADE",
-   "x": ""
-  },
-  {
-   "c": "SHADOWOFGLORY",
-   "x": ""
-  },
-  {
-   "c": "FLAMESOFHEART",
-   "x": ""
-  },
-  {
-   "c": "AGONISON",
-   "x": ""
-  },
-  {
-   "c": "1STANNIVERSARY",
-   "x": ""
-  },
-  {
-   "c": "EVERFLOWING",
+   "c": "WUTHERING2024",
    "x": ""
   },
   {
@@ -202,23 +46,15 @@
    "x": ""
   },
   {
-   "c": "WUWA4PC",
-   "x": ""
-  },
-  {
    "c": "WHOAMI",
    "x": ""
   },
   {
-   "c": "IMPERATOR",
+   "c": "WARMSUNLIGHT",
    "x": ""
   },
   {
-   "c": "LEVIATHAN",
-   "x": ""
-  },
-  {
-   "c": "SETSAIL",
+   "c": "WAKINGMOON",
    "x": ""
   },
   {
@@ -230,27 +66,43 @@
    "x": ""
   },
   {
+   "c": "THISISFINALE",
+   "x": ""
+  },
+  {
+   "c": "THEANSWER",
+   "x": ""
+  },
+  {
+   "c": "SUMMERSHALLNOTFADE",
+   "x": ""
+  },
+  {
+   "c": "STRANGEVISITORS",
+   "x": ""
+  },
+  {
+   "c": "STARRYSTAGE2",
+   "x": ""
+  },
+  {
    "c": "STARRYSTAGE",
    "x": ""
   },
   {
-   "c": "ALLEYESONUS",
+   "c": "STARCHASER",
    "x": ""
   },
   {
-   "c": "JOINCARNEVALE",
+   "c": "SOLARISSUPERCUP",
    "x": ""
   },
   {
-   "c": "OFFWEGO",
+   "c": "SOLARISSEASIDESTORY",
    "x": ""
   },
   {
-   "c": "GETREADY",
-   "x": ""
-  },
-  {
-   "c": "BLACKSHORES",
+   "c": "SLICEDSPACE",
    "x": ""
   },
   {
@@ -258,7 +110,35 @@
    "x": ""
   },
   {
-   "c": "FORYOU",
+   "c": "SHADOWOFGLORY",
+   "x": ""
+  },
+  {
+   "c": "SETSAIL",
+   "x": ""
+  },
+  {
+   "c": "SAYCHEESE",
+   "x": ""
+  },
+  {
+   "c": "RUNEREADER",
+   "x": ""
+  },
+  {
+   "c": "RUNEREADE",
+   "x": ""
+  },
+  {
+   "c": "RISKEVERYTHING",
+   "x": ""
+  },
+  {
+   "c": "REUNION",
+   "x": ""
+  },
+  {
+   "c": "RABBITHOLE",
    "x": ""
   },
   {
@@ -266,7 +146,143 @@
    "x": ""
   },
   {
+   "c": "PAPERPLANE",
+   "x": ""
+  },
+  {
+   "c": "OFFWEGO",
+   "x": ""
+  },
+  {
+   "c": "NOMATTERTHECOST",
+   "x": ""
+  },
+  {
+   "c": "MOONLIGHT",
+   "x": ""
+  },
+  {
+   "c": "MECHANISMCITY",
+   "x": ""
+  },
+  {
+   "c": "LEVIATHAN",
+   "x": ""
+  },
+  {
+   "c": "KEEPONSHINING",
+   "x": ""
+  },
+  {
+   "c": "JOURNEYWELL",
+   "x": ""
+  },
+  {
+   "c": "JOINCARNEVALE",
+   "x": ""
+  },
+  {
+   "c": "INTOTHEFOG",
+   "x": ""
+  },
+  {
+   "c": "IMPERATOR",
+   "x": ""
+  },
+  {
+   "c": "ILLUSIONHAUNTS",
+   "x": ""
+  },
+  {
+   "c": "HITTHEROAD",
+   "x": ""
+  },
+  {
+   "c": "HEARTOFSWORD",
+   "x": ""
+  },
+  {
+   "c": "GETREADY",
+   "x": ""
+  },
+  {
+   "c": "FORYOU",
+   "x": ""
+  },
+  {
+   "c": "FLAMESOFHEART",
+   "x": ""
+  },
+  {
+   "c": "FINDSENTINEL",
+   "x": ""
+  },
+  {
+   "c": "FIGHTFORHOPE",
+   "x": ""
+  },
+  {
+   "c": "FASTERHIGHERSTRONGER",
+   "x": ""
+  },
+  {
+   "c": "FALLINGSANCTUM",
+   "x": ""
+  },
+  {
+   "c": "FACETHEFATE",
+   "x": ""
+  },
+  {
+   "c": "FACEALEPH1",
+   "x": ""
+  },
+  {
+   "c": "F5F4D3B2A2",
+   "x": ""
+  },
+  {
+   "c": "EVERSHINE",
+   "x": ""
+  },
+  {
+   "c": "EVERFLOWING",
+   "x": ""
+  },
+  {
+   "c": "ETERNALFLAME",
+   "x": ""
+  },
+  {
+   "c": "ENDLESSSUMMER",
+   "x": ""
+  },
+  {
+   "c": "DREAMSPERSIST",
+   "x": ""
+  },
+  {
    "c": "DCARD3VN7M",
+   "x": ""
+  },
+  {
+   "c": "DARKSIDE",
+   "x": ""
+  },
+  {
+   "c": "CRUMBLEDCITY",
+   "x": ""
+  },
+  {
+   "c": "BURNINGSUN",
+   "x": ""
+  },
+  {
+   "c": "BLACKSHORES",
+   "x": ""
+  },
+  {
+   "c": "BEYONDTHEDOOR",
    "x": ""
   },
   {
@@ -274,11 +290,23 @@
    "x": ""
   },
   {
-   "c": "WUTHERINGWAVESGIFT",
+   "c": "BACKTOSCHOOL",
    "x": ""
   },
   {
-   "c": "WUTHERING2024",
+   "c": "ALLEYESONUS",
+   "x": ""
+  },
+  {
+   "c": "AGONISON",
+   "x": ""
+  },
+  {
+   "c": "2NDANNIVERSARY",
+   "x": ""
+  },
+  {
+   "c": "1STANNIVERSARY",
    "x": ""
   }
  ]
