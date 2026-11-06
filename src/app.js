@@ -31,6 +31,8 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTAL
 if ('serviceWorker' in navigator && window.isSecureContext && !import.meta.env.DEV) window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
+/* 릴리 전용 무기 러럴바이 — 출시 전 임시 항목(게시글: 공격력 16%~32%). 기본 스탯은 추정이며 실제 데이터가 들어오면 자동으로 교체됩니다. */
+if (!RAW_WEAPONS[21030999]) RAW_WEAPONS[21030999] = { n: '러럴바이', q: 5, wt: 3, atk: 587, sub: ['atk', 36.4], d: '(3.8.3 게시글 기준) 파티 전원의 공격력이 16% 증가한다. 재련 5단계에서는 32%.' };
 const RAW_SETS = D_RAW_SETS;
 const RAW_TOWER = D_RAW_TOWER;
 const RAW_ROLES = D_RAW_ROLES;
@@ -107,6 +109,7 @@ const WMOD = {
     { s: 'bonus', v: 24, el: 'electro', to: 'others', up: .7, wreq: 'unison', mode: 'unison', src: '적막한 어둠(못다 한 그리움): 파티 전도 피해 보너스 24%(협주 에너지를 쓰면 종료)' },
     { s: 'bonus', v: 40, el: 'electro', up: .85, mode: 'carry', src: '적막한 어둠(애틋한 그리움): 협주 에너지 소모 시 자신 전도 피해 40%, 14초' }],
   21030015: [{ s: 'atk', v: 10, to: 'next', src: '부동의 안개' }],
+  21030999: [{ s: 'atk', v: 16, to: 'team', src: '러럴바이(3.8.3 게시글: 공격력 16%~32%)' }],
   21030016: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 48, dt: 's' }],
   21030026: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, el: 'aero', req: 'erosion' }, { s: 'res', v: 10, el: 'aero', to: 'team', treq: 'erosion', src: '숲속의 아리아' }],
   21030036: [{ s: 'atk', v: 12 }, { s: 'amp', v: 24, dt: 'h' }, { s: 'amp', v: 24, dt: 'e' }, { s: 'defign', v: 8 }],
@@ -227,9 +230,13 @@ const CHARS = [
             { s: 'cd', v: 100, to: 'self', up: .85, src: '금쇄계주: 해방 후 E로 합일을 소모하면 크리티컬 피해 100%, 펼친 우산 평타 배율 +100%(12초)' }] }
     },
     note: '3.7 2페이즈(10/22) 출시. 해방 후 바로 교체하면 "합일 서브"(다음 캐릭터 전도 피해 보너스 30~70% · 벼락의 흔적 협동 공격), 해방 후 E를 쓰면 "금쇄계주 메인"(본인 평타 강화)입니다. 둘은 동시에 쓸 수 없어 파티마다 높은 쪽으로 계산합니다.' },
-  { id: 'lily', rid: 0, release: Date.UTC(2026, 10, 11, 2), releaseTxt: '3.8 예정', name: '릴리', q: 5, el: 'spectro', wt: 3, icon: '', role: 'sup', pw: 16, p: { n: 40, s: 30, l: 30 }, ap: ['heal', 'unison'], f: ['heal'], w: 21030015, w4: 21030064, set: 38,
-    b: [{ s: 'amp', v: 20, to: 'team', src: '릴리 반주(추정)' }, { s: 'atk', v: 20, to: 'team', src: '릴리 공명 해방(추정)' }, { s: 'cd', v: 25, to: 'team', src: '릴리 고유 스킬(추정)' }],
-    note: '3.8 출시 예정 · 수치는 공개 전 추정값입니다. 합일 대응이 가능한 힐러로 알려져 파수인 자리를 대체합니다.' },
+  { id: 'lily', rid: 0, release: Date.UTC(2026, 10, 11, 2), releaseTxt: '3.8 예정', name: '릴리', q: 5, el: 'spectro', wt: 3, icon: '', role: 'sup', pw: 16, p: { n: 40, s: 30, l: 30 }, ap: ['heal', 'unison'], f: ['heal'], w: 21030999, wGuess: true, w4: 21030024, set: 38,
+    b: [{ s: 'amp', v: 25, to: 'team', src: '릴리 반주: 파티 전원 전체 피해 부스트 25%' },
+        { s: 'atk', v: 14, to: 'team', src: '공명 해방: 변주 1회마다 공격력 7%씩 누적(최대 28%) — 쇄명 입장(1·3번째 변주) 평균 14%' },
+        { s: 'atk', v: 7, to: 'team', req: 'flare', treq: 'unison', src: '공명 해방: 여우의 별자리 입장(2·4번째 변주) 평균 21%' },
+        { s: 'atk', v: 14, to: 'team', req: 'unison', uniq: 'lilyUni', src: '공명 회로: 합일 버프 1스택당 공격력 7%(2스택 14%)' },
+        { s: 'atk', v: 21, to: 'team', req: 'unison', withChar: 'hsin', uniq: 'lilyUni', src: '공명 회로: 합일 버프 3스택(여우의 별자리 합일) 공격력 21%' }],
+    note: '3.8.3 아카라이브 정리글(서포터별 버프 모음) 수치를 반영했습니다. 반주 부스트 25%, 공명 해방 변주당 공격력 7%(1돌 14%), 공명 회로 합일 스택당 7%, 2돌 크확·크피 누적(최대 8% / 24%), 전용 무기 러럴바이 공격력 16~32%입니다. 합일팟에서 공격력만 최대 97%를 줍니다. 비이중모드라 스킬별 버프가 모두 동시에 적용됩니다. 출시 후 실제 게임 데이터가 자동으로 연결됩니다.' },
   { id: 'jingran', rid: 1212, role: 'main', pw: 104, p: { h: 80, o: 15, i: 5 }, ap: ['shield'], f: ['aoe'], w: 21010076, w4: 21010104, set: 35, b: [] },
   { id: 'qingxiao', rid: 1413, role: 'main', pw: 102, p: { h: 50, l: 30, o: 20 }, ap: ['tuneStrain'], f: ['move'], w: 21020106, w4: 21020017, set: 34, b: [] },
   { id: 'suisui', rid: 1110, role: 'sup', pw: 18, p: { s: 50, l: 30, st: 20 }, ap: ['chafe', 'heal'], f: ['heal', 'group'], w: 21050096, w4: 21050024, set: 33,
@@ -398,7 +405,7 @@ const PRESETS = [
         { k: 'f2p', m: ['hsin', 'rover_electro', 'buling'], n: '방랑자는 무료, 복링은 4성이라 진입 장벽이 가장 낮습니다(여전복)' }] },
   { id: 'hsin_unison', t: '여우의 별자리 · 합일 (쇄명 출시 후 최고점)', tag: '역경의 탑', m: ['hsin', 'suoming', 'shorekeeper'],
     d: '쇄명이 합일을 얻고 퇴장하면 반주와 여우의 별자리 변주가 동시에 터집니다.',
-    v: [{ k: 'mid', m: ['hsin', 'suoming', 'lily'], n: '릴리(3.8) 출시 후 합일 대응 힐러로 교체' },
+    v: [{ k: 'mid', m: ['hsin', 'suoming', 'lily'], n: '릴리(3.8): 합일팟에서 공격력을 최대 97%까지 주는 합일 대응 힐러' },
         { k: 'mid', m: ['hsin', 'jinhsi', 'shorekeeper'], n: '쇄명 대신 금희 합일' },
         { k: 'f2p', m: ['hsin', 'suoming', 'verina'], n: '파수인 대신 벨리나' }] },
   { id: 'xuanling', t: '양양·현령 암흑 파티', tag: '역경의 탑', m: ['xuanling', 'chisa', 'suisui'],
@@ -730,6 +737,7 @@ const TEAM_ROT = [
       loop: [['buling', '평평평평', '평타 4회'], ['rover_electro', '평평평', '평타 3회', 1], ['buling', 'E평', 'E → 평타'], ['buling', '강공강공', '강공 2회'], ['buling', '에코'], ['buling', '해방'], ['buling', '복링 반주'],
         ['rover_electro', '전랑자 변주'], ['rover_electro', '평평평', '평타 3회'], ['rover_electro', 'E평', 'E → 평타'], ['rover_electro', '해방'], ['rover_electro', '에코'], ['rover_electro', '강화스킬', '과부하'], ['rover_electro', '전랑자 반주'], ['hsin', '여별 변주', '→ 여우의 별자리 사이클']] } },
   { has: ['hsin', 'suoming'], t: '서포터 → 쇄명 → 여우의 별자리 → 쇄명 → 여우의 별자리(1-2-3-2-3). 쇄명이 공명 해방으로 합일을 얻은 뒤 교체하면 협주 에너지 없이 반주와 변주가 동시에 터집니다.' },
+  { has: ['hsin', 'suoming', 'lily'], t: '릴리 → 쇄명 → 여우의 별자리 → 쇄명 → 여우의 별자리(3-2-1-2-1). 릴리 해방 공격력은 변주마다 7%씩 쌓여 1~4번째 변주에 7/14/21/28%(1돌은 14/28/28/28%)가 되므로, 쇄명은 1·3번째, 여우의 별자리는 2·4번째 변주를 받습니다. 합일 스택당 공격력 7%(여별 3스택 21%, 풀돌 4스택 28%)와 세트 효과 25%, 전용 무기 16~32%가 더해집니다.' },
   { has: ['hsin', 'jinhsi'], t: '금희가 강화 E로 합일을 얻은 뒤 교체하면 여우의 별자리가 합일 변주로 들어옵니다.' },
   { has: ['aemeath', 'denia', 'lupa'], t: '데니아가 먼저 나와 루파에게 반주, 루파가 에이메스에게 반주합니다.' },
   { has: ['phrolova', 'cantarella'], t: '칸타렐라 반주가 플로로에게 가도록 루실라 등 다른 버퍼는 3번째에 둡니다.' }
@@ -1416,12 +1424,16 @@ const CHAIN_FIX = {
     3: [{ s: 'mv', v: 42, dt: 'l' }, { s: 'cd', v: 35, dt: 'l', mode: 'unison' }],
     4: [{ s: 'bonus', v: 20, to: 'team' }],
     6: [{ s: 'bonus', v: 40, dt: 's' }, { s: 'defign', v: 20, dt: 's' }, { s: 'final', v: 13.5, to: 'team', req: 'unison', mode: 'unison', uniq: 'unisonBuff', src: 'S6: 합일 버프 최대 4스택 → 3스택 기준 4.5%씩' },
-        { s: 'stcrit', v: 1, cr: 80, cd: 230, dt: 'st', to: 'team', mode: 'flare', src: 'S6: 주변 목표가 받는 전자 효과 피해가 크리티컬 80% / 230%로 발생' }] },
+        { s: 'stcrit', v: 1, cr: 80, cd: 230, dt: 'st', to: 'team', mode: 'flare', src: 'S6: 주변 목표가 받는 전자 효과 피해가 크리티컬 80% / 230%로 발생' },
+        { s: 'atk', v: 28, to: 'team', req: 'unison', withChar: 'lily', uniq: 'lilyUni', mode: 'unison', src: 'S6: 합일 버프 4스택 → 릴리 공명 회로 공격력 28%' }] },
   suoming: { 2: [{ s: 'cd', v: 40 }, { s: 'cd', v: 22, to: 'next', src: 'S2: 반주 시 다음 캐릭터 크리티컬 피해 10% + 합일 버프 2스택 12%' }],
     3: [{ s: 'amp', v: 30, dt: 'n', up: .8 }],
     6: [{ s: 'final', v: 9, to: 'team', req: 'unison', treqOther: 'unison', uniq: 'unisonBuff', src: 'S6: 합일 버프 1스택 효과 +50%(2스택 기준 4.5%씩)' },
         { s: 'final', v: 13.5, to: 'team', req: 'unison', withChar: 'hsin', uniq: 'unisonBuff', src: 'S6: 여우의 별자리 합일 모드와 3스택 기준 4.5%씩' },
         { s: 'mv', v: 30, dt: 'n' }, { s: 'cd', v: 200, up: .85, mode: 'carry', src: 'S6: 금쇄계주 중 크리티컬 피해 +200%' }] },
+  lily: { 1: [{ s: 'atk', v: 7, to: 'team', src: 'S1: 공명 해방 변주당 공격력 7% → 14%(최대 28%)' }],
+    2: [{ s: 'cr', v: 6, to: 'team', src: 'S2: 변주마다 크리티컬 4%·크피 12%(최대 2스택) — 쇄명 평균' }, { s: 'cd', v: 18, to: 'team' },
+        { s: 'cr', v: 2, to: 'team', req: 'flare', treq: 'unison', src: 'S2: 여우의 별자리는 2스택(8% / 24%)' }, { s: 'cd', v: 6, to: 'team', req: 'flare', treq: 'unison' }] },
   hiyuki: { 3: [{ s: 'mv', v: 60, dt: 'st' }, { s: 'mv', v: 50, dt: 'h' }], 6: [{ s: 'cd', v: 40, cond: true }, { s: 'final', v: 25, dt: 'st', to: 'team' }, { s: 'mv', v: 40, dt: 'st' }] },
   lucilla: { 2: [{ s: 'amp', v: 80, el: 'glacio', dt: 'st', to: 'team', mode: 'chafe' }, { s: 'bonus', v: 40, dt: 'e', to: 'team', mode: 'echo' }] },
   suisui: { 2: [{ s: 'cd', v: 50, to: 'team', req: STATUS_CAPS }], 6: [{ s: 'cd', v: 200, dt: 's' }, { s: 'cd', v: 200, dt: 'i' }] },
@@ -1513,7 +1525,7 @@ function applyExtra(doc) {
       if (tgt) { // 출시 전에 미리 넣어 둔 캐릭터(예: 릴리)를 실제 게임 데이터와 연결
         tgt.rid = r.rid; if (r.img && !IMG_CHAR[tgt.id]) IMG_CHAR[tgt.id] = r.img;
         if (!tgt.outro && r.outro && r.outro.d) tgt.outro = r.outro;
-        if (r.w && RAW_WEAPONS[r.w] && !RAW_WEAPONS[tgt.w]) tgt.w = r.w;
+        if (r.w && RAW_WEAPONS[r.w] && (tgt.wGuess || !RAW_WEAPONS[tgt.w])) { tgt.w = r.w; tgt.wGuess = false; }
         rids.add(r.rid); info.merged.push(tgt.id); return;
       }
       const id = 'x' + r.rid; if (CH[id]) return;
