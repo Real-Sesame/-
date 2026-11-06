@@ -866,3 +866,21 @@ h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflo
 .mx-no { font-weight: 700; color: var(--gold); text-align: center; font-variant-numeric: tabular-nums; }
 .mx-tn { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; min-width: 0; }
 @media (max-width: 560px) { .mx-team { grid-template-columns: 22px 1fr; } .mx-tn { grid-column: 2; } }
+
+/* 리딤 코드 */
+.cd-top { align-items: start; }
+.cd-list { display: grid; gap: 10px; }
+.cd-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.cd-row.used { opacity: .6; }
+.cd-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; flex: 1 1 260px; }
+.cd-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; letter-spacing: .04em; color: var(--gold); word-break: break-all; user-select: all; -webkit-user-select: all; }
+.cd-r { flex-basis: 100%; font-size: 13.5px; }
+.cd-main .note { flex-basis: 100%; }
+.cd-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.cd-how li { margin-bottom: 4px; }
+.cd-exp { margin-top: 14px; }
+.cd-exp summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cd-xl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.cd-xl code { font-size: 12px; padding: 3px 7px; border-radius: 6px; background: rgba(127,127,127,.1); color: var(--muted); text-decoration: line-through; }
+.cd-ic { font-size: 30px; width: 48px; text-align: center; flex: none; }
+.cd-promo b .tag { margin-left: 6px; vertical-align: 1px; }

@@ -1487,7 +1487,7 @@ const lsSet = (k, v) => {
   if (sk) { if (prev !== null && noTab(prev) !== noTab(v) && !touchQuiet) markTouched(); syncDirty(); }
 };
 let touchQuiet = false;
-const SYNC_KEYS = ['ddingjo-atm-v2', 'ddingjo-atm-echo-calc']; // 로그인하면 계정에 저장되는 설정(보유 캐릭터 · 파티 · 캐릭터 설정 · 육성 · 에코 계산기)
+const SYNC_KEYS = ['ddingjo-atm-v2', 'ddingjo-atm-echo-calc', 'ddingjo-atm-codes']; // 로그인하면 계정에 저장되는 설정(보유 캐릭터 · 파티 · 캐릭터 설정 · 육성 · 에코 계산기 · 사용한 리딤 코드)
 // 이 기기에서 설정을 직접 바꾼 적이 있는지(처음 로그인할 때 계정 설정을 바로 불러올지, 물어볼지 정함)
 const LS_TOUCHED = 'ddingjo-atm-touched';
 const noTab = t => { try { const o = JSON.parse(t); if (o && typeof o === 'object') delete o.tab; return JSON.stringify(o); } catch (e) { return t; } };
@@ -2696,11 +2696,13 @@ function renderHome() {
       <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">파티 편성 열기</a></div>
       <div class="feat-vis"><div class="feat-row" style="grid-template-columns:1fr">${['tower-build:역경의 탑 편성:시즌 버프 반영 자동 편성', 'timeline:딜 사이클:누가 언제 무엇을 하는지 순서대로', 'grow:육성 계산:돌파 · 스킬 재료와 필요한 파밍 횟수'].map(s => { const [k, n, d] = s.split(':'); return `<a class="mini-feat" href="#/tools/${k}"><b>${n}</b><span>${d}</span></a>`; }).join('')}</div></div></div></section>
+    ${codesHomeHTML()}
     ${IN_APP || STANDALONE ? '' : `<section class="sec"><a class="app-promo" href="#/app"><img src="${BASE}icons/icon-192.png" alt="" width="48" height="48"><div><b>휴대폰 앱으로 쓰기</b><span>안드로이드 APK · 아이폰은 홈 화면에 추가 — 주소창 없이 전체 화면으로</span></div><span class="more">앱 설치</span></a></section>`}
     <section class="sec">${secHead('자료실', '공략과 자료를 찾을 때 함께 보면 좋은 곳', '#/links')}${hscroll('hs-links', LINKS.map(linkHTML).join(''))}</section>
     <section class="data-info" id="home-data" aria-label="데이터 기준"></section>
   </div>`;
   paintDataInfo();
+  if (!CODES) loadCodes().then(d => { if (d && d.active.length && curView === 'home') renderHome(); });
   $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
   bindHscroll(el);
   clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
@@ -2760,6 +2762,67 @@ function renderLinks() {
     <div class="fbar"><div class="grp">${cats.map(c => `<button class="fchip" data-lc="${esc(c)}" aria-pressed="${c === f}">${esc(c)}</button>`).join('')}</div></div>
     <div class="intro-grid">${LINKS.filter(l => f === '전체' || l.cat === f).map(linkHTML).join('')}</div></div>`;
   $$('[data-lc]', el).forEach(b => b.addEventListener('click', () => { state.linkCat = b.dataset.lc; renderLinks(); }));
+}
+
+
+/* ---------- 리딤 코드 ----------
+   명조 리딤 코드는 게임 안(설정 → 기타 설정 → 계정 → 리딤 코드)에서만 입력할 수 있음(공식 웹 입력 페이지 없음).
+   public/codes.json(tools/update_codes.py가 3시간마다 공략 사이트에서 모음)을 보여 주고, 복사 · 사용함 표시(로그인하면 계정에 저장),
+   앱에서는 복사 후 명조를 바로 엽니다. */
+const LS_CODES = 'ddingjo-atm-codes';
+const GAME_PKG = 'com.kurogame.wutheringwaves.global';
+let CODES = null, CODES_P = null;
+function loadCodes() {
+  if (!CODES_P) CODES_P = fetch(`${BASE}codes.json?h=${Math.floor(Date.now() / 6e5)}`).then(r => r.ok ? r.json() : null).then(d => { CODES = d; return d; }).catch(() => null);
+  return CODES_P;
+}
+const codesUsed = () => { try { return (JSON.parse(lsGet(LS_CODES) || '{}').used) || {}; } catch (e) { return {}; } };
+function setCodeUsed(c, on) { const u = codesUsed(); if (on) u[c] = Date.now(); else delete u[c]; lsSet(LS_CODES, JSON.stringify({ used: u })); }
+const unusedCodes = d => d ? d.active.filter(x => !codesUsed()[x.c]) : [];
+const appCan = f => { try { return !!(IN_APP && window.DdingjoApp && typeof window.DdingjoApp[f] === 'function'); } catch (e) { return false; } };
+async function copyCode(t) {
+  if (appCan('copy')) { try { if (window.DdingjoApp.copy(t)) return true; } catch (e) { } }
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) { }
+  try { const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (e) { return false; }
+}
+function codeRowHTML(x, used) {
+  return `<div class="cd-row ${used ? 'used' : ''}" data-code="${esc(x.c)}">
+    <div class="cd-main"><code class="cd-code">${esc(x.c)}</code>${used ? '<span class="tag">사용함</span>' : x.a && Date.now() - Date.parse(x.a) < 3 * DAY ? '<span class="tag gold">NEW</span>' : ''}
+      <span class="cd-r">${esc(x.r || '보상 정보 없음')}</span>
+      <span class="note">${x.n ? esc(x.n) + ' · ' : ''}${x.e ? `${esc(x.e)}까지` : '만료일 미공개'}${x.a ? ` · ${esc(x.a)} 확인` : ''}</span></div>
+    <div class="cd-act"><button class="btn sm solid-gold" data-cd-copy>${appCan('openGame') ? '복사하고 명조 열기' : '복사'}</button>
+      <button class="btn sm" data-cd-used aria-pressed="${used}">${used ? '사용 취소' : '사용함'}</button></div></div>`;
+}
+function renderCodes() {
+  const el = $('[data-view="codes"]'); const d = CODES;
+  if (!d) { el.innerHTML = '<div class="container page"><div class="empty-note">리딤 코드를 불러오는 중입니다…</div></div>'; loadCodes().then(x => { if (curView === 'codes') x ? renderCodes() : (el.innerHTML = '<div class="container page"><div class="empty-note">리딤 코드를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</div></div>'); }); return; }
+  const used = codesUsed(); const left = unusedCodes(d);
+  el.innerHTML = `<div class="container page"><p class="eyebrow">리딤 코드</p><h1 class="ph-t">지금 쓸 수 있는 <em>리딤 코드</em></h1>
+    <p class="ph-d">명조 리딤 코드는 게임 안에서만 입력할 수 있어요(공식 웹 입력 페이지가 없습니다). 코드를 복사해 게임의 리딤 코드 창에 붙여 넣으세요. 입력한 코드에 「사용함」을 눌러 두면 ${AUTH ? '계정에 저장되어 다른 기기에서도 보입니다' : '다음에 헷갈리지 않아요(로그인하면 다른 기기와도 맞춰집니다)'}.</p>
+    <div class="two cd-top"><div class="box"><h3>사용 가능 <small>${d.active.length}개 · 안 쓴 코드 ${left.length}개</small></h3>
+      <div class="cd-list">${d.active.length ? d.active.map(x => codeRowHTML(x, !!used[x.c])).join('') : '<p class="note">지금 쓸 수 있는 코드가 없습니다. 특별 방송 · 기념일에 새 코드가 나오면 3시간 안에 여기에 올라옵니다.</p>'}</div></div>
+      <div class="box"><h3>게임에서 입력하는 방법</h3><ol class="prose cd-how">
+        <li>유니온 레벨 <b>2 이상</b>이어야 입력할 수 있습니다.</li>
+        <li>게임 화면 오른쪽 위 <b>메뉴</b>(PC는 ESC)를 엽니다.</li>
+        <li>오른쪽 아래 <b>설정</b>(톱니바퀴) → <b>기타 설정</b> 탭 → 계정 항목의 <b>리딤 코드</b>에서 <b>교환하기</b>를 누릅니다.</li>
+        <li>복사한 코드를 붙여 넣고 확인 → 「교환 성공」이 뜨면 보상은 <b>우편</b>으로 옵니다.</li></ol>
+        <p class="note" style="margin:8px 0 0">코드는 계정마다 한 번씩만 쓸 수 있고 대문자 그대로 입력해야 합니다. 일부 코드는 특정 지역(대만 커뮤니티 등) 전용이라 한국 계정에서는 안 될 수 있어요.</p>
+        ${IN_APP && !appCan('openGame') ? `<p class="note" style="margin:8px 0 0">앱을 1.3.0 이상으로 업데이트하면 「복사하고 명조 열기」로 바로 게임을 열 수 있어요. <a href="#/app">앱 업데이트</a></p>` : ''}</div></div>
+    ${d.expired.length ? `<details class="box cd-exp"><summary><b>만료된 코드</b> <span class="note">${d.expired.length}개 · 입력해도 받을 수 없어요</span></summary><div class="cd-xl">${d.expired.map(x => `<code>${esc(x.c)}</code>`).join('')}</div></details>` : ''}
+    <p class="note" style="margin-top:14px">${d.updated ? `${esc(d.updated.slice(0, 16).replace('T', ' '))} 확인` : ''}${(d.sources || []).length ? ` · 출처: ${esc(d.sources.join(', '))}` : ''} · 3시간마다 자동으로 다시 확인합니다. 코드가 안 되면 이미 만료됐을 수 있어요.</p></div>`;
+  $$('[data-cd-copy]', el).forEach(b => b.addEventListener('click', async () => {
+    const c = b.closest('[data-code]').dataset.code; const ok = await copyCode(c);
+    if (!ok) { toast('복사하지 못했어요. 코드를 길게 눌러 직접 복사해 주세요.'); return; }
+    if (appCan('openGame')) { toast(`${c} 복사함 · 명조를 엽니다`); setTimeout(() => { try { window.DdingjoApp.openGame(); } catch (e) { } }, 350); }
+    else toast(`${c} 복사함 · 게임의 리딤 코드 창에 붙여 넣으세요`);
+  }));
+  $$('[data-cd-used]', el).forEach(b => b.addEventListener('click', () => { const c = b.closest('[data-code]').dataset.code; setCodeUsed(c, !codesUsed()[c]); renderCodes(); }));
+}
+// 홈: 안 쓴 리딤 코드 알림
+function codesHomeHTML() {
+  const d = CODES; if (!d || !d.active.length) return '';
+  const left = unusedCodes(d);
+  return `<section class="sec"><a class="app-promo cd-promo" href="#/codes"><span class="cd-ic" aria-hidden="true">🎁</span><div><b>리딤 코드 ${left.length ? `<span class="tag gold">안 쓴 코드 ${left.length}개</span>` : '<span class="tag">모두 사용함</span>'}</b><span>${esc(left.slice(0, 3).map(x => x.c).join(' · ') || '새 코드가 나오면 여기에 알려 드려요')}</span></div><span class="more">코드 보기</span></a></section>`;
 }
 
 /* ---------- 시즌 콘텐츠 (역경의 탑 · 죽음의 노래와 바닷속 폐허 · 종말 매트릭스) ----------
@@ -3288,8 +3351,8 @@ function renderEcho() {
 }
 
 /* ---------- 화면 전환 ---------- */
-const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'links', 'notice', 'app'];
-const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', links: '자료실', notice: '공지사항', app: '앱 설치' };
+const VIEWS = ['home', 'intro', 'characters', 'character', 'tools', 'season', 'echo', 'codes', 'links', 'notice', 'app'];
+const VIEW_T = { home: '', intro: '소개', characters: '공명자 가이드', character: '공명자 가이드', tools: '파티 편성', season: '시즌 콘텐츠', echo: '에코 계산기', codes: '리딤 코드', links: '자료실', notice: '공지사항', app: '앱 설치' };
 let curView = null;
 // 주소: /-/ (홈), /-/characters, /-/character/<id>, /-/tools/<탭> … 예전 #/주소도 받아서 새 주소로 바꿈
 function parseRoute() {
@@ -3326,7 +3389,7 @@ function showView(r, keepScroll) {
   if (r.v === 'sim') { navigate('', true); return; } // 튜닝 시뮬레이터는 1.0.25에서 삭제
   if (v === 'tools' && (r.a === 'help' || r.a === 'patch')) { navigate(r.a === 'help' ? 'intro' : 'notice', true); if (r.a === 'help') setTimeout(scrollHelp, 60); return; }
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
-  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
+  else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, codes: renderCodes, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
   document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
@@ -3692,7 +3755,7 @@ async function api(path, { method = 'GET', body, token = AUTH && AUTH.token } = 
 function localPayload() {
   const get = k => { try { return JSON.parse(lsGet(k) || 'null'); } catch (e) { return null; } };
   const main = get(SYNC_KEYS[0]); if (main) delete main.tab; // 마지막으로 연 탭은 기기마다 따로
-  return { v: 1, main, echo: get(SYNC_KEYS[1]) };
+  return { v: 1, main, echo: get(SYNC_KEYS[1]), codes: get(SYNC_KEYS[2]) };
 }
 const localIsEmpty = () => !lsGet(LS_TOUCHED);
 function applyRemote(data, updated) {
@@ -3700,6 +3763,7 @@ function applyRemote(data, updated) {
   try {
     if (data && data.main) { const cur = (() => { try { return JSON.parse(lsGet(SYNC_KEYS[0]) || '{}'); } catch (e) { return {}; } })(); lsSet(SYNC_KEYS[0], JSON.stringify({ ...data.main, tab: cur.tab || data.main.tab })); }
     if (data && data.echo) lsSet(SYNC_KEYS[1], JSON.stringify(data.echo));
+    if (data && data.codes) lsSet(SYNC_KEYS[2], JSON.stringify(data.codes));
   } finally { syncApplying = false; }
   load(); state.ec = null; ensureParties();
   AUTH.base = updated; AUTH.snap = payloadStr(); saveAuth();

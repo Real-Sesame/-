@@ -3,6 +3,8 @@ package io.github.realsesame.ddingjo;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -45,6 +47,8 @@ public class MainActivity extends Activity {
     static final String HOST = "real-sesame.github.io";
     static final String HOME = "https://" + HOST + "/-/";
     static final String OFFLINE = "file:///android_asset/offline.html";
+    /** 명조(글로벌 · 한국 서버 공통) 앱 */
+    static final String GAME = "com.kurogame.wutheringwaves.global";
     WebView web;
     boolean offline = false;
     /** 지금 화면에 열린 주소(앱 기능을 부른 화면이 이 사이트인지 확인용) */
@@ -259,6 +263,39 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void reload() { if (trusted()) runOnUiThread(() -> { offline = false; web.loadUrl(HOME); }); }
+
+        /** 글자를 클립보드에 복사(리딤 코드 등, 최대 200자) */
+        @JavascriptInterface
+        public boolean copy(String text) {
+            if (!trusted() || text == null) return false;
+            final String t = text.length() > 200 ? text.substring(0, 200) : text;
+            runOnUiThread(() -> {
+                ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("리딤 코드", t));
+            });
+            return true;
+        }
+
+        /** 명조가 설치돼 있는지 */
+        @JavascriptInterface
+        public boolean hasGame() {
+            try { getPackageManager().getPackageInfo(GAME, 0); return true; } catch (Exception e) { return false; }
+        }
+
+        /** 명조를 엶(없으면 Play 스토어의 명조 페이지) */
+        @JavascriptInterface
+        public void openGame() {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                Intent i = getPackageManager().getLaunchIntentForPackage(GAME);
+                try {
+                    if (i != null) startActivity(i);
+                    else startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GAME)));
+                } catch (Exception e) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + GAME))); } catch (Exception ignored) { }
+                }
+            });
+        }
 
         /** 이 앱의 서명 인증서 SHA-256 지문(사이트의 앱 페이지에서 공식 앱인지 확인할 때 씀) */
         @JavascriptInterface

@@ -17,6 +17,7 @@ public/                 그대로 올라가는 파일
   skills/<rid>.json     공명자 스킬 설명 (자동 생성 · 그 공명자 화면을 열 때만 받아 옴)
   wastes.json           죽음의 노래와 바닷속 폐허 시즌 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
   matrix.json           종말 매트릭스 도전 단계 구성 (자동 생성 · 시즌 콘텐츠 화면에서 받아 옴)
+  codes.json            리딤 코드 모음 (tools/update_codes.py가 3시간마다 공략 사이트에서 모음 · tools/codes-manual.json으로 직접 추가)
   tower.json            역경의 탑 시즌 구성 · 한국어 텍스트 (자동 생성)
   echoes.json           공명자별 추천 메인 에코 (자동 생성, 아이콘은 assets/echo/)
   events.json           픽업 · 이벤트 일정 (자동 갱신)
