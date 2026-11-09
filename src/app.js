@@ -31,6 +31,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTAL
 if ('serviceWorker' in navigator && window.isSecureContext && !import.meta.env.DEV) window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
+let WOWN = {}; // 보유 무기 { 무기 id: 재련 } — state.wown과 같은 객체(setWown으로만 바꿈)
 /* 릴리 전용 무기 러럴바이 — 출시 전 임시 항목(게시글: 공격력 16%~32%). 기본 스탯은 추정이며 실제 데이터가 들어오면 자동으로 교체됩니다. */
 if (!RAW_WEAPONS[21030999]) RAW_WEAPONS[21030999] = { n: '러럴바이', q: 5, wt: 3, atk: 587, sub: ['atk', 36.4], d: '(3.8.3 게시글 기준) 파티 전원의 공격력이 16% 증가한다. 재련 5단계에서는 32%.' };
 const RAW_SETS = D_RAW_SETS;
@@ -60,7 +61,7 @@ const ECHO_MAIN = D_ECHO_MAIN;
    MODEL DATA — 명조 3.7 (게임 데이터 + 커뮤니티 빌드 가이드 기반)
    버프 표기
      s  : atk(공격력%) | flat(고정 공격력) | bonus(피해 보너스%) | amp(피해 심화/부스트%)
-          cr(크리티컬%) | cd(크리티컬 피해%) | defign(방어 무시%) | res(저항 감소%) | final(최종 피해%)
+          cr(크리티컬%) | cd(크리티컬 피해%) | defign(방어 무시%) | defred(방어력 감소%) | res(저항 감소%) | final(최종 피해%)
      to : self(기본) | team(자신 포함 전원) | others(자신 제외) | next(다음 등장 캐릭터)
      el : 속성 제한   dt : 피해 유형 제한(n 일반, h 강공격, s 스킬, l 해방, e 에코, st 이상효과, c 협동, o 반주, i 변주)
      req: 받는 캐릭터가 해당 능력을 가져야 적용   treq: 파티 안에 해당 능력자가 있어야 적용
@@ -87,11 +88,11 @@ const WMOD = {
   21010015: [{ s: 'bonus', v: 21, dt: 'l' }],
   21010016: [{ s: 'bonus', v: 12 }, { s: 'bonus', v: 48, dt: 'h' }],
   21010026: [{ s: 'bonus', v: 12 }, { s: 'bonus', v: 48, dt: 's' }],
-  21010036: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, dt: 'l' }, { s: 'bonus', v: 24, el: 'fusion', to: 'team', src: '불길' }],
+  21010036: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, dt: 'l' }, { s: 'bonus', v: 24, el: 'fusion', to: 'team', up: .85, src: '불길(강공격으로 효과 연장 시)' }],
   21010045: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, dt: 'l', up: .7, treq: 'tuneStrain' }],
   21010046: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 20, dt: 'h' }, { s: 'defign', v: 36, dt: 'h', up: .7, req: 'shield' }],
   21010056: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, dt: 'l' }, { s: 'bonus', v: 24, to: 'others', req: STATUS_CAPS, src: '쿠모키리' }],
-  21010066: [{ s: 'cd', v: 20, to: 'team', src: '별하늘 연산 측정기' }],
+  21010066: [{ s: 'cd', v: 20, to: 'team', wreq: 'heal', up: .7, src: '별하늘 연산 측정기(치료 시 4초)' }],
   21010076: [{ s: 'bonus', v: 12 }, { s: 'cd', v: 24, req: 'shield' }, { s: 'cr', v: 12, dt: 'h', req: 'shield' }, { s: 'amp', v: 20, dt: 'h', up: .7 }],
   21020015: [{ s: 'atk', v: 12 }],
   21020016: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 56, dt: 's' }],
@@ -114,9 +115,9 @@ const WMOD = {
   21030026: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, el: 'aero', req: 'erosion' }, { s: 'res', v: 10, el: 'aero', to: 'team', treq: 'erosion', src: '숲속의 아리아' }],
   21030036: [{ s: 'atk', v: 12 }, { s: 'amp', v: 24, dt: 'h' }, { s: 'amp', v: 24, dt: 'e' }, { s: 'defign', v: 8 }],
   21030045: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 20, up: .8 }],
-  21030046: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'n' }, { s: 'bonus', v: 24, to: 'team', treq: ['tuneRupture', 'tuneStrain'], src: '스펙트럼 블래스터' }],
+  21030046: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'n' }, { s: 'bonus', v: 24, to: 'team', wreq: ['tuneRupture', 'tuneStrain'], src: '스펙트럼 블래스터(장착자가 조화 파동 · 밀집 부여 시)' }],
   21030056: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 40, el: 'spectro' }, { s: 'amp', v: 30, dt: 'h', req: 'hack' }, { s: 'defign', v: 10, dt: 'h', req: 'hack' }],
-  21030066: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'n' }, { s: 'atk', v: 24, to: 'team', treq: 'hack', src: '스컬 스래셔' }],
+  21030066: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'n' }, { s: 'atk', v: 24, to: 'team', wreq: 'hack', src: '스컬 스래셔(장착자가 해킹 부여 시)' }],
   21040015: [{ s: 'bonus', v: 10, dt: 'n' }, { s: 'bonus', v: 10, dt: 's' }],
   21040016: [{ s: 'bonus', v: 12 }, { s: 'bonus', v: 48, dt: 'l' }],
   21040026: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 48, dt: 'h' }],
@@ -128,14 +129,14 @@ const WMOD = {
   21050015: [{ s: 'bonus', v: 16, dt: 'n' }],
   21050016: [{ s: 'bonus', v: 12 }, { s: 'atk', v: 30 }],
   21050026: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 45, dt: 'n' }],
-  21050036: [{ s: 'atk', v: 14, to: 'team', src: '뭇별의 교향곡' }],
+  21050036: [{ s: 'atk', v: 14, to: 'team', wreq: 'heal', src: '뭇별의 교향곡(치료하는 공명 스킬 시)' }],
   21050045: [{ s: 'atk', v: 24, up: .9 }, { s: 'bonus', v: 12, dt: 'n' }],
   21050046: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 42, dt: 'n' }, { s: 'bonus', v: 42, dt: 'h' }, { s: 'amp', v: 30, dt: 'st', el: 'spectro', to: 'team', src: '광휘의 찬송가' }],
   21050056: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 40, dt: 'n' }, { s: 'res', v: 12, el: 'havoc' }],
   21050066: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 32, dt: 's' }, { s: 'amp', v: 32, dt: 'e' }, { s: 'defign', v: 8 }],
-  21050076: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'l' }, { s: 'atk', v: 24, to: 'team', req: ['fusionBurst', 'tuneStrain'], src: '위조된 작은별' }],
-  21050086: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 30, el: 'glacio', req: 'chafe' }, { s: 'atk', v: 24, to: 'team', src: '프리즈 프레임' }],
-  21050096: [{ s: 'atk', v: 20, to: 'team', src: '노을에 깃든 이슬' }],
+  21050076: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 36, dt: 'l' }, { s: 'atk', v: 24, to: 'team', req: ['fusionBurst', 'tuneStrain'], wreq: ['fusionBurst', 'tuneStrain'], src: '위조된 작은별' }],
+  21050086: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 30, el: 'glacio', req: 'chafe' }, { s: 'atk', v: 24, to: 'team', wreq: 'chafe', src: '프리즈 프레임(장착자가 서리 효과 부여 시)' }],
+  21050096: [{ s: 'atk', v: 20, to: 'team', wreqAll: ['chafe', 'heal'], src: '노을에 깃든 이슬(장착자가 서리 효과 부여 + 치료 시)' }],
   21050116: [{ s: 'bonus', v: 12 }, { s: 'amp', v: 36, dt: 's', req: ['flare', 'unison'] }, { s: 'res', v: 10, dt: 's', el: 'electro' }, { s: 'amp', v: 30, dt: 'st', el: 'electro', to: 'team', src: '옥궐에 피는 꽃' }],
   // 4성
   21010074: [{ s: 'atk', v: 20 }], 21010104: [{ s: 'atk', v: 7.2 }, { s: 'bonus', v: 10.8, dt: 'h' }],
@@ -833,6 +834,52 @@ function parseGenericWeapon(w) {
 }
 function weaponBuffs(id) { return WMOD[id] || parseGenericWeapon(weaponOf(id)); }
 
+/* ---------- 보유 무기 ----------
+   state.wown = { 무기 id: 재련 단계(1~5) }. 기본 무기 설정이 「보유 무기」면 캐릭터마다 보유한 같은 종류 무기 중
+   계산상 가장 좋은 무기를 고릅니다(자기 딜 + 무기가 주는 파티 버프를 같은 속성 기준 딜러에게 줬을 때의 딜).
+   한 파티에서 같은 5성 무기를 두 명이 쓰지 않게 하고(4성은 여러 자루 있다고 봄), 메인 딜러가 먼저 고릅니다. */
+const isStd5 = id => { const w = RAW_WEAPONS[id]; return !!w && w.q === 5 && /(15|45)$/.test(String(id)); }; // 상시 5성(…15 · …45)
+let _sigOwner = null, _sigN = 0;
+function sigOwner(wid) { // 전용 무기 주인(공명자 id). 같은 무기를 추천 무기로 쓰는 캐릭터가 여럿이면 5성 · 방랑자 아닌 캐릭터 우선
+  if (!_sigOwner || _sigN !== CHARS.length) {
+    _sigOwner = {}; _sigN = CHARS.length;
+    Object.entries(RAW_WEAPONS).forEach(([id, w]) => {
+      if (w.q !== 5 || isStd5(id)) return;
+      const us = CHARS.filter(c => +c.w === +id); if (!us.length) return;
+      _sigOwner[id] = (us.find(c => c.q === 5 && !c.id.startsWith('rover_')) || us[0]).id;
+    });
+  }
+  return _sigOwner[wid] || null;
+}
+const wOwned = id => !!WOWN[id];
+function setWown(o) { WOWN = o || {}; if (typeof state === 'object') state.wown = WOWN; }
+// 무기 비교용 기준 딜러(같은 속성 · 조건 없음): 무기가 주는 파티 버프의 값을 재기 위해서만 씀
+const REF_W = 21020015;
+function refChar(el) {
+  const id = '__ref_' + el; if (CH[id]) return id;
+  CH[id] = { id, rid: 0, name: '기준 딜러', el, wt: 2, q: 5, role: 'main', pw: 100, p: { n: 25, h: 25, s: 25, l: 25 }, ap: [], f: [], b: [], w: REF_W, w4: REF_W, ref: true };
+  return id;
+}
+let _wrank = new Map(), _wrankV = -1, WRANK_V = 0; // save()마다 WRANK_V가 올라가 다시 계산
+function weaponRank(id, modeKey) { // 모드가 있는 캐릭터(여우의 별자리 전자/합일 등)는 모드마다 따로 매김
+  if (_wrankV !== WRANK_V) { _wrank = new Map(); _wrankV = WRANK_V; }
+  const c0 = CH[id]; if (c0 && c0.modes && !c0.modes[modeKey]) modeKey = Object.keys(c0.modes)[0];
+  const ck = id + '|' + (modeKey || '');
+  if (_wrank.has(ck)) return _wrank.get(ck);
+  const c = CH[id]; let res = [];
+  const list = c ? Object.keys(WOWN).map(Number).filter(w => RAW_WEAPONS[w] && RAW_WEAPONS[w].wt === c.wt) : [];
+  if (list.length === 1) res = [{ id: list[0], r: WOWN[list[0]] || 1, score: 1 }];
+  else if (list.length > 1) {
+    const ref = refChar(c.el);
+    res = list.map(w => {
+      const ov = { ...state.ov, [ref]: { w: REF_W, r: 1 }, [id]: { ...(state.ov[id] || {}), w, r: WOWN[w] || 1 } };
+      const t = calcTeam(c.role === 'main' ? [id, ref] : [ref, id], { settings: state.settings, ov, modes: modeKey ? { [id]: modeKey } : {} });
+      return { id: w, r: WOWN[w] || 1, score: t.totalDmg };
+    }).sort((a, b) => b.score - a.score);
+  }
+  _wrank.set(ck, res); return res;
+}
+
 // --- 스킬 레벨 ---
 // 게임 데이터(damage.json RateLv) 기준 레벨별 배율 곡선: 모든 스킬이 Lv10 대비 같은 비율로 오릅니다.
 const SK_CURVE = [0.503, 0.544, 0.5855, 0.643, 0.6845, 0.732, 0.798, 0.864, 0.93, 1];
@@ -921,10 +968,14 @@ function resolveMember(id, modeKey, ov, settings) {
   const c = CH[id]; if (!c) return null;
   const mode = c.modes ? c.modes[modeKey] : null;
   const o = ov[id] || {};
-  const weaponId = o.w || (settings.weapon === 'sig' ? c.w : c.w4);
+  let weaponId, wAuto = false, noOwn = false;
+  if (o.w) weaponId = o.w;
+  else if (settings.weapon === 'own' && !c.ref) { const rk = weaponRank(id, modeKey); if (rk.length) { weaponId = rk[0].id; wAuto = true; } else { weaponId = c.w4; noOwn = true; } }
+  else weaponId = settings.weapon === 'sig' ? c.w : c.w4;
   const wq = (RAW_WEAPONS[weaponId] || {}).q || 4;
   const chain = o.c ?? (c.q === 4 ? 6 : 0);
-  const refine = o.r ?? (wq === 5 ? 1 : 5);
+  // 재련: 보유 무기에서 자동으로 고른 무기는 보유 현황의 재련 단계, 직접 고른 무기는 캐릭터 설정 값(없으면 보유 재련 → 5성 1 · 4성 5)
+  const refine = wAuto ? (WOWN[weaponId] || 1) : noOwn ? 1 : (o.r ?? WOWN[weaponId] ?? (wq === 5 ? 1 : 5));
   // 공명 체인 효과
   const chainB = [], mv = {}; let rotMul = 1, ftDelta = 0;
   {
@@ -943,7 +994,7 @@ function resolveMember(id, modeKey, ov, settings) {
   return {
     c, id, modeKey, mode, el: c.el, role: (mode && mode.role) || c.role,
     pw: c.pw * ((mode && mode.pwMul) || 1), p: (mode && mode.p) || c.p || { n: 100 },
-    ap, b: ((mode ? mode.b : c.b) || []).concat(chainB), weaponId, setId, sets2, chain, refine, mv, rotMul,
+    ap, b: ((mode ? mode.b : c.b) || []).concat(chainB), weaponId, wAuto, noOwn, setId, sets2, chain, refine, mv, rotMul,
     sl: skillLevels(o), // 스킬 레벨(입력 없으면 모두 10)
     st: (o.st && o.st.on) ? o.st : null, // 속성 화면 스탯 입력
     ech: (!(o.st && o.st.on) && o.echo && o.echo.on) ? echoStats(c, o.echo) : null, // 에코 옵션 입력
@@ -968,6 +1019,8 @@ function buffApplies(buff, owner, recipient, team, order) {
   if (buff.treq && !team.some(m => capsMatch(m, buff.treq))) return false;
   if (buff.treqOther && !team.some(m => m !== owner && capsMatch(m, buff.treqOther))) return false;
   if (buff.wreq && !capsMatch(owner, buff.wreq)) return false;
+  if (buff.wreqAll && !buff.wreqAll.every(x => owner.ap.has(x))) return false;
+  if (buff.wdt && !(owner.p && owner.p[buff.wdt] > 0)) return false;
   if (buff.withChar && !team.some(m => m.id === buff.withChar)) return false;
   if (buff.wielder && owner.id !== buff.wielder) return false;
   if (buff.role === 'main' && owner.role !== 'main') return false;
@@ -1010,6 +1063,13 @@ function collectBuffs(team) {
     // 3+2, 1+2+2 구성의 보조 2세트 (상시 효과라 속성 화면에 포함됨)
     (owner.sets2 || []).forEach(sid => set2Buffs(sid).forEach(b => list.push({ ...b, owner, kind: '소나타', src: `${(RAW_SETS[sid] || {}).n || ''} 2세트`, panel: true, s2: true })));
   });
+  // 암흑 효과(게임 설명): 목표의 방어력을 1스택마다 2% 감소, 기본 최대 3스택(6%). 치사 반주(종말의 현 연주)는 이상 효과 최대 스택을 3 늘려 6스택(12%)
+  const bane = team.find(m => m && m.ap.has('bane'));
+  if (bane) {
+    const chisa = team.some(m => m && m.id === 'chisa');
+    list.push({ s: 'defred', v: chisa ? 12 : 6, up: chisa ? .85 : 1, to: 'team', owner: bane, kind: '이상 효과', uniq: 'havocBane',
+      src: chisa ? '암흑 효과 6스택(치사 반주로 최대 스택 +3): 적 방어력 12% 감소' : '암흑 효과 3스택: 적 방어력 6% 감소' });
+  }
   return list;
 }
 // 내 스탯 입력창에 보여 줄 '추정 속성 화면 값'
@@ -1044,6 +1104,17 @@ function calcTeam(ids, ctx) {
   const P = ECHO_PRESETS[settings.preset] || ECHO_PRESETS.std;
   const team = ids.map(id => id ? resolveMember(id, modes[id] || (CH[id] && CH[id].modes ? Object.keys(CH[id].modes)[0] : null), ov, settings) : null);
   const members = team.filter(Boolean);
+  if (settings.weapon === 'own') { // 한 파티에서 같은 5성 무기는 한 명만(메인 딜러부터 고름). 4성은 여러 자루 있다고 봄
+    const used = new Set();
+    team.forEach(m => {
+      if (!m) return;
+      if (m.wAuto && used.has(m.weaponId)) {
+        const alt = weaponRank(m.id, m.modeKey).find(x => !used.has(x.id) || RAW_WEAPONS[x.id].q < 5);
+        if (alt) { m.weaponId = alt.id; m.refine = alt.r; } else { m.weaponId = m.c.w4; m.refine = 1; m.wAuto = false; m.noOwn = true; }
+      }
+      if ((RAW_WEAPONS[m.weaponId] || {}).q === 5) used.add(m.weaponId);
+    });
+  }
   team.forEach((m, i) => { if (m && i > 0 && m.role === 'main') m.pw *= 0.4; }); // 메인 딜러를 서브 칸에 넣으면 필드 시간이 줄어듦
   const order = rotationOrder(team, ctx.ord || 0);
   const buffs = collectBuffs(team);
@@ -1089,7 +1160,7 @@ function calcTeam(ids, ctx) {
       const isSt = dt === 'st';
       // 이상 효과 피해(서리·불꽃·전자·풍식·광학 등): 레벨 기반 "이상 효과 피해 배율"이라 공격력·크리티컬·일반 피해 보너스의 영향을 받지 않음
       // (게임 설명: "이상 효과 피해는 크리티컬을 발생시킬 수 없다"). 이상 효과 전용 효과와 전체 피해 부스트·최종 피해·방어 무시·저항 감소만 적용
-      let bonus = isSt ? 0 : custom ? (+r.st.el || 0) + (+r.st[dt] || 0) : E.elem + ((E.dt && E.dt[dt]) || 0), amp = 0, cr = custom ? +r.st.cr || 0 : E.cr, cd = custom ? +r.st.cd || 0 : E.cd, ign = 0, shred = 0, fin = 0;
+      let bonus = isSt ? 0 : custom ? (+r.st.el || 0) + (+r.st[dt] || 0) : E.elem + ((E.dt && E.dt[dt]) || 0), amp = 0, cr = custom ? +r.st.cr || 0 : E.cr, cd = custom ? +r.st.cd || 0 : E.cd, ign = 0, red = 0, shred = 0, fin = 0;
       let stc = null;
       all.forEach(b => {
         if (b.s === 'stcrit') { if (isSt && matchFilter({ ...b, dt: undefined }, r.el, dt, b.owner ? b.owner.el : r.el) && (!stc || b.cr * b.cd > stc.cr * stc.cd)) stc = b; return; }
@@ -1100,12 +1171,13 @@ function calcTeam(ids, ctx) {
         }
         const v = b.v * (b.up ?? 1);
         if (b.s === 'bonus') bonus += v; else if (b.s === 'amp') amp += v; else if (b.s === 'cr') cr += v;
-        else if (b.s === 'cd') cd += v; else if (b.s === 'defign') ign += v; else if (b.s === 'res') shred += v; else if (b.s === 'final') fin += v;
+        else if (b.s === 'cd') cd += v; else if (b.s === 'defign') ign += v; else if (b.s === 'defred') red += v; else if (b.s === 'res') shred += v; else if (b.s === 'final') fin += v;
       });
       if (isSt) { cr = stc ? stc.cr : 0; cd = stc ? stc.cd : 100; }
       cr = Math.max(0, Math.min(cr, 100));
       const critE = 1 + (cr / 100) * (cd / 100 - 1);
-      const defM = 1520 / (1520 + enemyDef * (1 - Math.min(ign, 100) / 100));
+      // 방어 계수: 캐릭터 Lv.90 → 800 + 8 × 90 = 1520. 방어력 감소(암흑 효과 등)는 적 방어력에 먼저 적용되고, 방어 무시와는 곱해짐
+      const defM = 1520 / (1520 + enemyDef * (1 - Math.min(red, 100) / 100) * (1 - Math.min(ign, 100) / 100));
       let res = settings.baseRes + (tz && tz.res[r.el] ? tz.res[r.el] : 0) - shred;
       if (tz && tz.resEchoExempt && dt === 'e' && tz.res[r.el] > 0) res -= tz.resEchoExempt;
       const resM = res < 0 ? 1 - res / 200 : res < 80 ? 1 - res / 100 : 1 / (1 + 5 * res / 100);
@@ -1113,7 +1185,7 @@ function calcTeam(ids, ctx) {
       const mvMul = 1 + ((r.mv[dt] || 0) + (r.mv['*'] || 0)) / 100;
       const lvF = skillLvFactor(r, dt);
       const d = r.pw * 60 / 100 * (share / 100) * (isSt ? ST_BASE : ATK) * mult * mvMul * lvF;
-      per[dt] = { share, bonus, amp, cr, cd, ign, res, fin, critE, mult, mvMul, lvF, dmg: d };
+      per[dt] = { share, bonus, amp, cr, cd, ign, red, res, fin, critE, defM, mult, mvMul, lvF, dmg: d };
       total += d;
     });
     return { m: r, ATK, atkP, scale: sc, S, sP, total, per, custom, echo: !!r.ech, applied: all.filter(b => !b.base && !b.panelAdj) };
@@ -1307,6 +1379,7 @@ function parseTowerBuffs(texts) {
       if (/전투 시작 \d+초 후/.test(sent) && /최대 (\d+)%까지/.test(sent)) { mod.b.push({ s: 'final', v: Math.round(+RegExp.$1 * 0.42) }); return; }
       let mm;
       if ((mm = sent.match(/(\d+)% 방어력을 무시|방어력을 (\d+)% 무시/))) push({ s: 'defign', v: +(mm[1] || mm[2]) });
+      if ((mm = sent.match(/(?:목표|적군|적)(?:의|이 받는)? ?방어력(?:을|이) (\d+)% 감소/))) push({ s: 'defred', v: +mm[1] });
       const finRe = /([가-힣 ]*?)피해(?:가)? ?최종적으로 (\d+)%|최종 피해가 (\d+)%/g;
       while ((mm = finRe.exec(sent))) {
         const pre = mm[1] || sent.slice(0, mm.index);
@@ -1575,19 +1648,21 @@ const autoChip = c => c && c.auto ? '<span class="chip warn" title="게임 데�
 
 DEFAULT_SETTINGS.solo = false;
 const state = {
-  owned: new Set(CHARS.map(c => c.id)), ov: {}, forced: {}, settings: { ...DEFAULT_SETTINGS },
+  owned: new Set(CHARS.map(c => c.id)), ov: {}, forced: {}, settings: { ...DEFAULT_SETTINGS }, wown: WOWN, wFilter: 'all', wQuery: '',
   parties: [], tab: 'tower-build', rosterFilter: 'all', rosterQuery: '', presetFilter: 'all', dbView: 'chars',
   infoSeason: null, fieldHeal: 'need', fieldPref: 'comfort', swap: null, swapFilter: 'all', guideHidden: false,
   towerStatus: { kind: 'idle', msg: '내장 데이터 사용 중' }
 };
 
 function save() {
-  lsSet(LS_KEY, JSON.stringify({ owned: [...state.owned], ov: state.ov, forced: state.forced, settings: state.settings, parties: state.parties, tab: state.tab, guideHidden: state.guideHidden, grow: state.grow, inv: state.inv, growYield: state.growYield }));
+  WRANK_V++;
+  lsSet(LS_KEY, JSON.stringify({ owned: [...state.owned], wown: state.wown, ov: state.ov, forced: state.forced, settings: state.settings, parties: state.parties, tab: state.tab, guideHidden: state.guideHidden, grow: state.grow, inv: state.inv, growYield: state.growYield }));
 }
 function load() {
   try {
     const d = JSON.parse(lsGet(LS_KEY) || 'null'); if (!d) return false;
     if (Array.isArray(d.owned)) state.owned = new Set(d.owned.filter(id => CH[id]));
+    setWown((d.wown && typeof d.wown === 'object') ? Object.fromEntries(Object.entries(d.wown).filter(([k, v]) => RAW_WEAPONS[k] && v >= 1 && v <= 5)) : {});
     state.ov = d.ov || {}; state.forced = d.forced || {};
     state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
     if (state.settings.rot === 25) state.settings.rot = 0; // 이전 버전 고정값 → 자동
@@ -1622,7 +1697,7 @@ const sIcon = id => (IMG_SET[id]) ? `<img src="${IMG_SET[id]}" alt="">` : '<img 
 function elTag(el) { return EL[el] ? `<span class="el-tag" style="color:${EL[el].c}">${EL[el].n}</span>` : ''; }
 
 /* ---------- 버프 표기 ---------- */
-const STAT_N = { stcrit: '크리티컬 발생(크리티컬 / 크리티컬 피해 고정)', atk: '공격력', flat: '공격력(고정)', bonus: '피해 보너스', amp: '피해 부스트', cr: '크리티컬', cd: '크리티컬 피해', defign: '방어 무시', res: '저항 감소', final: '최종 피해', er: '공명 효율', hp: 'HP', def: '방어력' };
+const STAT_N = { stcrit: '크리티컬 발생(크리티컬 / 크리티컬 피해 고정)', atk: '공격력', flat: '공격력(고정)', bonus: '피해 보너스', amp: '피해 부스트', cr: '크리티컬', cd: '크리티컬 피해', defign: '방어 무시', defred: '방어력 감소', res: '저항 감소', final: '최종 피해', er: '공명 효율', hp: 'HP', def: '방어력' };
 const TO_N = { self: '자신', team: '파티 전원', others: '다른 파티원', next: '다음 등장 캐릭터' };
 function buffLabel(b) { const p = []; if (b.el && b.el !== '*') p.push(EL[b.el].n); if (b.dt) p.push(DT[b.dt]); p.push(STAT_N[b.s] || b.s); return p.join(' '); }
 function capTxt(x) { const a = [].concat(x); return a.length >= 5 ? '이상 효과' : a.map(k => CAP_N[k] || k).join('·'); }
@@ -1834,7 +1909,7 @@ function renderBuild() {
 function gearHTML(id, mem, c) {
   const w = weaponOf(mem.weaponId); const st = (state.ov[id] || {}).st;
   return `<button class="gear-sum" data-cfg="${id}" title="${esc(w ? w.n : '')} · ${esc(setLabel(mem))}" aria-label="${esc(c.name)} 체인·무기·스탯 설정">
-    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
+    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${mem.noOwn ? '<span class="tag-now" title="이 무기 종류의 보유 무기가 없어 4성 추천 무기 1재련으로 계산">무기 없음</span>' : ''}${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
 }
 function modeSelHTML(id, c, r) {
   if (!c.modes) return '';
@@ -2036,7 +2111,8 @@ function openCharCfg(id) {
   const mode0 = st.on ? 'panel' : (ech.on ? 'echo' : 'est');
   const mem = resolveMember(id, c.modes ? Object.keys(c.modes)[0] : null, state.ov, state.settings);
   const est = panelEstimate(id, state.settings, { ...state.ov, [id]: { ...o, st: null } });
-  const wOpts = weaponsForType(c.wt).map(w => `<option value="${w.id}" ${w.id === mem.weaponId ? 'selected' : ''}>${w.q === 5 ? '★5' : '★4'} ${esc(w.n)}</option>`).join('');
+  const autoN = state.settings.weapon === 'own' ? '보유 무기 중 최적' : state.settings.weapon === 'sig' ? '전용 5성' : '4성';
+  const wOpts = `<option value="0" ${!o.w ? 'selected' : ''}>자동 (${autoN}${!o.w ? ` → ${c.modes && state.settings.weapon === 'own' ? `${esc(Object.values(c.modes)[0].n)} 모드 기준 ` : ''}${esc((weaponOf(mem.weaponId) || {}).n || '')}` : ''})</option>` + weaponsForType(c.wt).map(w => `<option value="${w.id}" ${o.w && w.id === mem.weaponId ? 'selected' : ''}>${w.q === 5 ? '★5' : '★4'} ${esc(w.n)}${WOWN[w.id] ? ` · 보유 R${WOWN[w.id]}` : ''}${sigOwner(w.id) === id ? ' · 전용' : ''}</option>`).join('');
   const sOpts = Object.entries(RAW_SETS).map(([sid, s]) => `<option value="${sid}" ${+sid === +mem.setId ? 'selected' : ''}>${esc(s.n)}</option>`).join('');
   const num = (k, label, ph, step = '0.1') => `<label>${label}<input type="number" id="cf-st-${k}" step="${step}" min="0" value="${st[k] ?? ''}" placeholder="${ph}"></label>`;
   $('#char-title').textContent = `${c.name} 설정`;
@@ -2046,7 +2122,7 @@ function openCharCfg(id) {
     <div class="cfg-grid">
       <label>공명 체인<select id="cf-c">${[0, 1, 2, 3, 4, 5, 6].map(n => `<option value="${n}" ${n === mem.chain ? 'selected' : ''}>${n}체인</option>`).join('')}</select></label>
       <label>무기<select id="cf-w">${wOpts}</select></label>
-      <label>재련<select id="cf-r">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === mem.refine ? 'selected' : ''}>${n}재련</option>`).join('')}</select></label>
+      <label>재련<select id="cf-r" ${!o.w && state.settings.weapon === 'own' ? 'disabled title="보유 무기 탭의 재련 단계를 씁니다"' : ''}>${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === mem.refine ? 'selected' : ''}>${n}재련</option>`).join('')}</select></label>
       <label>에코 세트 (메인)<select id="cf-s">${sOpts}</select></label>
     </div>
     <div class="cfg-grid" id="cf-s2wrap" style="margin-top:10px"></div>
@@ -2097,6 +2173,11 @@ function openCharCfg(id) {
   $$('.cf-sl').forEach(x => x.addEventListener('change', paintSL)); paintSL();
   $('#cf-sl-max').addEventListener('click', () => { $$('.cf-sl').forEach(x => { x.value = '10'; }); paintSL(); });
   $('#cf-s').addEventListener('change', () => paintS2(false));
+  $('#cf-w').addEventListener('change', () => { // 무기를 직접 고르면 재련도 고를 수 있게(보유 무기면 그 재련 단계로)
+    const v = +$('#cf-w').value; const r = $('#cf-r');
+    r.disabled = !v && state.settings.weapon === 'own';
+    if (v && WOWN[v]) r.value = String(WOWN[v]); else if (v) r.value = String((RAW_WEAPONS[v] || {}).q === 5 ? 1 : 5);
+  });
   let mode = mode0;
   const readEcho = () => ({ on: mode === 'echo', e: $$('#cf-ec .ec-slot').map(sl => ({ c: +$('.ec-c', sl).value, m: $('.ec-m', sl).value,
     sub: $$('.ec-sub', sl).map(r => [$('.ec-sk', r).value, $('.ec-sv', r).value === '' ? 0 : +$('.ec-sv', r).value]).filter(([k, v]) => k && v > 0) })) });
@@ -2131,7 +2212,8 @@ function openCharCfg(id) {
     const nst = { on: mode === 'panel' }; [...PK, 'n', 'h', 's', 'l'].forEach(k => { const v = g(k); if (v !== undefined) nst[k] = v; });
     if (nst.on) PK.forEach(k => { if (nst[k] === undefined) nst[k] = est[k]; });
     if (nst.on) ['n', 'h', 's', 'l'].forEach(k => { if (nst[k] === undefined && est.dtp[k]) nst[k] = est.dtp[k]; });
-    state.ov[id] = { ...o, c: +$('#cf-c').value, w: +$('#cf-w').value, r: +$('#cf-r').value, s: +$('#cf-s').value, s2: $$('.cf-s2').map(x => +x.value), st: nst, echo: readEcho(), sl: Object.fromEntries($$('.cf-sl').map(x => [x.dataset.k, +x.value])) };
+    const wSel = +$('#cf-w').value; // 0 = 자동(기본 무기 설정 · 보유 무기)
+    state.ov[id] = { ...o, c: +$('#cf-c').value, w: wSel || undefined, r: wSel || state.settings.weapon !== 'own' ? +$('#cf-r').value : undefined, s: +$('#cf-s').value, s2: $$('.cf-s2').map(x => +x.value), st: nst, echo: readEcho(), sl: Object.fromEntries($$('.cf-sl').map(x => [x.dataset.k, +x.value])) };
     if (state.ov[id].echo === undefined) delete state.ov[id].echo;
     save(); closeDlg('#dlg-char'); rerenderTab(); toast(`${c.name} 설정을 저장했습니다.`);
   });
@@ -2145,7 +2227,7 @@ function rerenderTab() { switchTab(state.tab); }
 /* ---------- 내 데이터 내보내기 / 불러오기 ---------- */
 const IN_ARTIFACT = !!(window.claude && window.claude.use);
 async function exportData() {
-  const data = { app: 'ddingjo-atm', v: 2, owned: [...state.owned], ov: state.ov, forced: state.forced, settings: state.settings, parties: state.parties };
+  const data = { app: 'ddingjo-atm', v: 2, owned: [...state.owned], wown: state.wown, ov: state.ov, forced: state.forced, settings: state.settings, parties: state.parties };
   const d0 = new Date(); const fname = `ddingjo-mydata-${d0.getMonth() + 1}${String(d0.getDate()).padStart(2, '0')}.json`;
   if (IN_ARTIFACT) {
     const dl = await window.claude.use('downloads').catch(() => null);
@@ -2166,7 +2248,7 @@ function importData(file) {
   fr.onload = () => {
     try {
       const d = JSON.parse(fr.result); if (d.app !== 'ddingjo-atm') throw new Error('형식');
-      state.owned = new Set((d.owned || []).filter(id => CH[id])); state.ov = d.ov || {}; state.forced = d.forced || {};
+      state.owned = new Set((d.owned || []).filter(id => CH[id])); if (d.wown) setWown(d.wown); state.ov = d.ov || {}; state.forced = d.forced || {};
       state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) }; state.parties = d.parties || [];
       save(); location.reload();
     } catch (e) { $('#data-msg').textContent = '띵조 AUTO TEAM MAKER에서 내보낸 파일이 아닙니다.'; }
@@ -2187,7 +2269,7 @@ async function zipBytes(u8, mode) {
 function sharePayload(withSt) {
   const ov = {};
   Object.entries(state.ov).forEach(([id, o]) => { const x = { ...o }; if (!withSt) { delete x.st; delete x.echo; } if (Object.keys(x).length) ov[id] = x; });
-  return { a: 'ddingjo-atm', v: 1, ver: APP_VERSION, o: [...state.owned], ov, f: state.forced, s: state.settings, p: state.parties.map(p => ({ slot: p.slot, ids: p.ids, locked: !!p.locked })) };
+  return { a: 'ddingjo-atm', v: 1, ver: APP_VERSION, o: [...state.owned], w: state.wown, ov, f: state.forced, s: state.settings, p: state.parties.map(p => ({ slot: p.slot, ids: p.ids, locked: !!p.locked })) };
 }
 async function makeShareCode(withSt) {
   const raw = new TextEncoder().encode(JSON.stringify(sharePayload(withSt)));
@@ -2206,7 +2288,7 @@ async function readShareCode(code) {
   return d;
 }
 function applyShare(d) {
-  state.owned = new Set((d.o || []).filter(id => CH[id]));
+  state.owned = new Set((d.o || []).filter(id => CH[id])); if (d.w) setWown(d.w);
   const ov = {}; Object.entries(d.ov || {}).forEach(([id, o]) => { if (CH[id]) ov[id] = { ...o, st: o.st || (state.ov[id] && state.ov[id].st), echo: o.echo || (state.ov[id] && state.ov[id].echo) }; });
   Object.entries(state.ov).forEach(([id, o]) => { if (!ov[id] && (o.st || o.echo)) ov[id] = { st: o.st, echo: o.echo }; }); // 코드에 스탯이 없으면 내 스탯은 남겨 둠
   state.ov = ov; state.forced = d.f || {};
@@ -2486,6 +2568,75 @@ function renderRoster() {
   $('#owned-chip').textContent = `보유 ${state.owned.size}명`;
 }
 
+
+/* ---------- 보유 무기 ---------- */
+const WSORT = (a, b) => { // 전용 5성(최신 공명자 순) → 상시 5성 → 4성, 같은 등급은 무기 종류 · 번호 순
+  const oa = sigOwner(a[0]), ob = sigOwner(b[0]);
+  const ka = a[1].q === 5 ? (oa ? 0 : 1) : 2, kb = b[1].q === 5 ? (ob ? 0 : 1) : 2;
+  if (ka !== kb) return ka - kb;
+  if (ka === 0) return CHARS.findIndex(c => c.id === oa) - CHARS.findIndex(c => c.id === ob);
+  return a[1].wt - b[1].wt || b[0] - a[0];
+};
+function weaponCardHTML(id, w) {
+  const own = WOWN[id] || 0; const oid = sigOwner(id); const oc = oid ? CH[oid] : null;
+  const face = oc && IMG_CHAR[oc.id] ? `<img class="wc-face" src="${IMG_CHAR[oc.id]}" alt="">` : '';
+  return `<div class="wc-wrap"><button class="wc q${w.q}" data-wown="${id}" aria-pressed="${!!own}" title="${esc(w.n)}">
+      <span class="wc-img">${IMG_WEAPON[id] ? `<img src="${IMG_WEAPON[id]}" alt="" loading="lazy">` : `<span class="wc-noimg">${oc && isUpcoming(oc) ? '출시 후<br>그림 추가' : '그림 없음'}</span>`}${own ? `<span class="wc-rk num">R${own}</span>` : ''}</span>
+      <span class="nm">${esc(w.n)}</span>
+      <span class="sub">★${w.q} · ${WT[w.wt] || ''} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</span>
+      ${oc ? `<span class="wc-sig">${face}<span>${esc(oc.name)} 전용</span></span>` : isStd5(id) ? '<span class="wc-std">상시 5성</span>' : ''}
+    </button>
+    <div class="wc-r" role="group" aria-label="${esc(w.n)} 재련 단계" ${own ? '' : 'hidden'}>${[1, 2, 3, 4, 5].map(n => `<button type="button" data-wr="${id}" data-r="${n}" aria-pressed="${own === n}">R${n}</button>`).join('')}</div></div>`;
+}
+function paintWownChip() {
+  const n = Object.keys(WOWN).length; const c = $('#wown-chip'); if (c) c.textContent = `보유 무기 ${n}종`;
+  const m = $('#wown-mode');
+  if (m) {
+    const manual = CHARS.filter(c => (state.ov[c.id] || {}).w).length;
+    m.innerHTML = state.settings.weapon === 'own'
+      ? `<b>계산에 보유 무기를 쓰는 중</b> · 캐릭터마다 가진 무기 중 가장 좋은 무기(재련 반영)를 자동으로 고릅니다. 한 파티에서 같은 5성 무기는 한 명만 씁니다.${manual ? ` <span class="note">캐릭터 설정에서 무기를 직접 고른 ${manual}명은 그 무기를 씁니다.</span> <button class="btn sm ghost" id="wown-auto">모두 자동으로</button>` : ''}`
+      : `<b>지금은 ${state.settings.weapon === 'sig' ? '모두 전용 5성 무기' : '4성 무기'}로 계산합니다.</b> <button class="btn sm solid-gold" id="wown-use">보유 무기로 계산하기</button>`;
+    const u = $('#wown-use'); if (u) u.addEventListener('click', () => { setWeaponMode('own'); renderWeapons(); });
+    const a = $('#wown-auto'); if (a) a.addEventListener('click', () => { CHARS.forEach(c => { const o = state.ov[c.id]; if (o && o.w) { delete o.w; delete o.r; } }); save(); optimize(true); renderWeapons(); toast('모든 캐릭터가 보유 무기 중에서 자동으로 고릅니다.'); });
+  }
+}
+function setWeaponMode(v, quiet) {
+  state.settings.weapon = v; save(); optimize(true);
+  $$('#seg-weapon button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+  if (!quiet) toast(v === 'own' ? (Object.keys(WOWN).length ? '보유 무기 중 가장 좋은 무기로 계산합니다.' : '보유 무기로 계산합니다. 보유 무기 탭에서 가진 무기를 눌러 주세요.') : v === 'sig' ? '무기를 따로 정하지 않은 캐릭터는 전용 5성 무기로 계산합니다.' : '무기를 따로 정하지 않은 캐릭터는 4성 무기로 계산합니다.');
+}
+function renderWeapons() {
+  const f = state.wFilter, q = (state.wQuery || '').trim();
+  const filters = [['all', '전체'], ['5', '5성'], ['4', '4성'], ['sig', '전용 무기'], ['own', '보유만'], ['not', '미보유'], ...Object.entries(WT).map(([k, v]) => ['wt' + k, v])];
+  $('#wown-filter').innerHTML = filters.map(([k, n]) => `<button class="fbtn" data-wf="${k}" aria-pressed="${f === k}">${n}</button>`).join('');
+  $$('#wown-filter .fbtn').forEach(b => b.addEventListener('click', () => { state.wFilter = b.dataset.wf; renderWeapons(); }));
+  const list = Object.entries(RAW_WEAPONS).filter(([id, w]) => w.q >= 4 && (
+    f === 'all' || (f === '5' && w.q === 5) || (f === '4' && w.q === 4) || (f === 'sig' && sigOwner(id)) || (f === 'own' && WOWN[id]) || (f === 'not' && !WOWN[id]) || f === 'wt' + w.wt
+  ) && (!q || w.n.includes(q) || (sigOwner(id) && CH[sigOwner(id)].name.includes(q)))).sort(WSORT);
+  const grp = [['전용 5성 무기', list.filter(([id, w]) => w.q === 5 && sigOwner(id))], ['상시 5성 무기', list.filter(([id, w]) => w.q === 5 && !sigOwner(id))], ['4성 무기', list.filter(([, w]) => w.q === 4)]];
+  $('#wown-grid').innerHTML = grp.filter(([, a]) => a.length).map(([t, a]) => `<h3 class="wg-h">${t} <small>${a.filter(([id]) => WOWN[id]).length} / ${a.length}</small></h3><div class="wown-grid">${a.map(([id, w]) => weaponCardHTML(id, w)).join('')}</div>`).join('') || '<p class="muted">검색 결과가 없습니다.</p>';
+  $$('#wown-grid [data-wown]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.wown; const w = RAW_WEAPONS[id];
+    if (WOWN[id]) delete WOWN[id]; else WOWN[id] = w.q === 4 ? 5 : 1;
+    const first = state.settings.weapon !== 'own' && Object.keys(WOWN).length === 1 && WOWN[id];
+    save();
+    if (first) setWeaponMode('own', true), toast('보유 무기로 계산하도록 바꿨습니다. 재련 단계도 골라 주세요.');
+    else if (state.settings.weapon === 'own') optimize(true);
+    renderWeapons();
+  }));
+  $$('#wown-grid [data-wr]').forEach(b => b.addEventListener('click', () => { WOWN[b.dataset.wr] = +b.dataset.r; save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); }));
+  paintWownChip();
+}
+function bindWeapons() {
+  $('#wown-search').addEventListener('input', e => { state.wQuery = e.target.value; renderWeapons(); });
+  $('#wown-4all').addEventListener('click', () => { Object.entries(RAW_WEAPONS).forEach(([id, w]) => { if (w.q === 4 && !WOWN[id]) WOWN[id] = 5; }); save(); if (state.settings.weapon !== 'own') setWeaponMode('own', true); else optimize(true); renderWeapons(); toast('4성 무기를 모두 5재련으로 넣었습니다. 가진 5성 무기를 눌러 주세요.'); });
+  $('#wown-sig').addEventListener('click', () => { // 보유 캐릭터의 전용 무기 한 번에 넣기(1재련)
+    let n = 0; Object.keys(RAW_WEAPONS).forEach(id => { const o = sigOwner(id); if (o && state.owned.has(o) && !WOWN[id]) { WOWN[id] = 1; n++; } });
+    save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); toast(n ? `보유 캐릭터의 전용 무기 ${n}개를 1재련으로 넣었습니다. 없는 무기는 다시 눌러 빼 주세요.` : '더 넣을 전용 무기가 없습니다.');
+  });
+  $('#wown-none').addEventListener('click', () => { Object.keys(WOWN).forEach(k => delete WOWN[k]); save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); });
+}
+
 /* ---------- 도감 ---------- */
 function renderDB() {
   $$('#seg-db button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.dbView));
@@ -2550,7 +2701,7 @@ function switchTab(t) {
   state.tab = t;
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
-  ({ 'grow': renderGrow, 'timeline': renderTimeline, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
+  ({ 'grow': renderGrow, 'timeline': renderTimeline, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'weapons': renderWeapons, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
   if (typeof curView !== 'undefined' && curView === 'tools') { const u = BASE + 'tools/' + t; if (location.pathname !== u) try { history.replaceState(null, '', u); } catch (e) { } }
 }
@@ -3195,7 +3346,7 @@ function renderCharacter(id) {
   const bg = artUrl('bg', rid), full = artUrl('full', rid);
   const presets = PRESETS.filter(p => p.m.includes(c.id) && p.m.every(i => CH[i]));
   const alts = PRESETS.flatMap(p => (p.v || []).filter(v => v.m.includes(c.id) && !p.m.includes(c.id) && v.m.every(i => CH[i])).map(v => ({ ...v, t: p.t })));
-  const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b></div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
+  const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b>${WOWN[wid] ? ` <span class="tag gold">보유 R${WOWN[wid]}</span>` : ''}</div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
   const setHTML = (sid, label) => { const st = RAW_SETS[sid]; if (!st) return ''; return `<div class="wp">${IMG_SET[sid] ? `<img src="${IMG_SET[sid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b>${esc(st.n)}</b></div>${st.e.map(([n, d]) => `<div class="d"><b>${n}세트</b> ${esc(d)}</div>`).join('')}</div></div>`; };
   const G = RAW_GROW.chars[rid];
   const mats = G && G.cat ? [['boss', '보스 재료'], ['spec', '특산물'], ['weekly', '주간 보스']].filter(([k]) => G.cat[k]).map(([k, n]) => [G.cat[k], n])
@@ -3221,7 +3372,7 @@ function renderCharacter(id) {
         ${presets.length || alts.length ? `<div class="box"><h3>추천 조합 <small><a href="#/tools/presets">추천 조합 전체</a></small></h3>${presets.map(p => teamRow(p.m, p.t, p.d, `<span class="tag gold">${esc(p.tag)}</span> `)).join('')}${alts.slice(0, 4).map(v => teamRow(v.m, v.t, v.n, `<span class="tag">${v.k === 'f2p' ? '입문' : '대체'}</span> `)).join('')}</div>` : ''}
       </div>
       <aside>
-        <div class="box"><h3>추천 무기</h3>${wpHTML(c.w, c.q === 5 ? '전용 · 5성' : '5성')}${c.w4 && c.w4 !== c.w ? wpHTML(c.w4, '4성') : ''}</div>
+        <div class="box"><h3>추천 무기</h3>${wpHTML(c.w, sigOwner(c.w) === c.id ? '전용 · 5성' : '5성')}${c.w4 && c.w4 !== c.w ? wpHTML(c.w4, '4성') : ''}${myWeaponsHTML(c)}</div>
         <div class="box" id="ch-echo"><h3>추천 메인 에코</h3><p class="note" style="margin:0">불러오는 중…</p></div>
         ${c.set ? `<div class="box"><h3>추천 에코 세트</h3>${setHTML(c.set, '5세트')}${(c.set2 || []).map(s => setHTML(s, '2세트')).join('')}</div>` : ''}
         ${mats.length ? `<div class="box"><h3>육성 재료</h3><div class="mats">${mats.map(([k, n]) => `<div class="mat">${itemIcon(k, 36)}<div><div style="font-size:11px;color:var(--muted)">${n}</div>${esc(itemName(k))}</div></div>`).join('')}</div></div>` : ''}
@@ -3238,6 +3389,17 @@ function renderCharacter(id) {
 // 추천 메인 에코: public/echoes.json (tools/build_echoes.py — 공략 사이트 추천 + 게임 데이터)
 let ECHOES_P = null;
 const loadEchoes = () => ECHOES_P || (ECHOES_P = fetch(`${BASE}echoes.json?h=${Math.floor(Date.now() / 864e5)}`).then(r => r.ok ? r.json() : null).catch(() => null));
+// 공명자 화면: 내 보유 무기 중 이 공명자에게 좋은 순서(보유 무기 계산과 같은 기준)
+function myWeaponsHTML(c) {
+  const modes = c.modes ? Object.entries(c.modes) : [[null, null]];
+  const lists = Object.keys(WOWN).length ? modes.map(([k, m]) => [m ? m.n : '', weaponRank(c.id, k)]) : [];
+  const rk = lists.length ? lists[0][1] : [];
+  if (!rk.length) return `<p class="note" style="margin:10px 0 0">${Object.keys(WOWN).length ? `가진 ${WT[c.wt]} 무기가 없습니다.` : '보유 무기를 등록하면 가진 무기 중 이 공명자에게 가장 좋은 무기를 알려 드려요.'} <a href="#/tools/weapons">보유 무기 등록</a></p>`;
+  const rows = (rk, n) => { const top = rk[0].score || 1; return rk.slice(0, n).map((x, i) => { const w = RAW_WEAPONS[x.id]; return `<div class="wr-row">${IMG_WEAPON[x.id] ? `<img src="${IMG_WEAPON[x.id]}" alt="" loading="lazy">` : '<span></span>'}<span class="wr-n"><b class="r${w.q}">${i + 1}. ${esc(w.n)}</b> <span class="num note">R${x.r}</span>${sigOwner(x.id) === c.id ? ' <span class="tag gold">전용</span>' : ''}</span><b class="num">${rk.length > 1 ? Math.round(x.score / top * 100) + '%' : '보유'}</b></div>`; }).join(''); };
+  return `<div class="wrank"><div class="lbl">내 보유 무기 순위 <small>${state.settings.weapon === 'own' ? '계산에 1위 무기를 씁니다' : '「보유 무기」로 계산하면 1위 무기를 씁니다'}</small></div>
+    ${lists.map(([mn, rk]) => `${mn ? `<div class="note" style="margin-top:4px"><b>${esc(mn)} 모드</b></div>` : ''}${rows(rk, lists.length > 1 ? 3 : 5)}`).join('')}
+    <p class="note" style="margin:6px 0 0">혼자 쓸 때의 딜과, 무기가 주는 파티 버프를 같은 속성 딜러에게 줬을 때의 딜을 합쳐 비교합니다(1위 = 100%).</p></div>`;
+}
 function mainEchoHTML(c, d) {
   const x = d && d.chars && d.chars[c.id];
   if (!x || !x.m.length) return '<h3>추천 메인 에코</h3><p class="note" style="margin:0">이 공명자의 메인 에코 정보가 아직 없습니다.</p>';
@@ -3298,7 +3460,7 @@ function echoCalcState() {
 function echoGrade(cv) { return cv >= 200 ? ['SS', '종결급'] : cv >= 170 ? ['S', '준종결'] : cv >= 140 ? ['A', '훌륭함'] : cv >= 110 ? ['B', '쓸 만함'] : cv >= 70 ? ['C', '육성 중'] : ['D', '시작 단계']; }
 function renderEcho() {
   const el = $('[data-view="echo"]'); const E = echoCalcState(); const c = CH[E.id];
-  const ws = weaponsForType(c.wt); const wid = E.w && RAW_WEAPONS[E.w] ? E.w : ((state.ov[c.id] || {}).w || c.w);
+  const ws = weaponsForType(c.wt); const wr0 = state.settings.weapon === 'own' ? weaponRank(c.id, c.modes ? Object.keys(c.modes)[0] : null)[0] : null; const wid = E.w && RAW_WEAPONS[E.w] ? E.w : ((state.ov[c.id] || {}).w || (wr0 ? wr0.id : c.w));
   const gk = ECHO_GOALS[E.goal] ? E.goal : (ECHO_GOALS[c.role] ? c.role : 'main');
   const opts = Object.entries(EL).map(([k, v]) => `<optgroup label="${v.n}">${CHARS.filter(x => x.el === k).map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`).join('');
   el.innerHTML = `<div class="container page"><p class="eyebrow">에코 계산기</p><h1 class="ph-t">나의 에코,<em> 어디까지 강해질까요?</em></h1><p class="ph-d">에코 5개의 코스트 · 주옵션 · 부옵션을 넣으면 속성 화면 스탯(무기 · 에코 세트 상시 효과 포함)과 크리티컬 점수를 계산합니다. 입력은 이 브라우저에 저장됩니다.</p>
@@ -3456,7 +3618,8 @@ function init() {
   $('#roster-search').addEventListener('input', e => { state.rosterQuery = e.target.value; renderRoster(); });
   bindSeg('#seg-solo', () => state.settings.solo ? '1' : '0', v => { state.settings.solo = v === '1'; state.settings.parties = state.settings.solo ? Math.max(4, Math.min(7, state.settings.parties === 3 ? 4 : state.settings.parties)) : Math.min(4, state.settings.parties); state.parties.forEach(p => p.locked = false); optimize(true); toast(state.settings.solo ? '1~3층 단일 캐릭터 추천을 켰습니다.' : '단일 캐릭터 추천을 껐습니다.'); });
   bindSeg('#seg-tower', () => state.settings.towerMode ? '1' : '0', v => { state.settings.towerMode = v === '1'; optimize(true); });
-  bindSeg('#seg-weapon', () => state.settings.weapon, v => { state.settings.weapon = v; optimize(true); toast(v === 'sig' ? '무기를 따로 정하지 않은 캐릭터는 전용 5성 무기로 계산합니다.' : '무기를 따로 정하지 않은 캐릭터는 4성 무기로 계산합니다.'); });
+  bindSeg('#seg-weapon', () => state.settings.weapon, v => setWeaponMode(v));
+  bindWeapons();
   bindSeg('#seg-fheal', () => state.fieldHeal, v => { state.fieldHeal = v; renderField(); });
   bindSeg('#seg-fpref', () => state.fieldPref, v => { state.fieldPref = v; renderField(); });
   $$('#seg-db button').forEach(b => b.addEventListener('click', () => { state.dbView = b.dataset.v; renderDB(); }));

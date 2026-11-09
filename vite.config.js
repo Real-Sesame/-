@@ -12,7 +12,7 @@ const EL_KEY = { glacio: 1, fusion: 2, electro: 3, aero: 4, spectro: 5, havoc: 6
 const WT = { 1: '대검', 2: '직검', 3: '권총', 4: '권갑', 5: '증폭기' };
 const TOOLS = {
   'tower-build': '역경의 탑 편성', field: '필드 파티', presets: '추천 조합', timeline: '딜 사이클', grow: '육성 계산',
-  'tower-info': '역경의 탑 정보', roster: '보유 캐릭터', db: '도감', settings: '설정 · 계산식', help: '사용 설명', patch: '패치 노트'
+  'tower-info': '역경의 탑 정보', roster: '보유 캐릭터', weapons: '보유 무기', db: '도감', settings: '설정 · 계산식', help: '사용 설명', patch: '패치 노트'
 };
 
 // src/app.js의 공명자 목록에서 아이디 · 이름 · 속성 · 무기를 읽음(앱과 같은 규칙)

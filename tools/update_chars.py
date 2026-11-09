@@ -298,6 +298,13 @@ for r in roles_all:
             out_exp[str(r['LevelConsumeId'])] = [x['ExpCount'] for x in sorted([y for y in lvc if y['ConsumeGroupId'] == r['LevelConsumeId']], key=lambda y: y['Level'])]
     out_roles.append(ent)
 
+# 새 공명자와 상관없이 새로 생긴 4성 · 5성 무기(상시 · 이벤트 무기 등)도 보유 무기 목록에 나오도록 추가
+for w in weapons:
+    wid = w['ItemId']
+    if w.get('QualityId', 0) >= 4 and 21010000 <= wid < 21060000 and str(wid) not in known_weapons and str(wid) not in out_weapons and T(w.get('WeaponName')):
+        out_weapons[str(wid)] = {**weapon_entry(w), 'img': icon_uri(w.get('Icon'), 72)}
+        print('신규 무기:', wid, T(w['WeaponName']))
+
 for k in sorted(used_all):
     if str(k) in known_items: continue
     x = items.get(k)

@@ -62,7 +62,7 @@ tools/                  자동 갱신 스크립트
 
 - 서버: `server/worker.js`, Cloudflare 계정의 Worker `ddingjo-sync`(주소 `https://ddingjo-sync.ddingjo-atm.workers.dev`)와 D1 데이터베이스 `ddingjo-sync`. 무료 요금제 안에서 돌아갑니다(하루 요청 10만 회).
 - 아이디 · 비밀번호 계정. 비밀번호는 브라우저에서 PBKDF2(15만 회)로 늘린 값만 보내고, 서버는 무작위 소금으로 한 번 더 PBKDF2 해서 저장합니다. 로그인 토큰은 SHA-256으로만 저장(180일). 로그인 · 가입 시도 횟수 제한이 있습니다.
-- 계정에 저장되는 것: 보유 캐릭터 · 파티 · 캐릭터 설정 · 계산 설정 · 육성 계산 · 에코 계산기(localStorage `ddingjo-atm-v2`, `ddingjo-atm-echo-calc`). 계정당 최대 256KB.
+- 계정에 저장되는 것: 보유 캐릭터 · 보유 무기 · 파티 · 캐릭터 설정 · 계산 설정 · 육성 계산 · 에코 계산기 · 사용한 리딤 코드(localStorage `ddingjo-atm-v2`, `ddingjo-atm-echo-calc`, `ddingjo-atm-codes`). 계정당 최대 256KB.
 - 서버 코드를 고친 뒤 다시 올리기: `cd server && npx wrangler login && npx wrangler deploy` (표 구조는 `schema.sql`).
 - 사이트 배포(deploy.yml) 때마다 로그인 서버가 응답하는지 확인합니다.
 
@@ -83,5 +83,5 @@ tools/                  자동 갱신 스크립트
 
 ## 참고
 
-- 사용자 설정(보유 캐릭터, 파티, 캐릭터 설정)은 각자 브라우저에 저장되고, 로그인하면 계정에도 저장됩니다.
+- 사용자 설정(보유 캐릭터, 보유 무기, 파티, 캐릭터 설정)은 각자 브라우저에 저장되고, 로그인하면 계정에도 저장됩니다.
 - 역경의 탑 정보는 게임 데이터 저장소(Arikatsu/WutheringWaves_Data)에서 자동으로 갱신됩니다.
