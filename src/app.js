@@ -31,7 +31,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTAL
 if ('serviceWorker' in navigator && window.isSecureContext && !import.meta.env.DEV) window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => { }));
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
-let WOWN = {}; // 보유 무기 { 무기 id: 재련 } — state.wown과 같은 객체(setWown으로만 바꿈)
+let WOWN = {}; // 보유 무기 { 무기 id: [자루마다 재련 단계, 높은 순] } — state.wown과 같은 객체(setWown으로만 바꿈)
 /* 릴리 전용 무기 러럴바이 — 출시 전 임시 항목(게시글: 공격력 16%~32%). 기본 스탯은 추정이며 실제 데이터가 들어오면 자동으로 교체됩니다. */
 if (!RAW_WEAPONS[21030999]) RAW_WEAPONS[21030999] = { n: '러럴바이', q: 5, wt: 3, atk: 587, sub: ['atk', 36.4], d: '(3.8.3 게시글 기준) 파티 전원의 공격력이 16% 증가한다. 재련 5단계에서는 32%.' };
 const RAW_SETS = D_RAW_SETS;
@@ -835,7 +835,7 @@ function parseGenericWeapon(w) {
 function weaponBuffs(id) { return WMOD[id] || parseGenericWeapon(weaponOf(id)); }
 
 /* ---------- 보유 무기 ----------
-   state.wown = { 무기 id: 재련 단계(1~5) }. 기본 무기 설정이 「보유 무기」면 캐릭터마다 보유한 같은 종류 무기 중
+   state.wown = { 무기 id: [자루마다 재련 단계(1~5), 높은 순] } — 4성처럼 여러 자루 가진 무기는 자루 수만큼. 기본 무기 설정이 「보유 무기」면 캐릭터마다 보유한 같은 종류 무기 중
    계산상 가장 좋은 무기를 고릅니다(자기 딜 + 무기가 주는 파티 버프를 같은 속성 기준 딜러에게 줬을 때의 딜).
    한 파티에서 같은 5성 무기를 두 명이 쓰지 않게 하고(4성은 여러 자루 있다고 봄), 메인 딜러가 먼저 고릅니다. */
 const isStd5 = id => { const w = RAW_WEAPONS[id]; return !!w && w.q === 5 && /(15|45)$/.test(String(id)); }; // 상시 5성(…15 · …45)
@@ -851,8 +851,22 @@ function sigOwner(wid) { // 전용 무기 주인(공명자 id). 같은 무기를
   }
   return _sigOwner[wid] || null;
 }
-const wOwned = id => !!WOWN[id];
-function setWown(o) { WOWN = o || {}; if (typeof state === 'object') state.wown = WOWN; }
+const W_MAX = 9; // 무기 한 종류당 최대 자루 수
+const wCopies = id => WOWN[id] || [];
+const wCount = id => wCopies(id).length;
+const wBestR = id => wCopies(id)[0] || 0;
+const wOwned = id => wCount(id) > 0;
+// 저장값 정리: 예전 형식(재련 숫자 하나)은 1자루로
+function normWown(o) {
+  const out = {};
+  Object.entries(o || {}).forEach(([k, v]) => {
+    if (!RAW_WEAPONS[k]) return;
+    const a = (Array.isArray(v) ? v : [v]).map(x => Math.round(+x)).filter(x => x >= 1 && x <= 5).sort((a, b) => b - a).slice(0, W_MAX);
+    if (a.length) out[k] = a;
+  });
+  return out;
+}
+function setWown(o) { WOWN = normWown(o); if (typeof state === 'object') state.wown = WOWN; }
 // 무기 비교용 기준 딜러(같은 속성 · 조건 없음): 무기가 주는 파티 버프의 값을 재기 위해서만 씀
 const REF_W = 21020015;
 function refChar(el) {
@@ -868,13 +882,13 @@ function weaponRank(id, modeKey) { // 모드가 있는 캐릭터(여우의 별�
   if (_wrank.has(ck)) return _wrank.get(ck);
   const c = CH[id]; let res = [];
   const list = c ? Object.keys(WOWN).map(Number).filter(w => RAW_WEAPONS[w] && RAW_WEAPONS[w].wt === c.wt) : [];
-  if (list.length === 1) res = [{ id: list[0], r: WOWN[list[0]] || 1, score: 1 }];
+  if (list.length === 1) res = [{ id: list[0], r: wBestR(list[0]), score: 1 }];
   else if (list.length > 1) {
     const ref = refChar(c.el);
     res = list.map(w => {
-      const ov = { ...state.ov, [ref]: { w: REF_W, r: 1 }, [id]: { ...(state.ov[id] || {}), w, r: WOWN[w] || 1 } };
+      const ov = { ...state.ov, [ref]: { w: REF_W, r: 1 }, [id]: { ...(state.ov[id] || {}), w, r: wBestR(w) } };
       const t = calcTeam(c.role === 'main' ? [id, ref] : [ref, id], { settings: state.settings, ov, modes: modeKey ? { [id]: modeKey } : {} });
-      return { id: w, r: WOWN[w] || 1, score: t.totalDmg };
+      return { id: w, r: wBestR(w), score: t.totalDmg };
     }).sort((a, b) => b.score - a.score);
   }
   _wrank.set(ck, res); return res;
@@ -969,13 +983,13 @@ function resolveMember(id, modeKey, ov, settings) {
   const mode = c.modes ? c.modes[modeKey] : null;
   const o = ov[id] || {};
   let weaponId, wAuto = false, noOwn = false;
-  if (o.w) weaponId = o.w;
+  if (o.w) { weaponId = o.w; if (o._noOwn) noOwn = true; }
   else if (settings.weapon === 'own' && !c.ref) { const rk = weaponRank(id, modeKey); if (rk.length) { weaponId = rk[0].id; wAuto = true; } else { weaponId = c.w4; noOwn = true; } }
   else weaponId = settings.weapon === 'sig' ? c.w : c.w4;
   const wq = (RAW_WEAPONS[weaponId] || {}).q || 4;
   const chain = o.c ?? (c.q === 4 ? 6 : 0);
   // 재련: 보유 무기에서 자동으로 고른 무기는 보유 현황의 재련 단계, 직접 고른 무기는 캐릭터 설정 값(없으면 보유 재련 → 5성 1 · 4성 5)
-  const refine = wAuto ? (WOWN[weaponId] || 1) : noOwn ? 1 : (o.r ?? WOWN[weaponId] ?? (wq === 5 ? 1 : 5));
+  const refine = wAuto ? (wBestR(weaponId) || 1) : noOwn ? 1 : (o.r ?? (wBestR(weaponId) || null) ?? (wq === 5 ? 1 : 5));
   // 공명 체인 효과
   const chainB = [], mv = {}; let rotMul = 1, ftDelta = 0;
   {
@@ -994,7 +1008,7 @@ function resolveMember(id, modeKey, ov, settings) {
   return {
     c, id, modeKey, mode, el: c.el, role: (mode && mode.role) || c.role,
     pw: c.pw * ((mode && mode.pwMul) || 1), p: (mode && mode.p) || c.p || { n: 100 },
-    ap, b: ((mode ? mode.b : c.b) || []).concat(chainB), weaponId, wAuto, noOwn, setId, sets2, chain, refine, mv, rotMul,
+    ap, b: ((mode ? mode.b : c.b) || []).concat(chainB), weaponId, wAuto, noOwn, wShare: !!o._share, setId, sets2, chain, refine, mv, rotMul,
     sl: skillLevels(o), // 스킬 레벨(입력 없으면 모두 10)
     st: (o.st && o.st.on) ? o.st : null, // 속성 화면 스탯 입력
     ech: (!(o.st && o.st.on) && o.echo && o.echo.on) ? echoStats(c, o.echo) : null, // 에코 옵션 입력
@@ -1104,15 +1118,19 @@ function calcTeam(ids, ctx) {
   const P = ECHO_PRESETS[settings.preset] || ECHO_PRESETS.std;
   const team = ids.map(id => id ? resolveMember(id, modes[id] || (CH[id] && CH[id].modes ? Object.keys(CH[id].modes)[0] : null), ov, settings) : null);
   const members = team.filter(Boolean);
-  if (settings.weapon === 'own') { // 한 파티에서 같은 5성 무기는 한 명만(메인 딜러부터 고름). 4성은 여러 자루 있다고 봄
-    const used = new Set();
+  if (settings.weapon === 'own') { // 한 파티 안에서 보유 자루 수보다 많이 쓰지 않게(메인 딜러부터 고름). 두 번째 자루는 그다음 재련 단계
+    const used = {};
     team.forEach(m => {
       if (!m) return;
-      if (m.wAuto && used.has(m.weaponId)) {
-        const alt = weaponRank(m.id, m.modeKey).find(x => !used.has(x.id) || RAW_WEAPONS[x.id].q < 5);
-        if (alt) { m.weaponId = alt.id; m.refine = alt.r; } else { m.weaponId = m.c.w4; m.refine = 1; m.wAuto = false; m.noOwn = true; }
+      if (m.wAuto) {
+        const free = x => (used[x] || 0) < wCount(x);
+        if (!free(m.weaponId)) {
+          const alt = weaponRank(m.id, m.modeKey).find(x => free(x.id));
+          if (alt) m.weaponId = alt.id; else { m.weaponId = m.c.w4; m.refine = 1; m.wAuto = false; m.noOwn = true; }
+        }
+        if (m.wAuto) m.refine = wCopies(m.weaponId)[used[m.weaponId] || 0] || 1;
       }
-      if ((RAW_WEAPONS[m.weaponId] || {}).q === 5) used.add(m.weaponId);
+      if (!m.noOwn) used[m.weaponId] = (used[m.weaponId] || 0) + 1;
     });
   }
   team.forEach((m, i) => { if (m && i > 0 && m.role === 'main') m.pw *= 0.4; }); // 메인 딜러를 서브 칸에 넣으면 필드 시간이 줄어듦
@@ -1662,7 +1680,7 @@ function load() {
   try {
     const d = JSON.parse(lsGet(LS_KEY) || 'null'); if (!d) return false;
     if (Array.isArray(d.owned)) state.owned = new Set(d.owned.filter(id => CH[id]));
-    setWown((d.wown && typeof d.wown === 'object') ? Object.fromEntries(Object.entries(d.wown).filter(([k, v]) => RAW_WEAPONS[k] && v >= 1 && v <= 5)) : {});
+    setWown(d.wown && typeof d.wown === 'object' ? d.wown : {}); // normWown이 형식 확인(예전 숫자 형식 → 1자루)
     state.ov = d.ov || {}; state.forced = d.forced || {};
     state.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
     if (state.settings.rot === 25) state.settings.rot = 0; // 이전 버전 고정값 → 자동
@@ -1746,9 +1764,56 @@ function partyOptions() { return state.settings.solo ? [4, 5, 6, 7] : [3, 4]; }
 /* ---------- 계산 컨텍스트 ---------- */
 function curSeason() { const s = seasonAt(Date.now()); return { ...s, data: latestSeasonWithData(s.n) }; }
 function ctxFor(zone) { const s = curSeason(); return { settings: state.settings, ov: state.ov, forcedModes: state.forced, zone: state.settings.towerMode ? zone : null, season: s.data }; }
+/* 보유 무기 분배: 지금 편성된 모든 파티에 걸쳐, 무기마다 보유한 자루 수만큼만 쓰도록 나눠 줍니다.
+   1) 파티마다 분배 없이 계산(모드 · 파티 피해) 2) 캐릭터마다 「지금 남은 무기 중 1순위를 못 받으면 잃는 피해」를 재서
+   가장 많이 잃는 캐릭터부터 남은 무기 중 1순위(재련 높은 자루부터)를 줍니다. 직접 고른 무기는 먼저 빼 둡니다. */
+let _walloc = { k: null, v: null };
+function wAlloc() {
+  if (state.settings.weapon !== 'own' || !Object.keys(WOWN).length) return null;
+  const key = WRANK_V + '|' + state.settings.towerMode + '|' + state.parties.map(p => p.slot + ':' + p.ids.join(',')).join(';');
+  if (_walloc.k === key) return _walloc.v;
+  const left = {}; Object.keys(WOWN).forEach(id => { left[id] = wCopies(id).slice(); });
+  const res = state.parties.map(() => ({})); const mem = [];
+  state.parties.forEach((p, pi) => {
+    const r = evalPartyRaw(p); if (!r) return;
+    r.team.forEach(m => {
+      if (!m || m.c.ref) return;
+      const o = state.ov[m.id] || {};
+      if (o.w) { if (left[o.w] && left[o.w].length) left[o.w].shift(); return; }
+      const rk = weaponRank(m.id, m.modeKey); if (!rk.length) return;
+      mem.push({ pi, id: m.id, rk, dmg: r.totalDmg || 1 });
+    });
+  });
+  while (mem.length) {
+    let bi = 0, bl = -1;
+    mem.forEach((x, i) => {
+      const av = x.rk.filter(y => left[y.id] && left[y.id].length); x.av = av;
+      const loss = av.length ? (av[0].score - (av[1] ? av[1].score : av[0].score * .8)) / (av[0].score || 1) * x.dmg : -1;
+      if (loss > bl) { bl = loss; bi = i; }
+    });
+    const x = mem.splice(bi, 1)[0];
+    if (x.av.length) { const w = x.av[0].id; res[x.pi][x.id] = { w, r: left[w].shift(), share: w !== x.rk[0].id, want: x.rk[0].id }; }
+    else res[x.pi][x.id] = { w: CH[x.id].w4, r: 1, none: true, want: x.rk[0].id };
+  }
+  return (_walloc = { k: key, v: res }).v;
+}
 function evalParty(p) {
+  const a = wAlloc(); const pi = a ? state.parties.indexOf(p) : -1;
+  if (pi < 0 || !a[pi] || !Object.keys(a[pi]).length) return evalPartyRaw(p);
+  const ov = { ...state.ov };
+  Object.entries(a[pi]).forEach(([id, x]) => { ov[id] = { ...(ov[id] || {}), w: x.w, r: x.r, _share: x.share, _noOwn: x.none }; });
+  return evalPartyRaw(p, ov);
+}
+// 보유 무기가 모자라 나눠 쓴 무기 목록(편성 화면 요약용)
+function wShortage() {
+  const a = wAlloc(); if (!a) return [];
+  const need = {};
+  a.forEach(m => Object.values(m).forEach(x => { if (x.share || x.none) need[x.want] = (need[x.want] || 0) + 1; }));
+  return Object.entries(need).map(([id, n]) => ({ id: +id, more: n }));
+}
+function evalPartyRaw(p, ov) {
   const sl = SLOT[p.slot]; if (!sl || !p.ids.some(Boolean)) return null;
-  const rs = sl.zones.map(z => bestTeam(p.ids, ctxFor(z)));
+  const rs = sl.zones.map(z => bestTeam(p.ids, ov ? { ...ctxFor(z), ov } : ctxFor(z)));
   const r = rs[0];
   if (rs.length > 1) { r.dpsAlt = rs.slice(1).map(x => x.totalDmg); }
   return r;
@@ -1897,7 +1962,7 @@ function renderBuild() {
     <div><div class="k">파티 합산 1사이클 피해</div><div class="v">${fmt(total)}</div></div>
     <div><div class="k">사용 캐릭터</div><div class="v txt">${new Set(used).size}명${soloN ? ` · 단일 ${soloN}` : ''}</div></div>
     <div><div class="k">파티 간 균형 (탑 버프 제외)</div><div class="v txt">${bal.length ? grade : '-'}</div></div>
-    <div><div class="k">중복 · 피로도</div><div class="v txt" style="color:${dup ? 'var(--bad)' : 'var(--good)'}">${dup ? `${dup}명 중복` : '중복 없음'}</div></div>`;
+    <div><div class="k">중복 · 피로도</div><div class="v txt" style="color:${dup ? 'var(--bad)' : 'var(--good)'}">${dup ? `${dup}명 중복` : '중복 없음'}</div></div>${wSummaryHTML()}`;
   $('#parties').innerHTML = state.parties.map((p, i) => partyHTML(p, results[i], i)).join('');
   $('#build-note').textContent = state.settings.solo
     ? '1~3층은 추천 속성(속성 접대)을 가진 캐릭터 한 명으로 깨는 구성입니다. 단일 캐릭터 피로도 6(심연 1층은 5), 4층 파티는 4입니다. 방랑자는 속성이 달라도 피로도를 공유하므로 한 파티에만 배치합니다.'
@@ -1909,7 +1974,7 @@ function renderBuild() {
 function gearHTML(id, mem, c) {
   const w = weaponOf(mem.weaponId); const st = (state.ov[id] || {}).st;
   return `<button class="gear-sum" data-cfg="${id}" title="${esc(w ? w.n : '')} · ${esc(setLabel(mem))}" aria-label="${esc(c.name)} 체인·무기·스탯 설정">
-    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${mem.noOwn ? '<span class="tag-now" title="이 무기 종류의 보유 무기가 없어 4성 추천 무기 1재련으로 계산">무기 없음</span>' : ''}${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
+    ${wIcon(mem.weaponId)}${sIcon(mem.setId)}${(mem.sets2 || []).map(sIcon).join('')}<span class="num">S${mem.chain}·R${mem.refine}</span>${mem.noOwn ? '<span class="tag-now" title="쓸 수 있는 보유 무기가 없어(다른 파티가 먼저 씀 포함) 4성 추천 무기 1재련으로 계산">무기 없음</span>' : mem.wShare ? '<span class="tag-now" title="보유 개수가 모자라 다른 파티와 나눠 쓰느라 2순위 이하 무기를 씁니다">나눠 씀</span>' : ''}${Object.values(mem.sl || {}).some(v => v < 10) ? `<span class="num tag-sl">Lv ${SK_TREES.map(([k]) => mem.sl[k]).join('/')}</span>` : ''}${st && st.on ? '<span class="tag-me">내 스탯</span>' : ((state.ov[id] || {}).echo && state.ov[id].echo.on ? '<span class="tag-me">에코</span>' : '')}<span class="cfg">설정</span></button>`;
 }
 function modeSelHTML(id, c, r) {
   if (!c.modes) return '';
@@ -2112,7 +2177,7 @@ function openCharCfg(id) {
   const mem = resolveMember(id, c.modes ? Object.keys(c.modes)[0] : null, state.ov, state.settings);
   const est = panelEstimate(id, state.settings, { ...state.ov, [id]: { ...o, st: null } });
   const autoN = state.settings.weapon === 'own' ? '보유 무기 중 최적' : state.settings.weapon === 'sig' ? '전용 5성' : '4성';
-  const wOpts = `<option value="0" ${!o.w ? 'selected' : ''}>자동 (${autoN}${!o.w ? ` → ${c.modes && state.settings.weapon === 'own' ? `${esc(Object.values(c.modes)[0].n)} 모드 기준 ` : ''}${esc((weaponOf(mem.weaponId) || {}).n || '')}` : ''})</option>` + weaponsForType(c.wt).map(w => `<option value="${w.id}" ${o.w && w.id === mem.weaponId ? 'selected' : ''}>${w.q === 5 ? '★5' : '★4'} ${esc(w.n)}${WOWN[w.id] ? ` · 보유 R${WOWN[w.id]}` : ''}${sigOwner(w.id) === id ? ' · 전용' : ''}</option>`).join('');
+  const wOpts = `<option value="0" ${!o.w ? 'selected' : ''}>자동 (${autoN}${!o.w ? ` → ${c.modes && state.settings.weapon === 'own' ? `${esc(Object.values(c.modes)[0].n)} 모드 기준 ` : ''}${esc((weaponOf(mem.weaponId) || {}).n || '')}` : ''})</option>` + weaponsForType(c.wt).map(w => `<option value="${w.id}" ${o.w && w.id === mem.weaponId ? 'selected' : ''}>${w.q === 5 ? '★5' : '★4'} ${esc(w.n)}${wOwned(w.id) ? ` · 보유 ${wOwnTxt(w.id)}` : ''}${sigOwner(w.id) === id ? ' · 전용' : ''}</option>`).join('');
   const sOpts = Object.entries(RAW_SETS).map(([sid, s]) => `<option value="${sid}" ${+sid === +mem.setId ? 'selected' : ''}>${esc(s.n)}</option>`).join('');
   const num = (k, label, ph, step = '0.1') => `<label>${label}<input type="number" id="cf-st-${k}" step="${step}" min="0" value="${st[k] ?? ''}" placeholder="${ph}"></label>`;
   $('#char-title').textContent = `${c.name} 설정`;
@@ -2176,7 +2241,7 @@ function openCharCfg(id) {
   $('#cf-w').addEventListener('change', () => { // 무기를 직접 고르면 재련도 고를 수 있게(보유 무기면 그 재련 단계로)
     const v = +$('#cf-w').value; const r = $('#cf-r');
     r.disabled = !v && state.settings.weapon === 'own';
-    if (v && WOWN[v]) r.value = String(WOWN[v]); else if (v) r.value = String((RAW_WEAPONS[v] || {}).q === 5 ? 1 : 5);
+    if (v && wOwned(v)) r.value = String(wBestR(v)); else if (v) r.value = String((RAW_WEAPONS[v] || {}).q === 5 ? 1 : 5);
   });
   let mode = mode0;
   const readEcho = () => ({ on: mode === 'echo', e: $$('#cf-ec .ec-slot').map(sl => ({ c: +$('.ec-c', sl).value, m: $('.ec-m', sl).value,
@@ -2577,24 +2642,35 @@ const WSORT = (a, b) => { // 전용 5성(최신 공명자 순) → 상시 5성 �
   if (ka === 0) return CHARS.findIndex(c => c.id === oa) - CHARS.findIndex(c => c.id === ob);
   return a[1].wt - b[1].wt || b[0] - a[0];
 };
+const wOwnTxt = id => { const a = wCopies(id); return a.length ? (a.length > 1 ? `R${a.join('·R')}` : `R${a[0]}`) : ''; };
 function weaponCardHTML(id, w) {
-  const own = WOWN[id] || 0; const oid = sigOwner(id); const oc = oid ? CH[oid] : null;
+  const cp = wCopies(id), n = cp.length; const oid = sigOwner(id); const oc = oid ? CH[oid] : null;
   const face = oc && IMG_CHAR[oc.id] ? `<img class="wc-face" src="${IMG_CHAR[oc.id]}" alt="">` : '';
-  return `<div class="wc-wrap"><button class="wc q${w.q}" data-wown="${id}" aria-pressed="${!!own}" title="${esc(w.n)}">
-      <span class="wc-img">${IMG_WEAPON[id] ? `<img src="${IMG_WEAPON[id]}" alt="" loading="lazy">` : `<span class="wc-noimg">${oc && isUpcoming(oc) ? '출시 후<br>그림 추가' : '그림 없음'}</span>`}${own ? `<span class="wc-rk num">R${own}</span>` : ''}</span>
+  const rbtn = (k, cur) => [1, 2, 3, 4, 5].map(r => `<button type="button" data-wr="${id}" data-k="${k}" data-r="${r}" aria-pressed="${cur === r}">R${r}</button>`).join('');
+  return `<div class="wc-wrap"><button class="wc q${w.q}" data-wown="${id}" aria-pressed="${!!n}" title="${esc(w.n)}${n ? ' · 다시 누르면 보유 해제' : ' · 눌러서 보유'}">
+      <span class="wc-img">${IMG_WEAPON[id] ? `<img src="${IMG_WEAPON[id]}" alt="" loading="lazy">` : `<span class="wc-noimg">${oc && isUpcoming(oc) ? '출시 후<br>그림 추가' : '그림 없음'}</span>`}${n ? `<span class="wc-rk num">${n > 1 ? `×${n}` : `R${cp[0]}`}</span>` : ''}</span>
       <span class="nm">${esc(w.n)}</span>
       <span class="sub">★${w.q} · ${WT[w.wt] || ''} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</span>
       ${oc ? `<span class="wc-sig">${face}<span>${esc(oc.name)} 전용</span></span>` : isStd5(id) ? '<span class="wc-std">상시 5성</span>' : ''}
     </button>
-    <div class="wc-r" role="group" aria-label="${esc(w.n)} 재련 단계" ${own ? '' : 'hidden'}>${[1, 2, 3, 4, 5].map(n => `<button type="button" data-wr="${id}" data-r="${n}" aria-pressed="${own === n}">R${n}</button>`).join('')}</div></div>`;
+    ${n ? `<div class="wc-cnt" role="group" aria-label="${esc(w.n)} 보유 개수"><button type="button" data-wc="${id}" data-d="-1" aria-label="한 자루 빼기">−</button><span class="num">${n}개</span><button type="button" data-wc="${id}" data-d="1" aria-label="한 자루 더하기" ${n >= W_MAX ? 'disabled' : ''}>＋</button></div>
+    ${n === 1 ? `<div class="wc-r" role="group" aria-label="${esc(w.n)} 재련 단계">${rbtn(0, cp[0])}</div>`
+      : `<div class="wc-rs">${cp.map((r, k) => `<label title="${k + 1}번째 자루 재련"><span>${k + 1}</span><select data-wsel="${id}" data-k="${k}">${[5, 4, 3, 2, 1].map(x => `<option value="${x}" ${x === r ? 'selected' : ''}>R${x}</option>`).join('')}</select></label>`).join('')}</div>`}` : ''}</div>`;
+}
+// 편성 요약: 보유 무기를 파티끼리 나눈 결과(모자라서 2순위를 쓴 무기)
+function wSummaryHTML() {
+  if (state.settings.weapon !== 'own') return '';
+  if (!Object.keys(WOWN).length) return `<div class="wsum"><b>보유 무기</b> 아직 등록한 무기가 없습니다. <a href="#/tools/weapons">보유 무기 등록</a></div>`;
+  const sh = wShortage();
+  return `<div class="wsum"><b>보유 무기 분배</b> ${sh.length ? `무기가 모자라 나눠 쓴 캐릭터가 있어요: ${sh.map(x => `<span class="tag">${esc((RAW_WEAPONS[x.id] || {}).n || x.id)} +${x.more}개 더 있으면 좋음</span>`).join(' ')} <a href="#/tools/weapons">개수 고치기</a>` : '모든 캐릭터가 1순위 보유 무기를 씁니다(파티끼리 겹쳐도 보유 개수 안에서 나눴어요).'}</div>`;
 }
 function paintWownChip() {
-  const n = Object.keys(WOWN).length; const c = $('#wown-chip'); if (c) c.textContent = `보유 무기 ${n}종`;
+  const n = Object.keys(WOWN).length; const tot = Object.values(WOWN).reduce((a, x) => a + x.length, 0); const c = $('#wown-chip'); if (c) c.textContent = `보유 무기 ${n}종${tot > n ? ` · ${tot}자루` : ''}`;
   const m = $('#wown-mode');
   if (m) {
     const manual = CHARS.filter(c => (state.ov[c.id] || {}).w).length;
     m.innerHTML = state.settings.weapon === 'own'
-      ? `<b>계산에 보유 무기를 쓰는 중</b> · 캐릭터마다 가진 무기 중 가장 좋은 무기(재련 반영)를 자동으로 고릅니다. 한 파티에서 같은 5성 무기는 한 명만 씁니다.${manual ? ` <span class="note">캐릭터 설정에서 무기를 직접 고른 ${manual}명은 그 무기를 씁니다.</span> <button class="btn sm ghost" id="wown-auto">모두 자동으로</button>` : ''}`
+      ? `<b>계산에 보유 무기를 쓰는 중</b> · 캐릭터마다 가진 무기 중 가장 좋은 무기(재련 반영)를 고르고, 편성한 모든 파티에 걸쳐 무기마다 보유 개수만큼만 나눠 줍니다.${manual ? ` <span class="note">캐릭터 설정에서 무기를 직접 고른 ${manual}명은 그 무기를 씁니다.</span> <button class="btn sm ghost" id="wown-auto">모두 자동으로</button>` : ''}`
       : `<b>지금은 ${state.settings.weapon === 'sig' ? '모두 전용 5성 무기' : '4성 무기'}로 계산합니다.</b> <button class="btn sm solid-gold" id="wown-use">보유 무기로 계산하기</button>`;
     const u = $('#wown-use'); if (u) u.addEventListener('click', () => { setWeaponMode('own'); renderWeapons(); });
     const a = $('#wown-auto'); if (a) a.addEventListener('click', () => { CHARS.forEach(c => { const o = state.ov[c.id]; if (o && o.w) { delete o.w; delete o.r; } }); save(); optimize(true); renderWeapons(); toast('모든 캐릭터가 보유 무기 중에서 자동으로 고릅니다.'); });
@@ -2617,21 +2693,33 @@ function renderWeapons() {
   $('#wown-grid').innerHTML = grp.filter(([, a]) => a.length).map(([t, a]) => `<h3 class="wg-h">${t} <small>${a.filter(([id]) => WOWN[id]).length} / ${a.length}</small></h3><div class="wown-grid">${a.map(([id, w]) => weaponCardHTML(id, w)).join('')}</div>`).join('') || '<p class="muted">검색 결과가 없습니다.</p>';
   $$('#wown-grid [data-wown]').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.wown; const w = RAW_WEAPONS[id];
-    if (WOWN[id]) delete WOWN[id]; else WOWN[id] = w.q === 4 ? 5 : 1;
+    if (WOWN[id]) delete WOWN[id]; else WOWN[id] = [w.q === 4 ? 5 : 1];
     const first = state.settings.weapon !== 'own' && Object.keys(WOWN).length === 1 && WOWN[id];
     save();
     if (first) setWeaponMode('own', true), toast('보유 무기로 계산하도록 바꿨습니다. 재련 단계도 골라 주세요.');
     else if (state.settings.weapon === 'own') optimize(true);
     renderWeapons();
   }));
-  $$('#wown-grid [data-wr]').forEach(b => b.addEventListener('click', () => { WOWN[b.dataset.wr] = +b.dataset.r; save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); }));
+  const changed = () => { save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); };
+  const sortW = id => { WOWN[id].sort((a, b) => b - a); };
+  $$('#wown-grid [data-wr]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.wr; WOWN[id][+b.dataset.k] = +b.dataset.r; sortW(id); changed(); }));
+  $$('#wown-grid [data-wsel]').forEach(sel => sel.addEventListener('change', () => { const id = sel.dataset.wsel; WOWN[id][+sel.dataset.k] = +sel.value; sortW(id); changed(); }));
+  $$('#wown-grid [data-wc]').forEach(b => b.addEventListener('click', () => { // 개수: 늘리면 새 자루는 4성 R5 · 5성 R1, 줄이면 재련 낮은 자루부터 뺌
+    const id = b.dataset.wc, a = WOWN[id]; if (!a) return;
+    if (+b.dataset.d > 0) { if (a.length < W_MAX) a.push(RAW_WEAPONS[id].q === 4 ? 5 : 1); } else { a.pop(); if (!a.length) delete WOWN[id]; }
+    if (WOWN[id]) sortW(id); changed();
+  }));
   paintWownChip();
 }
 function bindWeapons() {
   $('#wown-search').addEventListener('input', e => { state.wQuery = e.target.value; renderWeapons(); });
-  $('#wown-4all').addEventListener('click', () => { Object.entries(RAW_WEAPONS).forEach(([id, w]) => { if (w.q === 4 && !WOWN[id]) WOWN[id] = 5; }); save(); if (state.settings.weapon !== 'own') setWeaponMode('own', true); else optimize(true); renderWeapons(); toast('4성 무기를 모두 5재련으로 넣었습니다. 가진 5성 무기를 눌러 주세요.'); });
+  $$('[data-w4n]').forEach(b => b.addEventListener('click', () => { // 4성 전부 n자루(R5)로: 이미 있는 자루의 재련은 그대로, 모자란 만큼 R5로 채움
+    const n = +b.dataset.w4n;
+    Object.entries(RAW_WEAPONS).forEach(([id, w]) => { if (w.q !== 4) return; const a = WOWN[id] || []; while (a.length < n) a.push(5); WOWN[id] = a.slice(0, Math.max(n, a.length)).sort((x, y) => y - x); });
+    save(); if (state.settings.weapon !== 'own') setWeaponMode('own', true); else optimize(true); renderWeapons(); toast(`4성 무기를 모두 ${n}개 이상(새 자루는 5재련)으로 맞췄습니다. 가진 5성 무기를 눌러 주세요.`);
+  }));
   $('#wown-sig').addEventListener('click', () => { // 보유 캐릭터의 전용 무기 한 번에 넣기(1재련)
-    let n = 0; Object.keys(RAW_WEAPONS).forEach(id => { const o = sigOwner(id); if (o && state.owned.has(o) && !WOWN[id]) { WOWN[id] = 1; n++; } });
+    let n = 0; Object.keys(RAW_WEAPONS).forEach(id => { const o = sigOwner(id); if (o && state.owned.has(o) && !WOWN[id]) { WOWN[id] = [1]; n++; } });
     save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); toast(n ? `보유 캐릭터의 전용 무기 ${n}개를 1재련으로 넣었습니다. 없는 무기는 다시 눌러 빼 주세요.` : '더 넣을 전용 무기가 없습니다.');
   });
   $('#wown-none').addEventListener('click', () => { Object.keys(WOWN).forEach(k => delete WOWN[k]); save(); if (state.settings.weapon === 'own') optimize(true); renderWeapons(); });
@@ -2705,11 +2793,17 @@ function switchTab(t) {
   save();
   if (typeof curView !== 'undefined' && curView === 'tools') { const u = BASE + 'tools/' + t; if (location.pathname !== u) try { history.replaceState(null, '', u); } catch (e) { } }
 }
+// 복사 문구에 넣을 무기(보유 무기로 계산할 때만): 「[무기 R5]」
+function wTxt(r, id) {
+  if (state.settings.weapon !== 'own' || !r) return '';
+  const m = r.team.find(x => x && x.id === id); const w = m && weaponOf(m.weaponId);
+  return w ? ` [${w.n} R${m.refine}${m.noOwn ? ' · 미보유' : ''}]` : '';
+}
 function copyText() {
   const lines = [`[띵조 AUTO TEAM MAKER Ver. ${APP_VERSION}] ` + seasonStripHTML().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()];
   state.parties.forEach((p, i) => {
     const r = evalParty(p); const sl = SLOT[p.slot];
-    const who = sl.type === 'solo' ? (p.ids[0] ? `단일 ${CH[p.ids[0]].name}` : '-') : p.ids.map((id, j) => id ? `${['메인', '서브', '서포터'][j]} ${CH[id].name}${r && r.modes[id] ? '(' + CH[id].modes[r.modes[id]].n + ')' : ''}` : '-').join(' / ');
+    const who = sl.type === 'solo' ? (p.ids[0] ? `단일 ${CH[p.ids[0]].name}${wTxt(r, p.ids[0])}` : '-') : p.ids.map((id, j) => id ? `${['메인', '서브', '서포터'][j]} ${CH[id].name}${r && r.modes[id] ? '(' + CH[id].modes[r.modes[id]].n + ')' : ''}${wTxt(r, id)}` : '-').join(' / ');
     lines.push(`${i + 1}파티 [${sl.label} ${sl.fl}] ${who}${r ? ` · 1사이클 ${fmt(r.totalDmg)} (약 ${Math.round(r.rot)}초)` : ''}`);
   });
   copyStr(lines.join('\n'), '조합을 복사했습니다.');
@@ -3346,7 +3440,7 @@ function renderCharacter(id) {
   const bg = artUrl('bg', rid), full = artUrl('full', rid);
   const presets = PRESETS.filter(p => p.m.includes(c.id) && p.m.every(i => CH[i]));
   const alts = PRESETS.flatMap(p => (p.v || []).filter(v => v.m.includes(c.id) && !p.m.includes(c.id) && v.m.every(i => CH[i])).map(v => ({ ...v, t: p.t })));
-  const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b>${WOWN[wid] ? ` <span class="tag gold">보유 R${WOWN[wid]}</span>` : ''}</div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
+  const wpHTML = (wid, label) => { const w = RAW_WEAPONS[wid]; if (!w) return ''; return `<div class="wp">${IMG_WEAPON[wid] ? `<img src="${IMG_WEAPON[wid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b class="r${w.q}">★${w.q} ${esc(w.n)}</b>${wOwned(wid) ? ` <span class="tag gold">보유 ${wOwnTxt(wid)}</span>` : ''}</div><div class="note">${esc(WT[w.wt])} · 공격력 ${w.atk} · ${esc(STAT_N[w.sub[0]] || w.sub[0])} ${w.sub[1]}%</div><div class="d">${esc(w.d)}</div></div></div>`; };
   const setHTML = (sid, label) => { const st = RAW_SETS[sid]; if (!st) return ''; return `<div class="wp">${IMG_SET[sid] ? `<img src="${IMG_SET[sid]}" alt="">` : '<img alt="">'}<div><div><span class="tag">${label}</span> <b>${esc(st.n)}</b></div>${st.e.map(([n, d]) => `<div class="d"><b>${n}세트</b> ${esc(d)}</div>`).join('')}</div></div>`; };
   const G = RAW_GROW.chars[rid];
   const mats = G && G.cat ? [['boss', '보스 재료'], ['spec', '특산물'], ['weekly', '주간 보스']].filter(([k]) => G.cat[k]).map(([k, n]) => [G.cat[k], n])
