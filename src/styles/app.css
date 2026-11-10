@@ -519,7 +519,9 @@ a.btn { text-decoration: none; }
   .bnr-main .art { max-width: 96%; right: -14%; opacity: .7; }
   .bnr-main::before { background: linear-gradient(90deg, rgba(10,10,9,.9) 0%, rgba(10,10,9,.55) 75%, rgba(10,10,9,.3) 100%); }
   .bnr-info { padding: 22px 20px; }
-  .bnr-4 { left: 20px; right: auto; align-items: flex-start; }
+  .bnr-4 { right: 14px; bottom: 14px; }
+  .bnr-4 .portrait { width: 38px; }
+  .cd .t { white-space: nowrap; }
   .cd .t { font-size: 26px; }
   .bnr-thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -934,3 +936,15 @@ h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflo
 .wown-4n { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .wown-4n .lbl { font-size: 12.5px; font-weight: 600; }
 .summary .wsum { grid-column: 1 / -1; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* 다듬기(1.0.33) */
+.nw { white-space: nowrap; }
+.ss-card > span { text-wrap: pretty; }
+.slot select[data-mode] { max-width: 100%; text-overflow: ellipsis; }
+.two > .box + .box, .ss-grid > .box + .box { margin-top: 0; }
+.mx-crisis .portrait { outline: 2px solid var(--gold); outline-offset: 1px; }
+.summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 700px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+main a:not([class]) { color: var(--gold); text-underline-offset: 2px; }
+.mx-crisis { display: contents; }
+.mx-enh ~ .bufftxt { font-size: 13px; line-height: 1.6; color: var(--ink-2, inherit); margin-top: 2px; }

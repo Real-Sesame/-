@@ -1979,7 +1979,7 @@ function gearHTML(id, mem, c) {
 function modeSelHTML(id, c, r) {
   if (!c.modes) return '';
   const auto = c.modes[(r && r.modes[id]) || Object.keys(c.modes)[0]].n;
-  return `<select data-mode="${id}" aria-label="공명 모드"><option value="">모드 자동 (${esc(auto)})</option>${Object.entries(c.modes).map(([k, m]) => `<option value="${k}" ${state.forced[id] === k ? 'selected' : ''}>${esc(m.n)} 모드</option>`).join('')}</select>`;
+  return `<select data-mode="${id}" aria-label="공명 모드"><option value="">자동 · ${esc(auto)}</option>${Object.entries(c.modes).map(([k, m]) => `<option value="${k}" ${state.forced[id] === k ? 'selected' : ''}>${esc(m.n)} 모드</option>`).join('')}</select>`;
 }
 
 function partyHTML(p, r, pi) {
@@ -2785,13 +2785,14 @@ function bindSeg(id, getter, setter) {
 }
 
 /* ---------- 탭 ---------- */
+function paintToolTitle() { const b = $('#tabs .tab[aria-selected="true"]'); document.title = `${b ? b.textContent.trim() + ' · ' : ''}파티 편성 · 띵조 AUTO TEAM MAKER`; }
 function switchTab(t) {
   state.tab = t;
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
   $$('main [data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t; });
   ({ 'grow': renderGrow, 'timeline': renderTimeline, 'field': renderField, 'presets': renderPresets, 'tower-info': renderTowerInfo, 'roster': renderRoster, 'weapons': renderWeapons, 'db': renderDB, 'tower-build': renderBuild }[t] || (() => { }))();
   save();
-  if (typeof curView !== 'undefined' && curView === 'tools') { const u = BASE + 'tools/' + t; if (location.pathname !== u) try { history.replaceState(null, '', u); } catch (e) { } }
+  if (typeof curView !== 'undefined' && curView === 'tools') { const u = BASE + 'tools/' + t; if (location.pathname !== u) try { history.replaceState(null, '', u); } catch (e) { } paintToolTitle(); }
 }
 // 복사 문구에 넣을 무기(보유 무기로 계산할 때만): 「[무기 R5]」
 function wTxt(r, id) {
@@ -2936,7 +2937,7 @@ function renderHome() {
   el.innerHTML = hero + `<div class="container">
     <section class="sec">${secHead('공명자 가이드', '이번 픽업과 최근 공명자의 무기 · 에코 · 추천 조합을 확인하세요.', '#/characters')}<div class="cc-grid">${cards.join('')}</div></section>
     <section class="sec">${secHead('캐릭터 이벤트 튜닝', '진행 중인 픽업과 남은 시간 · 다음 버전 예정 공명자', '')}${bnr}${wline}</section>
-    <section class="sec">${secHead('시즌 콘텐츠', '28일마다 바뀌는 엔드 콘텐츠의 이번 시즌과 남은 시간', '#/season')}<div class="ss-grid" style="margin-top:0">${[['역경의 탑', '심경 구역', sn], ['죽음의 노래와 바닷속 폐허', '재생 해역 · 해곡 · 급류', wastesSeasonAt(now)]].map(([n, k, s]) => `<a class="ss-card" href="#/season"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · 초기화까지 <b class="num">${leftTxt(s.end)}</b></span></a>`).join('')}</div></section>
+    <section class="sec">${secHead('시즌 콘텐츠', '주기마다 바뀌는 엔드 콘텐츠의 이번 시즌과 남은 시간', '#/season')}<div class="ss-grid" style="margin-top:0">${[['역경의 탑', '심경 구역', sn], ['죽음의 노래와 바닷속 폐허', '재생 해역 · 해곡 · 급류', wastesSeasonAt(now)]].map(([n, k, s]) => `<a class="ss-card" href="#/season"><span class="k">${k}</span><b>${n} <span class="tag gold">시즌 ${s.n}</span></b><span>${ymd(s.start)} ~ ${ymd(s.end)} 04:00 · <span class="nw">초기화까지 <b class="num">${leftTxt(s.end)}</b></span></span></a>`).join('')}${(() => { const m = mxStageAt(MX, now); return m ? `<a class="ss-card" href="#/season"><span class="k">${esc(MX.season.n)}</span><b>종말 매트릭스 <span class="tag gold">${esc(m.n)}</span></b><span>${m.s && m.e ? `${ymd(Date.parse(m.s))} ~ ${ymd(Date.parse(m.e))} · <span class="nw">${Date.parse(m.e) > now ? `다음 단계까지 <b class="num">${leftTxt(Date.parse(m.e))}</b>` : '다음 단계 대기 중'}</span>` : `${esc(m.v)} 버전`}</span></a>` : ''; })()}</div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">에코 계산기</p><h3>나의 에코,<br><em>어디까지 왔을까요?</em></h3><p>에코 5개의 주옵션 · 부옵션을 넣으면 속성 화면 스탯과 크리티컬 점수를 바로 계산하고, 목표치와 비교해 다음에 올릴 옵션을 알려 줍니다.</p><a class="btn solid-gold" href="#/echo">에코 계산기 열기</a></div>
       <div class="feat-vis">${bar('공격력', ex.atk, 2400)}${bar('크리티컬', ex.cr, 75, '%')}${bar('크리티컬 피해', ex.cd, 260, '%')}${bar('공명 효율', ex.er, 125, '%')}<p class="note" style="margin:4px 0 0">예시 화면</p></div></div></section>
     <section class="sec"><div class="feat"><div class="feat-tx"><p class="eyebrow">파티 편성</p><h3>보유 캐릭터로 짜는<br><em>역경의 탑 자동 편성</em></h3><p>심경 구역 시즌 ${sn.n}${tower ? '의 층별 버프와 적 속성' : ''}을 반영해 파티별 1사이클 예상 피해가 가장 높은 조합을 찾아 줍니다. 필드 파티, 딜 사이클, 육성 재료 계산도 함께 있어요.</p><a class="btn solid-gold" href="#/tools/tower-build">파티 편성 열기</a></div>
@@ -2948,6 +2949,7 @@ function renderHome() {
   </div>`;
   paintDataInfo();
   if (!CODES) loadCodes().then(d => { if (d && d.active.length && curView === 'home') renderHome(); });
+  if (!MX) loadMatrix().then(d => { if (d && curView === 'home') renderHome(); });
   $$('[data-bn]', el).forEach(b => b.addEventListener('click', () => { homeBanner = +b.dataset.bn; renderHome(); }));
   bindHscroll(el);
   clearInterval(cdTimer); cdTimer = setInterval(() => { if (curView !== 'home') return clearInterval(cdTimer); $$('[data-cd]').forEach(x => { x.innerHTML = cdHTML(+x.dataset.cd); }); }, 30000);
@@ -3186,7 +3188,8 @@ function matrixHTML(d, ranked, now) {
       ${d.cond ? `<li class="note">참여 조건: ${esc(d.cond)}</li>` : ''}</ul></div>
       <div class="box"><h3>증폭 회로 <small>파티마다 1개 선택</small></h3><div class="stack" style="gap:8px">${st.buffs.map(([n, t]) => `<div class="ws-tok"><b>${esc(n)}</b><span>${esc(t).replace(/\n/g, '<br>')}</span></div>`).join('')}</div></div></div>
     <div class="box" style="margin-top:14px"><h3>강화 공명자 <small>이번 단계 · 「위기 특수 요원」은 피로도 +1</small></h3>
-      <div class="mx-enh">${(st.crisis || []).map(r => charChip(r, ' <span class="tag gold">위기 특수 요원</span>')).join('')}${st.enh.filter(([r]) => !(st.crisis || []).includes(r)).map(([r]) => charChip(r)).join('')}</div>
+      ${(st.crisis || []).length ? `<p class="note" style="margin:0 0 8px"><span class="tag gold">위기 특수 요원</span> <b>${esc(st.crisis.map(r => (charByRid(r) || { name: '' }).name).filter(Boolean).join(' · '))}</b> — 피로도가 1 더 있어 두 파티에 나갈 수 있습니다.</p>` : ''}
+      <div class="mx-enh">${(st.crisis || []).map(r => `<span class="mx-crisis">${charChip(r)}</span>`).join('')}${st.enh.filter(([r]) => !(st.crisis || []).includes(r)).map(([r]) => charChip(r)).join('')}</div>
       ${[...new Set(st.enh.map(x => x[1]).filter(Boolean))].map(t => `<div class="bufftxt"><b>${esc(st.enh.filter(x => x[1] === t).map(x => (charByRid(x[0]) || { name: '' }).name).filter(Boolean).join(' · '))}</b> ${esc(t)}</div>`).join('')}</div>
     <div class="two" style="margin-top:14px"><div class="box"><h3>안정 프로토콜</h3>${sc(st.stab.sc)}${roundsHTML(st.stab.rounds, '적 구성')}</div>
       ${st.sing ? `<div class="box"><h3>특이점 확장</h3>${sc(st.sing.sc)}<div class="note" style="margin-top:8px">적 순서: ${esc(st.sing.rounds[0].e.map(e => e.n).join(' → '))} (쓰러뜨리면 다음 적이 이어서 나옴)</div>${roundsHTML(st.sing.rounds, '', st.stab.rounds[0].e)}</div>` : ''}</div>
@@ -3647,7 +3650,7 @@ function showView(r, keepScroll) {
   if (v === 'tools') { const t = r.a && $(`#tabs .tab[data-tab="${r.a}"]`) ? r.a : (state.tab || 'tower-build'); switchTab(t); paintOwnedChip(); }
   else ({ home: renderHome, intro: renderIntro, characters: renderCharacters, character: renderCharacter, season: renderSeason, echo: renderEcho, codes: renderCodes, links: renderLinks, notice: renderNotice, app: renderApp }[v])(r.a);
   const ct = v === 'character' && CH[r.a] ? CH[r.a].name + ' · ' : '';
-  document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
+  if (v === 'tools') paintToolTitle(); else document.title = `${ct}${VIEW_T[v] ? VIEW_T[v] + ' · ' : ''}띵조 AUTO TEAM MAKER`;
   if (!keepScroll && (prev !== v || v === 'character')) window.scrollTo(0, 0);
   fixLinks();
 }
