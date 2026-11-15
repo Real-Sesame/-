@@ -1,7 +1,7 @@
 {
  "_about": "자동 편성 보정용 커뮤니티 정보. 패치마다 예약 작업(또는 사람이)이 갱신합니다. teams: [종류(best·mid·f2p), 이름, 캐릭터 id…], tiers: 역경의 탑 티어별 캐릭터 id",
- "patch": "3.7",
- "updated": "2026-10-27",
+ "patch": "3.8",
+ "updated": "2026-11-15",
  "source": "wuwabuild.com 공명자 빌드 · 티어(Prydwen 역경의 탑 순위 기준)",
  "teams": [
   [
@@ -23,6 +23,13 @@
    "합일",
    "hsin",
    "suoming",
+   "lily"
+  ],
+  [
+   "mid",
+   "합일",
+   "hsin",
+   "suoming",
    "shorekeeper"
   ],
   [
@@ -31,6 +38,13 @@
    "hsin",
    "jinhsi",
    "shorekeeper"
+  ],
+  [
+   "mid",
+   "금희 합일",
+   "jinhsi",
+   "hsin",
+   "lily"
   ],
   [
    "best",
@@ -233,7 +247,21 @@
    "에코 스킬",
    "sigrika",
    "qiuyuan",
+   "lily"
+  ],
+  [
+   "mid",
+   "에코 스킬",
+   "sigrika",
+   "qiuyuan",
    "shorekeeper"
+  ],
+  [
+   "mid",
+   "릴리 에코",
+   "sigrika",
+   "lucilla",
+   "lily"
   ],
   [
    "mid",
@@ -327,6 +355,13 @@
    "verina"
   ],
   [
+   "mid",
+   "릴리 에코",
+   "galbrena",
+   "lupa",
+   "lily"
+  ],
+  [
    "best",
    "인멸 강공격",
    "phrolova",
@@ -379,28 +414,28 @@
  "tiers": {
   "T0": [
    "hiyuki",
+   "hsin",
    "jingran",
    "qingxiao",
    "xuanling",
    "denia",
    "iuno",
    "lucilla",
-   "lynae",
+   "suoming",
    "chisa",
+   "lily",
    "mornye",
    "suisui",
    "shorekeeper"
   ],
   "T0.5": [
    "aemeath",
-   "hsin",
    "luuk",
    "sigrika",
-   "lupa",
+   "lynae",
    "qiuyuan",
    "rebecca",
-   "verina",
-   "suoming"
+   "verina"
   ],
   "T1": [
    "augusta",
@@ -409,29 +444,29 @@
    "lucy",
    "phrolova",
    "ciaccona",
+   "lupa",
    "mortefi",
    "rover_electro",
-   "lily"
+   "sanhua",
+   "buling"
   ],
   "T1.5": [
    "carlotta",
-   "buling",
+   "jinhsi",
+   "brant",
    "rover_aero"
   ],
   "T2": [
-   "brant",
    "jiyan",
+   "phoebe",
    "zani",
    "cantarella",
    "changli",
-   "phoebe",
-   "sanhua",
    "rover_spectro"
   ],
   "T3": [
    "camellya",
    "encore",
-   "jinhsi",
    "lingyang",
    "xiangli_yao",
    "danjin",

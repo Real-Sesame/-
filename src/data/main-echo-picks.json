@@ -1,5 +1,6 @@
 {
-  "_about": "공명자별 추천 메인 에코(4코스트). 값은 게임 영어 이름(앞이 1순위). 출처: wuwabuild.com 공명자 빌드(3.7 기준, Prydwen 순위 반영) · ldshop.gg 전 캐릭터 에코 가이드. 여기 없는 공명자는 tools/build_echoes.py가 게임 데이터(추천 세트 · 속성 · 주력 피해 유형)로 고릅니다.",
+  "_about": "공명자별 추천 메인 에코(4코스트). 값은 게임 영어 이름(앞이 1순위). 출처: wuwabuild.com 공명자 빌드(3.8 기준, Prydwen 순위 반영) · ldshop.gg 전 캐릭터 에코 가이드. 여기 없는 공명자는 tools/build_echoes.py가 게임 데이터(추천 세트 · 속성 · 주력 피해 유형)로 고릅니다.",
+  "lily": ["Fallacy of No Return"],
   "hsin": ["Reminiscence: Suhsin the Inevitable", "Thundering Mephis"],
   "suoming": ["Thundering Mephis", "Reminiscence: Suhsin the Inevitable"],
   "jingran": ["Myriad Snare: Rustfire Chassis", "Calamity Effigy", "Lady of the Sea"],
