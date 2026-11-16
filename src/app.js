@@ -32,8 +32,6 @@ if ('serviceWorker' in navigator && window.isSecureContext && !import.meta.env.D
 const imgIndex = kind => Object.fromEntries(Object.entries(IMG_KEYS[kind] || {}).map(([k, ext]) => [k, `${BASE}img/${kind}/${encodeURIComponent(k)}.${ext}`]));
 const RAW_WEAPONS = D_RAW_WEAPONS;
 let WOWN = {}; // 보유 무기 { 무기 id: [자루마다 재련 단계, 높은 순] } — state.wown과 같은 객체(setWown으로만 바꿈)
-/* 릴리 전용 무기 러럴바이 — 출시 전 임시 항목(게시글: 공격력 16%~32%). 기본 스탯은 추정이며 실제 데이터가 들어오면 자동으로 교체됩니다. */
-if (!RAW_WEAPONS[21030999]) RAW_WEAPONS[21030999] = { n: '러럴바이', q: 5, wt: 3, atk: 587, sub: ['atk', 36.4], d: '(3.8.3 게시글 기준) 파티 전원의 공격력이 16% 증가한다. 재련 5단계에서는 32%.' };
 const RAW_SETS = D_RAW_SETS;
 const RAW_TOWER = D_RAW_TOWER;
 const RAW_ROLES = D_RAW_ROLES;
@@ -110,7 +108,8 @@ const WMOD = {
     { s: 'bonus', v: 24, el: 'electro', to: 'others', up: .7, wreq: 'unison', mode: 'unison', src: '적막한 어둠(못다 한 그리움): 파티 전도 피해 보너스 24%(협주 에너지를 쓰면 종료)' },
     { s: 'bonus', v: 40, el: 'electro', up: .85, mode: 'carry', src: '적막한 어둠(애틋한 그리움): 협주 에너지 소모 시 자신 전도 피해 40%, 14초' }],
   21030015: [{ s: 'atk', v: 10, to: 'next', src: '부동의 안개' }],
-  21030999: [{ s: 'atk', v: 16, to: 'team', src: '러럴바이(3.8.3 게시글: 공격력 16%~32%)' }],
+  21030076: [{ s: 'hp', v: 12 }, { s: 'atk', v: 16, to: 'team', req: 'unison', wreq: 'heal', src: '럴러바이: 강공격으로 치료하면 파티에 「꿈으로 돌아간 영혼」 → 합일을 얻거나 대응하는 캐릭터의 공격력 16%(5재련 32%)' },
+    { s: 'bonus', v: 24, dt: 'e', to: 'team', wreq: 'heal', src: '럴러바이: 강공격으로 치료하면 등장 캐릭터의 에코 어빌리티 피해 24%' }],
   21030016: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 48, dt: 's' }],
   21030026: [{ s: 'atk', v: 12 }, { s: 'bonus', v: 24, el: 'aero', req: 'erosion' }, { s: 'res', v: 10, el: 'aero', to: 'team', treq: 'erosion', src: '숲속의 아리아' }],
   21030036: [{ s: 'atk', v: 12 }, { s: 'amp', v: 24, dt: 'h' }, { s: 'amp', v: 24, dt: 'e' }, { s: 'defign', v: 8 }],
@@ -192,7 +191,7 @@ const SMOD = {
   35: { el: 'fusion', b: [{ s: 'cr', v: 20, req: 'shield' }, { s: 'bonus', v: 15, el: 'fusion', req: 'shield' }] },
   36: { el: 'electro', b: [{ s: 'bonus', v: 32.5, el: 'electro' }, { s: 'cr', v: 15, req: ['flare', 'unison'] }] },
   37: { el: 'electro', sup: 1, b: [{ s: 'bonus', v: 20, el: 'electro', req: 'flare' }, { s: 'bonus', v: 25, el: 'electro', to: 'next', wreq: 'flare', src: '거울 그림자에 번개가 스치는 찰나' }] },
-  38: { sup: 1, b: [{ s: 'atk', v: 10, to: 'team', wreq: 'heal', src: '추억에 붉게 물든 꽃' }, { s: 'atk', v: 15, to: 'team', wreq: 'heal', treq: 'unison', src: '추억에 붉게 물든 꽃(합일)' }] }
+  38: { sup: 1, b: [{ s: 'atk', v: 10, to: 'team', wreq: 'heal', src: '추억에 붉게 물든 꽃' }, { s: 'atk', v: 15, to: 'team', wreq: 'heal', req: 'unison', src: '추억에 붉게 물든 꽃(합일을 얻거나 대응하는 캐릭터)' }] }
 };
 
 /* ---------- 공명자 모델 ----------
@@ -231,13 +230,13 @@ const CHARS = [
             { s: 'cd', v: 100, to: 'self', up: .85, src: '금쇄계주: 해방 후 E로 합일을 소모하면 크리티컬 피해 100%, 펼친 우산 평타 배율 +100%(12초)' }] }
     },
     note: '3.7 2페이즈(10/22) 출시. 해방 후 바로 교체하면 "합일 서브"(다음 캐릭터 전도 피해 보너스 30~70% · 벼락의 흔적 협동 공격), 해방 후 E를 쓰면 "금쇄계주 메인"(본인 평타 강화)입니다. 둘은 동시에 쓸 수 없어 파티마다 높은 쪽으로 계산합니다.' },
-  { id: 'lily', rid: 0, release: Date.UTC(2026, 10, 11, 2), releaseTxt: '3.8 예정', name: '릴리', q: 5, el: 'spectro', wt: 3, icon: '', role: 'sup', pw: 16, p: { n: 40, s: 30, l: 30 }, ap: ['heal', 'unison'], f: ['heal'], w: 21030999, wGuess: true, w4: 21030024, set: 38,
-    b: [{ s: 'amp', v: 25, to: 'team', src: '릴리 반주: 파티 전원 전체 피해 부스트 25%' },
-        { s: 'atk', v: 14, to: 'team', src: '공명 해방: 변주 1회마다 공격력 7%씩 누적(최대 28%) — 쇄명 입장(1·3번째 변주) 평균 14%' },
-        { s: 'atk', v: 7, to: 'team', req: 'flare', treq: 'unison', src: '공명 해방: 여우의 별자리 입장(2·4번째 변주) 평균 21%' },
-        { s: 'atk', v: 14, to: 'team', req: 'unison', uniq: 'lilyUni', src: '공명 회로: 합일 버프 1스택당 공격력 7%(2스택 14%)' },
-        { s: 'atk', v: 21, to: 'team', req: 'unison', withChar: 'hsin', uniq: 'lilyUni', src: '공명 회로: 합일 버프 3스택(여우의 별자리 합일) 공격력 21%' }],
-    note: '3.8.3 아카라이브 정리글(서포터별 버프 모음) 수치를 반영했습니다. 반주 부스트 25%, 공명 해방 변주당 공격력 7%(1돌 14%), 공명 회로 합일 스택당 7%, 2돌 크확·크피 누적(최대 8% / 24%), 전용 무기 러럴바이 공격력 16~32%입니다. 합일팟에서 공격력만 최대 97%를 줍니다. 비이중모드라 스킬별 버프가 모두 동시에 적용됩니다. 출시 후 실제 게임 데이터가 자동으로 연결됩니다.' },
+  { id: 'lily', rid: 0, release: Date.UTC(2026, 10, 11, 2), name: '릴리', q: 5, el: 'spectro', wt: 3, icon: '', role: 'sup', pw: 16, p: { h: 50, s: 20, l: 20, i: 10 }, ap: ['heal'], f: ['heal'], w: 21030076, w4: 21030024, set: 38,
+    b: [{ s: 'amp', v: 25, to: 'team', src: '반주 · 향이여, 피어나라: 파티 전원 전체 피해 부스트 25%(30초)' },
+        { s: 'atk', v: 14, to: 'team', uniq: 'lilyScent', src: '공명 해방 「요람의 레퀴엠」 → 꿈내음: 릴리 외 캐릭터의 변주 스킬 1회마다 1스택, 스택당 파티 전원 공격력 7%(공명 효율 260%) — 한 사이클 2스택 기준 14%(최대 4스택 28%)' },
+        { s: 'atk', v: 14, to: 'team', req: 'unison', uniq: 'lilyFaded', src: '공명 회로 「빛바랜 꿈결」(강공격 종막 → 반주로 부여): 합일 버프 1스택당 공격력 7%(공명 효율 260%) — 2스택 기준 14%(최대 4스택 28%)' },
+        { s: 'cr', v: 10, dt: 'e', to: 'team', src: '빛바랜 꿈결: 등장 캐릭터의 에코 어빌리티 크리티컬 10%(공명 효율 260%)' },
+        { s: 'cd', v: 20, dt: 'e', to: 'team', src: '빛바랜 꿈결: 등장 캐릭터의 에코 어빌리티 크리티컬 피해 20%(공명 효율 260%)' }],
+    note: '3.8 게임 데이터 기준입니다. 릴리의 버프는 거의 다 본인 공명 효율에 비례합니다. 공명 효율 190%를 넘기면 1%마다 공격력이 0.1%씩 붙어 260%에서 「꿈내음」·「빛바랜 꿈결」 스택당 공격력이 최대 7%가 되고, 에코 어빌리티 크리티컬 10% · 크리티컬 피해 20%도 같이 최대가 됩니다. 그래서 공명 효율 260%가 컷이고, 계산은 260%를 맞춘 기준입니다. 「빛바랜 꿈결」은 합일을 얻거나 대응하는 캐릭터에게만 들어가고, 「꿈내음」은 파티 전원에게 들어갑니다. 합일 파티에서 릴리가 주는 공격력은 꿈내음 28% + 빛바랜 꿈결 28% + 전용 무기 16% + 세트 25%로 최대 97%입니다. 릴리 본인은 합일을 얻거나 대응하지 않습니다.' },
   { id: 'jingran', rid: 1212, role: 'main', pw: 104, p: { h: 80, o: 15, i: 5 }, ap: ['shield'], f: ['aoe'], w: 21010076, w4: 21010104, set: 35, b: [] },
   { id: 'qingxiao', rid: 1413, role: 'main', pw: 102, p: { h: 50, l: 30, o: 20 }, ap: ['tuneStrain'], f: ['move'], w: 21020106, w4: 21020017, set: 34, b: [] },
   { id: 'suisui', rid: 1110, role: 'sup', pw: 18, p: { s: 50, l: 30, st: 20 }, ap: ['chafe', 'heal'], f: ['heal', 'group'], w: 21050096, w4: 21050024, set: 33,
@@ -336,7 +335,7 @@ const CHARS = [
   { id: 'shorekeeper', rid: 1505, role: 'sup', pw: 12, p: { s: 60, l: 40 }, ap: ['heal'], f: ['heal'], w: 21050036, w4: 21050024, set: 7,
     b: [{ s: 'amp', v: 15, to: 'team', src: '파수인 반주' }, { s: 'cr', v: 12.5, to: 'team', src: '별의 영역·심층(크리 12.5%)' },
         { s: 'cd', v: 25, to: 'team', src: '별의 영역·해금(치피 25%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코): 에코 사용 시 파티 전원 공격력 10%, 20초' }],
-    note: '합일 대응은 할 수 없어 여우의 별자리 합일 파티에서는 릴리 출시 후 교체를 권장합니다.' },
+    note: '어느 파티에나 들어가는 기본 힐러입니다. 합일 파티에서는 합일 버프 스택만큼 공격력을 더 주는 릴리가 더 세서, 릴리가 있으면 보통 자리를 넘깁니다.' },
   { id: 'verina', rid: 1503, role: 'sup', pw: 12, p: { l: 50, h: 30, c: 20 }, ap: ['heal', 'coord'], f: ['heal'], w: 21050036, w4: 21050024, set: 7,
     b: [{ s: 'amp', v: 15, to: 'team', src: '벨리나 반주' }, { s: 'atk', v: 20, to: 'team', src: '자연의 선물(공격력 20%)' }, { s: 'atk', v: 10, to: 'team', src: '귀환 불가의 사도(메인 에코): 에코 사용 시 파티 전원 공격력 10%, 20초' }] },
   { id: 'buling', rid: 1307, role: 'sup', pw: 16, p: { s: 50, l: 50 }, ap: ['flare', 'heal'], f: ['heal'], w: 21050016, w4: 21050094, set: 7,
@@ -406,7 +405,7 @@ const PRESETS = [
         { k: 'f2p', m: ['hsin', 'rover_electro', 'buling'], n: '방랑자는 무료, 복링은 4성이라 진입 장벽이 가장 낮습니다(여전복)' }] },
   { id: 'hsin_unison', t: '여우의 별자리 · 합일 (쇄명 출시 후 최고점)', tag: '역경의 탑', m: ['hsin', 'suoming', 'shorekeeper'],
     d: '쇄명이 합일을 얻고 퇴장하면 반주와 여우의 별자리 변주가 동시에 터집니다.',
-    v: [{ k: 'mid', m: ['hsin', 'suoming', 'lily'], n: '릴리(3.8): 합일팟에서 공격력을 최대 97%까지 주는 합일 대응 힐러' },
+    v: [{ k: 'mid', m: ['hsin', 'suoming', 'lily'], n: '릴리(3.8): 공명 효율 260%를 맞추면 합일 파티에 공격력을 최대 97%까지 주는 힐러' },
         { k: 'mid', m: ['hsin', 'jinhsi', 'shorekeeper'], n: '쇄명 대신 금희 합일' },
         { k: 'f2p', m: ['hsin', 'suoming', 'verina'], n: '파수인 대신 벨리나' }] },
   { id: 'xuanling', t: '양양·현령 암흑 파티', tag: '역경의 탑', m: ['xuanling', 'chisa', 'suisui'],
@@ -738,7 +737,7 @@ const TEAM_ROT = [
       loop: [['buling', '평평평평', '평타 4회'], ['rover_electro', '평평평', '평타 3회', 1], ['buling', 'E평', 'E → 평타'], ['buling', '강공강공', '강공 2회'], ['buling', '에코'], ['buling', '해방'], ['buling', '복링 반주'],
         ['rover_electro', '전랑자 변주'], ['rover_electro', '평평평', '평타 3회'], ['rover_electro', 'E평', 'E → 평타'], ['rover_electro', '해방'], ['rover_electro', '에코'], ['rover_electro', '강화스킬', '과부하'], ['rover_electro', '전랑자 반주'], ['hsin', '여별 변주', '→ 여우의 별자리 사이클']] } },
   { has: ['hsin', 'suoming'], t: '서포터 → 쇄명 → 여우의 별자리 → 쇄명 → 여우의 별자리(1-2-3-2-3). 쇄명이 공명 해방으로 합일을 얻은 뒤 교체하면 협주 에너지 없이 반주와 변주가 동시에 터집니다.' },
-  { has: ['hsin', 'suoming', 'lily'], t: '릴리 → 쇄명 → 여우의 별자리 → 쇄명 → 여우의 별자리(3-2-1-2-1). 릴리 해방 공격력은 변주마다 7%씩 쌓여 1~4번째 변주에 7/14/21/28%(1돌은 14/28/28/28%)가 되므로, 쇄명은 1·3번째, 여우의 별자리는 2·4번째 변주를 받습니다. 합일 스택당 공격력 7%(여별 3스택 21%, 풀돌 4스택 28%)와 세트 효과 25%, 전용 무기 16~32%가 더해집니다.' },
+  { has: ['hsin', 'suoming', 'lily'], t: '릴리 → 쇄명 → 여우의 별자리 → 쇄명 → 여우의 별자리(3-2-1-2-1). 릴리는 공명 스킬로 향기를 채워 강공격(꿈으로 엮은 동화 · 악몽)의 종막까지 쓰고 공명 해방으로 「요람의 레퀴엠」을 켠 뒤 반주로 빠집니다. 종막 → 반주 순서를 지켜야 「빛바랜 꿈결」이 파티에 들어가고, 그 뒤 쇄명 · 여우의 별자리가 변주로 들어올 때마다 꿈내음이 1스택(1돌 2스택)씩 쌓입니다. 공명 효율 260% 기준 꿈내음 · 빛바랜 꿈결 모두 스택당 공격력 7%(각각 최대 28%)이고, 세트 25%와 전용 무기 16~32%가 더해집니다.' },
   { has: ['hsin', 'jinhsi'], t: '금희가 강화 E로 합일을 얻은 뒤 교체하면 여우의 별자리가 합일 변주로 들어옵니다.' },
   { has: ['aemeath', 'denia', 'lupa'], t: '데니아가 먼저 나와 루파에게 반주, 루파가 에이메스에게 반주합니다.' },
   { has: ['phrolova', 'cantarella'], t: '칸타렐라 반주가 플로로에게 가도록 루실라 등 다른 버퍼는 3번째에 둡니다.' }
@@ -926,7 +925,22 @@ const ECHO_SUB = {
 };
 const ECHO_MAIN_N = { cr: '크리티컬', cd: '크리티컬 피해', atkP: '공격력%', hpP: 'HP%', defP: '방어력%', heal: '치료 효과 보너스', el: '속성 피해 보너스', er: '공명 효율' };
 const ECHO_COSTS = [4, 3, 1];
-const ECHO_DEFAULT = (sc = 'atk') => { const m1 = sc === 'hp' ? 'hpP' : sc === 'def' ? 'defP' : 'atkP'; return { on: false, e: [{ c: 4, m: 'cr', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 1, m: m1, sub: [] }, { c: 1, m: m1, sub: [] }] }; };
+/* ---------- 추천 에코 주옵션 ----------
+   기본은 4-3-3-1-1(크리티컬 · 속성 피해 · 속성 피해 · 공격 기준 스탯 2개)입니다.
+   공명 효율처럼 다른 스탯을 맞춰야 버프가 커지는 공명자만 여기에 배치를 적어 둡니다.
+     e  : [코스트, 주옵션] 5개   er : 공명 효율 목표(%)   n : 설명 */
+const ECHO_REC = {
+  lily: { e: [[3, 'er'], [3, 'er'], [1, 'hpP'], [1, 'hpP'], [1, 'hpP']], er: 260,
+    n: '합일 파티용 3-3-1-1-1(추억에 붉게 물든 꽃). 릴리의 버프는 공명 효율 190% 초과분에 비례해서 커지고 260%에서 모두 최대가 되므로, 전용 무기 럴러바이의 부옵션(공명 효율 77%)과 3코스트 주옵션 2개(32% + 32%)로 맞추고 남는 만큼을 부옵션으로 채웁니다. 코스트가 남아도 1코스트 HP%가 치료량에 더 도움이 됩니다. HP를 더 올리고 싶으면 3-1-1-1-1도 쓰이지만, 부옵션으로 공명 효율 50% 이상을 채워야 합니다. 에코 스킬 파티에서는 세트를 찬란한 광휘로 바꾸고 4코스트 메인 에코를 넣어 4-3-1-1-1로 갑니다.' }
+};
+const ECHO_DEFAULT = (sc = 'atk', c = null) => {
+  const r = c && ECHO_REC[c.id];
+  if (r) return { on: false, e: r.e.map(([cost, m]) => ({ c: cost, m, sub: [] })) };
+  const m1 = sc === 'hp' ? 'hpP' : sc === 'def' ? 'defP' : 'atkP';
+  return { on: false, e: [{ c: 4, m: 'cr', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 1, m: m1, sub: [] }, { c: 1, m: m1, sub: [] }] };
+};
+// 공명 효율 목표(%) — 적어 둔 공명자만. 에코 옵션 화면에서 지금 수치와 함께 보여 줍니다.
+const erTarget = c => (c && ECHO_REC[c.id] && ECHO_REC[c.id].er) || 0;
 function subLabel(k) { return ECHO_SUB[k] ? ECHO_SUB[k][0] : k; }
 function echoSum(echo) {
   const t = { cost: 0, n5: 0 }; const add = (k, v) => { if (k && v) t[k] = +((t[k] || 0) + v).toFixed(2); };
@@ -1101,7 +1115,7 @@ function panelEstimate(id, settings, ov) {
   const dtp = {}; ['n', 'h', 's', 'l'].forEach(k => { const v = ((E.dt && E.dt[k]) || 0) + s2.filter(b => b.s === 'bonus' && b.dt === k).reduce((a, b) => a + b.v, 0); if (v) dtp[k] = +v.toFixed(1); });
   const bs = (RAW_BASE[c.rid]) || null; const sc = scaleOf(c);
   const res = { atk: Math.round(base * (1 + (E.atk + sum('atk') + s2v('atk')) / 100) + E.flat), cr: +(E.cr + sum('cr')).toFixed(1), cd: +(E.cd + sum('cd')).toFixed(1),
-    el: +(E.elem + sum('bonus') + s2v('bonus', c.el)).toFixed(1), er: E.er, dt: E.dt, dtp, scale: sc };
+    el: +(E.elem + sum('bonus') + s2v('bonus', c.el)).toFixed(1), er: +((E.er || 100) + sum('er')).toFixed(1), dt: E.dt, dtp, scale: sc };
   if (sc !== 'atk' && bs) res[sc] = Math.round((sc === 'hp' ? bs[1] : bs[2]) * (1 + (E[sc + 'P'] + sum(sc)) / 100) + E[sc + 'Flat']);
   return res;
 }
@@ -1516,15 +1530,15 @@ const CHAIN_FIX = {
     4: [{ s: 'bonus', v: 20, to: 'team' }],
     6: [{ s: 'bonus', v: 40, dt: 's' }, { s: 'defign', v: 20, dt: 's' }, { s: 'final', v: 13.5, to: 'team', req: 'unison', mode: 'unison', uniq: 'unisonBuff', src: 'S6: 합일 버프 최대 4스택 → 3스택 기준 4.5%씩' },
         { s: 'stcrit', v: 1, cr: 80, cd: 230, dt: 'st', to: 'team', mode: 'flare', src: 'S6: 주변 목표가 받는 전자 효과 피해가 크리티컬 80% / 230%로 발생' },
-        { s: 'atk', v: 28, to: 'team', req: 'unison', withChar: 'lily', uniq: 'lilyUni', mode: 'unison', src: 'S6: 합일 버프 4스택 → 릴리 공명 회로 공격력 28%' }] },
+        { s: 'atk', v: 28, to: 'team', req: 'unison', withChar: 'lily', uniq: 'lilyFaded', mode: 'unison', src: 'S6: 합일 버프 4스택 → 릴리 「빛바랜 꿈결」 공격력 28%' }] },
   suoming: { 2: [{ s: 'cd', v: 40 }, { s: 'cd', v: 22, to: 'next', src: 'S2: 반주 시 다음 캐릭터 크리티컬 피해 10% + 합일 버프 2스택 12%' }],
     3: [{ s: 'amp', v: 30, dt: 'n', up: .8 }],
     6: [{ s: 'final', v: 9, to: 'team', req: 'unison', treqOther: 'unison', uniq: 'unisonBuff', src: 'S6: 합일 버프 1스택 효과 +50%(2스택 기준 4.5%씩)' },
         { s: 'final', v: 13.5, to: 'team', req: 'unison', withChar: 'hsin', uniq: 'unisonBuff', src: 'S6: 여우의 별자리 합일 모드와 3스택 기준 4.5%씩' },
         { s: 'mv', v: 30, dt: 'n' }, { s: 'cd', v: 200, up: .85, mode: 'carry', src: 'S6: 금쇄계주 중 크리티컬 피해 +200%' }] },
-  lily: { 1: [{ s: 'atk', v: 7, to: 'team', src: 'S1: 공명 해방 변주당 공격력 7% → 14%(최대 28%)' }],
-    2: [{ s: 'cr', v: 6, to: 'team', src: 'S2: 변주마다 크리티컬 4%·크피 12%(최대 2스택) — 쇄명 평균' }, { s: 'cd', v: 18, to: 'team' },
-        { s: 'cr', v: 2, to: 'team', req: 'flare', treq: 'unison', src: 'S2: 여우의 별자리는 2스택(8% / 24%)' }, { s: 'cd', v: 6, to: 'team', req: 'flare', treq: 'unison' }] },
+  lily: { 1: [{ s: 'atk', v: 28, to: 'team', uniq: 'lilyScent', src: 'S1: 변주 스킬 1회에 꿈내음 2스택 → 한 사이클에 최대 4스택(공격력 28%)' }],
+    2: [{ s: 'cr', v: 8, to: 'team', src: 'S2: 꿈내음 1스택당 크리티컬 2% · 크리티컬 피해 6%(1돌 4스택 기준 8% / 24%)' }, { s: 'cd', v: 24, to: 'team' }],
+    6: [{ s: 'mv', v: 100, dt: 'h' }, { s: 'mv', v: 700, dt: 'i', note: 'S6: 변주 스킬 · 영원한 피어남 회절 피해 700% 증가' }] },
   hiyuki: { 3: [{ s: 'mv', v: 60, dt: 'st' }, { s: 'mv', v: 50, dt: 'h' }], 6: [{ s: 'cd', v: 40, cond: true }, { s: 'final', v: 25, dt: 'st', to: 'team' }, { s: 'mv', v: 40, dt: 'st' }] },
   lucilla: { 2: [{ s: 'amp', v: 80, el: 'glacio', dt: 'st', to: 'team', mode: 'chafe' }, { s: 'bonus', v: 40, dt: 'e', to: 'team', mode: 'echo' }] },
   suisui: { 2: [{ s: 'cd', v: 50, to: 'team', req: STATUS_CAPS }], 6: [{ s: 'cd', v: 200, dt: 's' }, { s: 'cd', v: 200, dt: 'i' }] },
@@ -1633,6 +1647,8 @@ function applyExtra(doc) {
       CHARS.push(c); CH[id] = c; if (r.img) IMG_CHAR[id] = r.img; rids.add(r.rid); info.added.push(id);
     });
   } catch (e) { console.warn('chars-extra 적용 실패', e); }
+  // 공명 체인 효과는 공명자마다 한 번만 계산해 두므로, 체인 원문이 새로 들어오면 캐시를 비웁니다
+  if (info.added.length || info.merged.length) Object.keys(_chainCache).forEach(k => { delete _chainCache[k]; });
   return info;
 }
 EXTRA_INFO = applyExtra((() => { try { return JSON.parse(lsGet(LS_EXTRA) || 'null'); } catch (e) { return null; } })());
@@ -2172,7 +2188,7 @@ function echoSlotHTML(c, x, i) {
 function openCharCfg(id) {
   const c = CH[id]; const o = state.ov[id] || {}; const st = o.st || {};
   const sc0 = scaleOf(c); const PK = [sc0, 'cr', 'cd', 'el'];
-  const ech = (o.echo && Array.isArray(o.echo.e)) ? o.echo : ECHO_DEFAULT(sc0);
+  const ech = (o.echo && Array.isArray(o.echo.e)) ? o.echo : ECHO_DEFAULT(sc0, c);
   const mode0 = st.on ? 'panel' : (ech.on ? 'echo' : 'est');
   const mem = resolveMember(id, c.modes ? Object.keys(c.modes)[0] : null, state.ov, state.settings);
   const est = panelEstimate(id, state.settings, { ...state.ov, [id]: { ...o, st: null } });
@@ -2263,13 +2279,13 @@ function openCharCfg(id) {
     const d0 = ownDmg({ ...state.ov, [id]: { ...o, st: null, echo: { ...e, on: false } } }), d1 = ownDmg(ovE);
     const dtb = ['n', 'h', 's', 'l'].filter(k => pe.dt && pe.dt[k]).map(k => `${DT[k]} ${pe.dt[k]}%`).join(' · ');
     $('#cf-ec-sum').innerHTML = `<div class="ec-cost ${t.cost > 12 ? 'bad' : ''}">코스트 <b class="num">${t.cost}</b> / 12${t.cost > 12 ? ' · 12를 넘었습니다' : ''}</div>
-      <div class="ec-stats num">${pe.scale !== 'atk' && pe[pe.scale] ? `<span>${pe.scale === 'hp' ? 'HP' : '방어력'} <b>${fmt(pe[pe.scale])}</b></span>` : `<span>공격력 <b>${fmt(pe.atk)}</b></span>`}<span>크리티컬 <b>${pe.cr}%</b></span><span>크리티컬 피해 <b>${pe.cd}%</b></span><span>${EL[c.el].n} 피해 <b>${pe.el}%</b></span><span>공명 효율 <b>${(pe.er || 100).toFixed(1)}%</b></span>${dtb ? `<span>${dtb}</span>` : ''}</div>
+      <div class="ec-stats num">${pe.scale !== 'atk' && pe[pe.scale] ? `<span>${pe.scale === 'hp' ? 'HP' : '방어력'} <b>${fmt(pe[pe.scale])}</b></span>` : `<span>공격력 <b>${fmt(pe.atk)}</b></span>`}<span>크리티컬 <b>${pe.cr}%</b></span><span>크리티컬 피해 <b>${pe.cd}%</b></span><span>${EL[c.el].n} 피해 <b>${pe.el}%</b></span><span>공명 효율 <b class="${erTarget(c) ? ((pe.er || 100) >= erTarget(c) ? 'up' : 'down') : ''}">${(pe.er || 100).toFixed(1)}%</b>${erTarget(c) ? ` <span class="note">목표 ${erTarget(c)}%</span>` : ''}</span>${dtb ? `<span>${dtb}</span>` : ''}</div>
       <div class="note">속성 화면 예상치(무기·소나타 상시 효과 포함). 크리티컬 기대값 ${(1 + Math.min(pe.cr, 100) / 100 * (pe.cd / 100 - 1)).toFixed(3)}배 · 본인 1사이클 피해는 추정치보다 <b class="${d1 >= d0 ? 'up' : 'down'}">${d0 ? ((d1 / d0 - 1) * 100 >= 0 ? '+' : '') + ((d1 / d0 - 1) * 100).toFixed(1) + '%' : '-'}</b></div>`;
   };
   $$('#cf-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.v; paintMode(); }));
   $('#cf-ec').addEventListener('change', paintEcho); $('#cf-ec').addEventListener('input', e => { if (e.target.classList.contains('ec-sv')) paintEcho(); });
   $('#cf-ec').addEventListener('change', e => { if (e.target.classList.contains('ec-sk')) { const inp = e.target.parentElement.querySelector('.ec-sv'); inp.setAttribute('list', 'ec-dl-' + e.target.value); const d = ECHO_SUB[e.target.value]; inp.max = d ? d[1][d[1].length - 1] : ''; inp.placeholder = d ? `${d[1][0]}~${d[1][d[1].length - 1]}` : ''; if (!e.target.value) inp.value = ''; } });
-  $('#cf-ec-std').addEventListener('click', () => { const keep = readEcho(); const d = ECHO_DEFAULT(sc0); $('#cf-ec').innerHTML = d.e.map((x, i) => echoSlotHTML(c, { ...x, sub: (keep.e[i] || {}).sub || [] }, i)).join(''); paintEcho(); });
+  $('#cf-ec-std').addEventListener('click', () => { const keep = readEcho(); const d = ECHO_DEFAULT(sc0, c); $('#cf-ec').innerHTML = d.e.map((x, i) => echoSlotHTML(c, { ...x, sub: (keep.e[i] || {}).sub || [] }, i)).join(''); paintEcho(); });
   $('#cf-ec-clear').addEventListener('click', () => { $$('#cf-ec .ec-sk').forEach(x => { x.value = ''; }); $$('#cf-ec .ec-sv').forEach(x => { x.value = ''; }); paintEcho(); });
   paintMode();
   $('#cf-save').addEventListener('click', () => {
@@ -3472,6 +3488,7 @@ function renderCharacter(id) {
         <div class="box"><h3>추천 무기</h3>${wpHTML(c.w, sigOwner(c.w) === c.id ? '전용 · 5성' : '5성')}${c.w4 && c.w4 !== c.w ? wpHTML(c.w4, '4성') : ''}${myWeaponsHTML(c)}</div>
         <div class="box" id="ch-echo"><h3>추천 메인 에코</h3><p class="note" style="margin:0">불러오는 중…</p></div>
         ${c.set ? `<div class="box"><h3>추천 에코 세트</h3>${setHTML(c.set, '5세트')}${(c.set2 || []).map(s => setHTML(s, '2세트')).join('')}</div>` : ''}
+        ${echoRecHTML(c)}
         ${mats.length ? `<div class="box"><h3>육성 재료</h3><div class="mats">${mats.map(([k, n]) => `<div class="mat">${itemIcon(k, 36)}<div><div style="font-size:11px;color:var(--muted)">${n}</div>${esc(itemName(k))}</div></div>`).join('')}</div></div>` : ''}
       </aside>
     </div>`;
@@ -3496,6 +3513,22 @@ function myWeaponsHTML(c) {
   return `<div class="wrank"><div class="lbl">내 보유 무기 순위 <small>${state.settings.weapon === 'own' ? '계산에 1위 무기를 씁니다' : '「보유 무기」로 계산하면 1위 무기를 씁니다'}</small></div>
     ${lists.map(([mn, rk]) => `${mn ? `<div class="note" style="margin-top:4px"><b>${esc(mn)} 모드</b></div>` : ''}${rows(rk, lists.length > 1 ? 3 : 5)}`).join('')}
     <p class="note" style="margin:6px 0 0">혼자 쓸 때의 딜과, 무기가 주는 파티 버프를 같은 속성 딜러에게 줬을 때의 딜을 합쳐 비교합니다(1위 = 100%).</p></div>`;
+}
+// 공명자 화면: 추천 에코 주옵션(코스트 배치) · 공명 효율 목표 — ECHO_REC에 적어 둔 공명자는 그 배치, 나머지는 기본 4-3-3-1-1
+function echoRecHTML(c) {
+  const rec = ECHO_REC[c.id]; const d = ECHO_DEFAULT(scaleOf(c), c);
+  const cost = d.e.reduce((a, x) => a + x.c, 0);
+  const mn = m => m === 'el' ? `${EL[c.el].n} 피해 보너스` : (ECHO_MAIN_N[m] || m);
+  const rows = d.e.map(x => {
+    const M = ECHO_MAIN[x.c] || {};
+    return `<div class="erec-row"><span class="erec-c num">${x.c}코</span><span class="erec-m">${esc(mn(x.m))} <b class="num">${M[x.m] !== undefined ? M[x.m] + '%' : '-'}</b></span><span class="note">${M._sec ? `+ ${M._sec[0] === 'hp' ? 'HP' : '공격력'} ${fmt(M._sec[1])}` : ''}</span></div>`;
+  }).join('');
+  const note = rec ? rec.n : '5성 +25 기준 기본 배치입니다. 4코스트는 크리티컬 대신 크리티컬 피해로 바꿔 크리티컬 1 : 크리티컬 피해 2 비율을 맞춰도 됩니다.';
+  return `<div class="box"><h3>추천 에코 주옵션 <small>${d.e.map(x => x.c).join('-')} · 코스트 ${cost} / 12</small></h3>
+    <div class="erec">${rows}</div>
+    ${rec && rec.er ? `<div class="erec-er">공명 효율 목표 <b class="num">${rec.er}%</b> <span class="note">전용 무기 부옵션 + 3코스트 주옵션 + 부옵션으로 맞춥니다</span></div>` : ''}
+    <p class="note" style="margin:10px 0 0">${esc(note)}</p>
+    <p class="note" style="margin:6px 0 0"><a href="#/echo">에코 계산기</a>에서 이 배치로 시작합니다.</p></div>`;
 }
 function mainEchoHTML(c, d) {
   const x = d && d.chars && d.chars[c.id];
@@ -3551,7 +3584,7 @@ function echoCalcState() {
   if (!state.ec) { try { state.ec = JSON.parse(lsGet(LS_ECHO_CALC) || 'null'); } catch (e) { state.ec = null; } }
   if (!state.ec || !CH[state.ec.id]) { const c0 = CHARS.find(c => c.q === 5 && c.role === 'main' && !isUpcoming(c)); state.ec = { id: c0.id, echo: null, w: 0 }; }
   const c = CH[state.ec.id];
-  if (!state.ec.echo) { const o = state.ov[c.id] || {}; state.ec.echo = (o.echo && Array.isArray(o.echo.e)) ? JSON.parse(JSON.stringify(o.echo)) : ECHO_DEFAULT(scaleOf(c)); }
+  if (!state.ec.echo) { const o = state.ov[c.id] || {}; state.ec.echo = (o.echo && Array.isArray(o.echo.e)) ? JSON.parse(JSON.stringify(o.echo)) : ECHO_DEFAULT(scaleOf(c), c); }
   return state.ec;
 }
 function echoGrade(cv) { return cv >= 200 ? ['SS', '종결급'] : cv >= 170 ? ['S', '준종결'] : cv >= 140 ? ['A', '훌륭함'] : cv >= 110 ? ['B', '쓸 만함'] : cv >= 70 ? ['C', '육성 중'] : ['D', '시작 단계']; }
@@ -3577,7 +3610,7 @@ function renderEcho() {
     const cv = subCr * 2 + subCd; const [g, gn] = echoGrade(cv);
     const ov = { ...state.ov, [c.id]: { ...(state.ov[c.id] || {}), st: null, w: E.w, r: (RAW_WEAPONS[E.w] || {}).q === 5 ? 1 : 5, echo: { ...e, on: true } } };
     const pe = panelEstimate(c.id, state.settings, ov);
-    const G = ECHO_GOALS[gk]; const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], gk === 'sup' ? null : echoMainGoal(c, sc)] : ['공격력', pe.atk, gk === 'sup' ? null : echoMainGoal(c, 'atk')];
+    const G0 = ECHO_GOALS[gk]; const G = erTarget(c) ? { ...G0, er: erTarget(c), d: `${G0.d} · ${c.name}는 공명 효율 ${erTarget(c)}%가 컷입니다` } : G0; const sc = pe.scale; const main = sc !== 'atk' && pe[sc] ? [sc === 'hp' ? 'HP' : '방어력', pe[sc], gk === 'sup' ? null : echoMainGoal(c, sc)] : ['공격력', pe.atk, gk === 'sup' ? null : echoMainGoal(c, 'atk')];
     const bar = (n, v, goal, unit = '') => `<div class="stat-bar"><div class="top"><span>${n}</span><b>${v > 999 ? fmt(v) : v}${unit}${goal ? ` <span>/ 목표 ${goal > 999 ? fmt(goal) : goal}${unit}</span>` : ''}</b></div>${goal ? `<div class="track"><div class="fill" style="width:${Math.min(100, v / goal * 100)}%"></div></div>` : ''}</div>`;
     const tips = []; if (gk === 'sup') { if ((pe.er || 100) < G.er) tips.push('서포터는 공명 효율이 먼저예요. 3코스트 주옵션 공명 효율이나 부옵션 공명 효율을 노려 보세요.'); if (sc !== 'atk') tips.push(`${sc === 'hp' ? 'HP' : '방어력'}에 비례하는 공명자라 1 · 3 · 4코스트 주옵션을 ${sc === 'hp' ? 'HP' : '방어력'}%로 맞추면 좋아요.`); }
     else if (pe.cr < G.cr - 15) tips.push('크리티컬이 낮아요. 4코스트 주옵션 크리티컬이나 부옵션 크리티컬을 먼저 올려 보세요.');
@@ -3604,7 +3637,7 @@ function renderEcho() {
     paint();
   });
   $('#ec-slots').addEventListener('input', e => { if (e.target.classList.contains('ec-sv')) paint(); });
-  $('#ec-std').addEventListener('click', () => { const keep = read(); const d = ECHO_DEFAULT(scaleOf(c)); $('#ec-slots').innerHTML = d.e.map((x, i) => echoSlotHTML(c, { ...x, sub: (keep.e[i] || {}).sub || [] }, i)).join(''); paint(); });
+  $('#ec-std').addEventListener('click', () => { const keep = read(); const d = ECHO_DEFAULT(scaleOf(c), c); $('#ec-slots').innerHTML = d.e.map((x, i) => echoSlotHTML(c, { ...x, sub: (keep.e[i] || {}).sub || [] }, i)).join(''); paint(); });
   $('#ec-clear').addEventListener('click', () => { $$('#ec-slots .ec-sk').forEach(x => { x.value = ''; }); $$('#ec-slots .ec-sv').forEach(x => { x.value = ''; }); paint(); });
   paint();
 }

@@ -948,3 +948,13 @@ h1, h2, h3, .ph-t, .hero h1, .feat h3, .sec-h h2 { word-break: keep-all; overflo
 main a:not([class]) { color: var(--gold); text-underline-offset: 2px; }
 .mx-crisis { display: contents; }
 .mx-enh ~ .bufftxt { font-size: 13px; line-height: 1.6; color: var(--ink-2, inherit); margin-top: 2px; }
+
+/* 추천 에코 주옵션 (공명자 가이드) */
+.erec { display: grid; gap: 6px; margin-top: 10px; }
+.erec-row { display: grid; grid-template-columns: 38px 1fr auto; gap: 8px; align-items: baseline; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.erec-c { color: var(--muted); font-size: 12px; }
+.erec-m { font-size: 13px; }
+.erec-m b { color: var(--gold); }
+.erec-er { margin-top: 10px; padding: 8px 10px; border: 1px solid var(--accent-soft); background: var(--surface-2); border-radius: 8px; font-size: 13px; }
+.erec-er b { color: var(--gold); }
+.erec-er .note { display: block; margin-top: 3px; }
