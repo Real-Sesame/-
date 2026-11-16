@@ -421,7 +421,9 @@ const PRESETS = [
         { k: 'f2p', m: ['aemeath', 'lupa', 'verina'], n: '모노 용융 계열, 힐러는 벨리나' }] },
   { id: 'sigrika', t: '시그리카 에코 파티', tag: '역경의 탑', m: ['sigrika', 'qiuyuan', 'ciaccona'],
     d: '구원 반주가 에코 피해 50% 부스트, 시그리카가 파티 기류·에코 피해를 올려 줍니다.',
-    v: [{ k: 'mid', m: ['sigrika', 'qiuyuan', 'lucilla'], n: '샤콘 대신 루실라(에코 모드)' },
+    v: [{ k: 'best', m: ['sigrika', 'qiuyuan', 'lily'], n: '힐러를 릴리로 — 이 파티는 릴리 세트를 찬란한 광휘로(공명 효율 260%)' },
+        { k: 'best', m: ['sigrika', 'lucilla', 'lily'], n: '루실라 + 릴리 — 릴리 세트는 추억에 붉게 물든 꽃(해형살 메인, 공명 효율 250%)' },
+        { k: 'mid', m: ['sigrika', 'qiuyuan', 'lucilla'], n: '샤콘 대신 루실라(에코 모드)' },
         { k: 'mid', m: ['sigrika', 'qiuyuan', 'shorekeeper'], n: '샤콘 대신 파수인' },
         { k: 'mid', m: ['sigrika', 'lynae', 'mornye'], n: '구원이 없을 때' },
         { k: 'f2p', m: ['sigrika', 'qiuyuan', 'verina'], n: '힐러를 벨리나로' }] },
@@ -620,6 +622,10 @@ const ROT = {
     loop: ['변주 → 점프', '낙하 공격 → E', 'E → 회피', '평타 2', '공명 회로 강공', '강공 → 공명 해방', '공명 해방', '교체', '반주'] },
   jingran: { ft: 15, loop: ['변주', '공명 해방', '강공', '평타 2~4', '강공', 'E', '평타', '강공', 'E', '평타', '강공', '반주'], tip: '사이클이 느린 편이라 퀵스왑 여지가 적습니다.' },
   iuno: { ft: 7, full: true, loop: ['변주', 'E → 에코/공명 해방으로 캔슬', '공명 해방', '점프 → 대시', '평타 1·2 → E', 'E → 대시', '평타 1·2 → E', 'E', '강공(교체)', '반주'], tip: '공중에 떠 있는 시간이 길어 퀵스왑이 어렵습니다.' },
+  lily: { ft: 6, src: '명조 전술 릴리 가이드 사이클',
+    open: ['공명 스킬', '강공(평꾹)', '에코 + 공명 해방', '반주'],
+    loop: ['변주', '강공(평꾹)', '에코 + 공명 해방', '반주'],
+    tip: '변주로 들어가면 공명 스킬을 건너뛰고 바로 강공격으로 넘어갑니다. 강공격(평타 꾹)으로 치료가 나가야 「빛바랜 꿈결」과 전용 무기 효과가 켜지고, 그 뒤 반주로 빠져야 파티에 들어갑니다. 공명 해방으로 요람의 레퀴엠을 켜 두면 다른 캐릭터가 변주로 들어올 때마다 꿈내음이 쌓입니다.' },
   shorekeeper: { ft: 5, loop: ['변주', '평타 1~3 → E', 'E', '평타 2', '강공 → 공명 해방', '공명 해방', '에코', '반주'] },
   verina: { ft: 4, loop: ['(변주 없이 교체)', '평타 3~5 → E', 'E → 공명 해방', '공명 해방', '점프 공중 공격 2회', '에코', '반주'] },
   galbrena: { ft: 15, loop: ['에코 먼저', '변주', '평타 2·3', '강공 1~3 → 대시', '강공 1·2 → E', 'E → 공명 해방', '공명 해방', '세라픽 처형 연타 (대시 캔슬)', '반주'] },
@@ -927,20 +933,31 @@ const ECHO_MAIN_N = { cr: '크리티컬', cd: '크리티컬 피해', atkP: '공�
 const ECHO_COSTS = [4, 3, 1];
 /* ---------- 추천 에코 주옵션 ----------
    기본은 4-3-3-1-1(크리티컬 · 속성 피해 · 속성 피해 · 공격 기준 스탯 2개)입니다.
-   공명 효율처럼 다른 스탯을 맞춰야 버프가 커지는 공명자만 여기에 배치를 적어 둡니다.
-     e  : [코스트, 주옵션] 5개   er : 공명 효율 목표(%)   n : 설명 */
+   공명 효율처럼 다른 스탯을 맞춰야 하는 공명자만 여기에 적어 둡니다. 세트에 따라 배치가 다르면 builds를 여러 개 둡니다.
+     e : [코스트, 주옵션] 5개   er : 공명 효율 목표(%, 장비로 맞추는 값)   set : 소나타 세트   echo : 메인 에코 이름
+   첫 번째 builds가 기본값이라 에코 입력 · 에코 계산기가 그 배치로 시작합니다. */
 const ECHO_REC = {
-  lily: { e: [[3, 'er'], [3, 'er'], [1, 'hpP'], [1, 'hpP'], [1, 'hpP']], er: 260,
-    n: '합일 파티용 3-3-1-1-1(추억에 붉게 물든 꽃). 릴리의 버프는 공명 효율 190% 초과분에 비례해서 커지고 260%에서 모두 최대가 되므로, 전용 무기 럴러바이의 부옵션(공명 효율 77%)과 3코스트 주옵션 2개(32% + 32%)로 맞추고 남는 만큼을 부옵션으로 채웁니다. 코스트가 남아도 1코스트 HP%가 치료량에 더 도움이 됩니다. HP를 더 올리고 싶으면 3-1-1-1-1도 쓰이지만, 부옵션으로 공명 효율 50% 이상을 채워야 합니다. 에코 스킬 파티에서는 세트를 찬란한 광휘로 바꾸고 4코스트 메인 에코를 넣어 4-3-1-1-1로 갑니다.' }
+  lily: {
+    sub: ['공명 효율', '크리티컬(15%까지)', '크리티컬 피해', 'HP%'],
+    builds: [
+      { n: '합일 파티', set: 38, echo: '해형살', er: 250,
+        e: [[3, 'er'], [3, 'er'], [1, 'hpP'], [1, 'hpP'], [1, 'hpP']],
+        d: '메인 에코는 3코스트 해형살입니다. 메인 슬롯에 끼우면 공명 효율이 10% 올라가는데 이 수치는 장비 칸에 안 잡히니, 장비로 250%만 맞추면 실제로는 260%가 되어 릴리 버프가 모두 최대가 됩니다. 전용 무기 럴러바이의 부옵션(77%)과 3코스트 주옵션 2개(32% + 32%)로 241%가 되고, 나머지 9%만 부옵션으로 채우면 됩니다.' },
+      { n: '에코 스킬 파티', set: 7, echo: '돌아갈 곳이 없는 오류', er: 260,
+        e: [[4, 'hpP'], [3, 'er'], [3, 'er'], [1, 'hpP'], [1, 'hpP']],
+        d: '메인 에코는 4코스트 돌아갈 곳이 없는 오류입니다. 해형살 같은 메인 슬롯 공명 효율 보너스가 없어서 장비로 260%를 다 맞춰야 하고, 부옵션으로 19% 정도를 더 채워야 합니다.' }
+    ]
+  }
 };
+const recBuild = c => { const r = c && ECHO_REC[c.id]; return r && r.builds[0]; };
 const ECHO_DEFAULT = (sc = 'atk', c = null) => {
-  const r = c && ECHO_REC[c.id];
+  const r = recBuild(c);
   if (r) return { on: false, e: r.e.map(([cost, m]) => ({ c: cost, m, sub: [] })) };
   const m1 = sc === 'hp' ? 'hpP' : sc === 'def' ? 'defP' : 'atkP';
   return { on: false, e: [{ c: 4, m: 'cr', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 3, m: 'el', sub: [] }, { c: 1, m: m1, sub: [] }, { c: 1, m: m1, sub: [] }] };
 };
 // 공명 효율 목표(%) — 적어 둔 공명자만. 에코 옵션 화면에서 지금 수치와 함께 보여 줍니다.
-const erTarget = c => (c && ECHO_REC[c.id] && ECHO_REC[c.id].er) || 0;
+const erTarget = c => (recBuild(c) || {}).er || 0;
 function subLabel(k) { return ECHO_SUB[k] ? ECHO_SUB[k][0] : k; }
 function echoSum(echo) {
   const t = { cost: 0, n5: 0 }; const add = (k, v) => { if (k && v) t[k] = +((t[k] || 0) + v).toFixed(2); };
@@ -2492,7 +2509,7 @@ function renderPresets() {
   const list = PRESETS.filter(p => state.presetFilter === 'all' || p.tag === state.presetFilter);
   ensureParties();
   const opts = state.parties.map((p, i) => SLOT[p.slot].type === 'team' ? `<option value="${i}">${i + 1}파티 · ${esc(SLOT[p.slot].label)} ${esc(SLOT[p.slot].fl)}</option>` : '').join('');
-  const TIER_N = { mid: '대체', f2p: '입문' };
+  const TIER_N = { best: '추천', mid: '대체', f2p: '입문' };
   $('#preset-grid').innerHTML = list.map(p => {
     const r = bestTeam(p.m, ctx);
     const missing = p.m.filter(id => !state.owned.has(id));
@@ -2504,7 +2521,7 @@ function renderPresets() {
     let firstOwned = -1; if (missing.length) vs.forEach((v, i) => { if (v.m.every(id => state.owned.has(id)) && (firstOwned < 0 || vRes[i].totalDmg > vRes[firstOwned].totalDmg)) firstOwned = i; });
     const vHTML = vs.length ? `<div class="pv-list"><div class="pv-h">대체 조합 <span class="muted">캐릭터가 부족할 때</span></div>${vs.map((v, i) => {
       const vr = vRes[i]; const miss = v.m.filter(id => !state.owned.has(id)).length; const pct = r.totalDmg ? Math.round(vr.totalDmg / r.totalDmg * 100) : 0;
-      return `<div class="pv ${i === firstOwned ? 'pick' : ''}"><span class="chip ${v.k === 'f2p' ? 'ok' : ''}">${TIER_N[v.k]}</span>
+      return `<div class="pv ${i === firstOwned ? 'pick' : ''}"><span class="chip ${v.k === 'f2p' ? 'ok' : v.k === 'best' ? 'acc' : ''}">${TIER_N[v.k] || '대체'}</span>
         <div class="pv-team">${v.m.map(id => `<span class="pv-m ${state.owned.has(id) ? '' : 'missing'}" title="${esc(CH[id].name)}">${portraitHTML(CH[id])}<span>${esc(CH[id].name)}</span></span>`).join('')}</div>
         <div class="pv-info"><div class="note">${esc(v.n || '')}</div><div><b class="num">${fmt(vr.totalDmg)}</b> <span class="muted num">(정석의 ${pct}%)</span> ${miss ? `<span class="chip warn">미보유 ${miss}</span>` : '<span class="chip ok">전원 보유</span>'}${i === firstOwned ? ' <span class="chip acc">내 캐릭터로 최선</span>' : ''}</div></div>
         <button class="btn sm" data-pvload="${p.id}:${i}">편성에 넣기</button></div>`; }).join('')}</div>` : '';
@@ -3514,21 +3531,28 @@ function myWeaponsHTML(c) {
     ${lists.map(([mn, rk]) => `${mn ? `<div class="note" style="margin-top:4px"><b>${esc(mn)} 모드</b></div>` : ''}${rows(rk, lists.length > 1 ? 3 : 5)}`).join('')}
     <p class="note" style="margin:6px 0 0">혼자 쓸 때의 딜과, 무기가 주는 파티 버프를 같은 속성 딜러에게 줬을 때의 딜을 합쳐 비교합니다(1위 = 100%).</p></div>`;
 }
-// 공명자 화면: 추천 에코 주옵션(코스트 배치) · 공명 효율 목표 — ECHO_REC에 적어 둔 공명자는 그 배치, 나머지는 기본 4-3-3-1-1
+// 공명자 화면: 추천 에코 주옵션(코스트 배치) · 공명 효율 목표 — ECHO_REC에 적어 둔 공명자는 세트별 배치, 나머지는 기본 4-3-3-1-1
 function echoRecHTML(c) {
-  const rec = ECHO_REC[c.id]; const d = ECHO_DEFAULT(scaleOf(c), c);
-  const cost = d.e.reduce((a, x) => a + x.c, 0);
+  const rec = ECHO_REC[c.id];
   const mn = m => m === 'el' ? `${EL[c.el].n} 피해 보너스` : (ECHO_MAIN_N[m] || m);
-  const rows = d.e.map(x => {
+  const slots = list => list.map(x => {
     const M = ECHO_MAIN[x.c] || {};
     return `<div class="erec-row"><span class="erec-c num">${x.c}코</span><span class="erec-m">${esc(mn(x.m))} <b class="num">${M[x.m] !== undefined ? M[x.m] + '%' : '-'}</b></span><span class="note">${M._sec ? `+ ${M._sec[0] === 'hp' ? 'HP' : '공격력'} ${fmt(M._sec[1])}` : ''}</span></div>`;
   }).join('');
-  const note = rec ? rec.n : '5성 +25 기준 기본 배치입니다. 4코스트는 크리티컬 대신 크리티컬 피해로 바꿔 크리티컬 1 : 크리티컬 피해 2 비율을 맞춰도 됩니다.';
-  return `<div class="box"><h3>추천 에코 주옵션 <small>${d.e.map(x => x.c).join('-')} · 코스트 ${cost} / 12</small></h3>
-    <div class="erec">${rows}</div>
-    ${rec && rec.er ? `<div class="erec-er">공명 효율 목표 <b class="num">${rec.er}%</b> <span class="note">전용 무기 부옵션 + 3코스트 주옵션 + 부옵션으로 맞춥니다</span></div>` : ''}
-    <p class="note" style="margin:10px 0 0">${esc(note)}</p>
-    <p class="note" style="margin:6px 0 0"><a href="#/echo">에코 계산기</a>에서 이 배치로 시작합니다.</p></div>`;
+  const block = b => {
+    const e = b.e.map(([c2, m]) => ({ c: c2, m }));
+    const cost = e.reduce((a, x) => a + x.c, 0);
+    return `<div class="erec-b"><h4>${esc(b.n)} <small>${e.map(x => x.c).join('-')} · 코스트 ${cost} / 12</small></h4>
+      <div class="erec-tags">${b.set && RAW_SETS[b.set] ? `<span class="tag gold">${esc(RAW_SETS[b.set].n)}</span>` : ''}${b.echo ? `<span class="tag">메인 에코 ${esc(b.echo)}</span>` : ''}<span class="tag">공명 효율 ${b.er}%</span></div>
+      <div class="erec">${slots(e)}</div>
+      ${b.d ? `<p class="note" style="margin:8px 0 0">${esc(b.d)}</p>` : ''}</div>`;
+  };
+  const body = rec ? rec.builds.map(block).join('')
+    : block({ n: '기본 배치', e: ECHO_DEFAULT(scaleOf(c), c).e.map(x => [x.c, x.m]), er: 0, d: '5성 +25 기준입니다. 4코스트는 크리티컬 대신 크리티컬 피해로 바꿔 크리티컬 1 : 크리티컬 피해 2 비율을 맞춰도 됩니다.' })
+      .replace(/<span class="tag">공명 효율 0%<\/span>/, '');
+  return `<div class="box"><h3>추천 에코 주옵션</h3>${body}
+    ${rec && rec.sub ? `<div class="erec-sub"><b>부옵션 우선순위</b> ${rec.sub.map((x, i) => `<span class="tag ${i ? '' : 'gold'}">${i + 1}. ${esc(x)}</span>`).join(' ')}</div>` : ''}
+    <p class="note" style="margin:10px 0 0"><a href="#/echo">에코 계산기</a>에서 첫 번째 배치로 시작합니다.</p></div>`;
 }
 function mainEchoHTML(c, d) {
   const x = d && d.chars && d.chars[c.id];
@@ -3537,7 +3561,7 @@ function mainEchoHTML(c, d) {
     const e = d.echoes[eid]; if (!e) return '';
     const img = `${BASE}assets/echo/${eid}.webp`; // 아이콘은 echoes.json과 함께 만들어짐
     const sets = (e.sets || []).map(sid => `<span class="tag ${sid === c.set ? 'gold' : ''}" title="${sid === c.set ? '이 공명자의 추천 세트' : ''}">${esc((RAW_SETS[sid] || {}).n || `세트 ${sid}`)}</span>`).join(' ');
-    return `<div class="wp me-row"><img src="${img}" alt="" loading="lazy" data-hide-err><div><div><span class="tag ${i ? '' : 'gold'}">${i ? '대안' : '1순위'}</span> <b>${esc(e.n)}</b> <span class="note">4코스트${e.cd ? ` · 쿨타임 ${e.cd}초` : ''}</span></div>
+    return `<div class="wp me-row"><img src="${img}" alt="" loading="lazy" data-hide-err><div><div><span class="tag ${i ? '' : 'gold'}">${i ? '대안' : '1순위'}</span> <b>${esc(e.n)}</b> <span class="note">${e.c}코스트${e.cd ? ` · 쿨타임 ${e.cd}초` : ''}</span></div>
       <div class="me-sets">${sets}</div><div class="d">${esc(e.d).replace(/\n/g, '<br>')}</div></div></div>`;
   };
   return `<h3>추천 메인 에코 <small>${x.src === 'guide' ? '공략 사이트 추천' : '게임 데이터로 추정'}</small></h3>${x.m.map((eid, i) => row(String(eid), i)).join('')}

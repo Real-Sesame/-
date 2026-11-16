@@ -32,6 +32,7 @@ COST = {0: 1, 1: 3, 2: 4, 3: 4}
 
 skills = {s['PhantomSkillId']: s for s in load('BinData/phantom/phantomskill.json')}
 # 4코스트 · 기본형(PhantomType 1) · 가장 높은 품질만, 이름마다 하나
+# (3코스트는 자동 선택 대상이 아니고, main-echo-picks.json에 이름을 적어 둔 것만 아래에서 더합니다)
 echoes = {}
 for x in load('BinData/phantom/phantomitem.json'):
     if COST.get(x.get('Rarity')) != 4 or x.get('PhantomType') != 1:
@@ -48,6 +49,26 @@ for x in load('BinData/phantom/phantomitem.json'):
     icon = re.sub(r'^/Game/Aki/', '', icon) + '.png' if icon.startswith('/Game/') else ''
     echoes[en or ko] = {'id': x['MonsterId'], 'n': ko, 'en': en, 'c': 4, 'sets': x.get('FetterGroup') or [], 'el': (x.get('ElementType') or [0])[0], 'd': d, 'cd': sk.get('SkillCD'), 'icon': icon, '_q': x.get('QualityId', 0)}
 by_en = {e['en']: e for e in echoes.values() if e['en']}
+
+# 3코스트 메인 에코: 자동 선택에는 넣지 않고, main-echo-picks.json에 적어 둔 것만 더합니다
+# (예: 해형살 Formrender — 메인 슬롯에 끼우면 공명 효율이 올라 릴리처럼 공명 효율을 맞추는 공명자가 씁니다)
+_picks_raw = json.load(open(os.path.join(R, 'src/data/main-echo-picks.json'), encoding='utf-8'))
+_want3 = {n for k, v in _picks_raw.items() if k != '_about' for n in v}
+for x in load('BinData/phantom/phantomitem.json'):
+    if COST.get(x.get('Rarity')) != 3 or x.get('PhantomType') != 1:
+        continue
+    ko = clean(tko.get(x.get('MonsterName'), '')); en = clean(ten.get(x.get('MonsterName'), ''))
+    if not ko or (en or ko) not in _want3:
+        continue
+    cur = by_en.get(en or ko)
+    if cur and cur['_q'] >= x.get('QualityId', 0):
+        continue
+    sk = skills.get(x.get('SkillId')) or {}
+    icon = (x.get('IconMiddle') or x.get('Icon') or '').split('.')[0]
+    icon = re.sub(r'^/Game/Aki/', '', icon) + '.png' if icon.startswith('/Game/') else ''
+    by_en[en or ko] = {'id': x['MonsterId'], 'n': ko, 'en': en, 'c': 3, 'sets': x.get('FetterGroup') or [],
+                       'el': (x.get('ElementType') or [0])[0], 'd': clean(tko.get(sk.get('SimplyDescription'), '')),
+                       'cd': sk.get('SkillCD'), 'icon': icon, '_q': x.get('QualityId', 0)}
 try:
     official = {r['RoleId']: r.get('RecommendFetterGroups') or [] for r in load('BinData/VisionRecommend/phantomrecommend.json')}
 except Exception:
@@ -115,7 +136,7 @@ for c in chars:
     insets = [bool(c['set'] and c['set'] in res['echoes'][str(i)]['sets']) for i in ids]
     res['chars'][c['id']] = {'m': ids, 'src': srcs, 'inset': insets}
 if miss:
-    print('게임 데이터에서 못 찾은(또는 4코스트가 아닌) 추천 에코:', '; '.join(miss))
+    print('게임 데이터에서 못 찾은 추천 에코:', '; '.join(miss))
 out = os.path.join(R, 'public/echoes.json')
 new = json.dumps(res, ensure_ascii=False, separators=(',', ':'))
 try:
